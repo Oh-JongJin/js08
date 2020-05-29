@@ -15,7 +15,7 @@ while True:
 
     secs = time.time()
 
-    #전체 프레임 중 1/100의 프레임만 저장한다.
+    #5분이 지나면 캡쳐.
     if datetime.datetime.now().minute % 5 == 0 and datetime.datetime.now().second == 00:
         # TIME
 
