@@ -1,0 +1,52 @@
+"""
+2020.06.01
+"""
+
+import time
+import datetime
+import cv2
+
+ADD = 'rtsp://admin:1234@192.168.100.253:554/1/1'
+cap = cv2.VideoCapture(ADD)
+
+
+def run_ipcam():
+    """IP Camera Print"""
+    while True:
+        try:
+            ret, frame = cap.read()
+            video = cv2.resize(frame, dsize=(640, 480))
+            # cv2.imshow("IP Camera stream", frame)
+            cv2.imshow("IP Camera stream", video)
+
+            secs = time.time()
+
+            # 5분이 지나면 캡쳐.
+            if datetime.datetime.now().minute % 1 == 0 and datetime.datetime.now().second == 00:
+                epoch = int(secs)
+
+                print('Saved frame number : ' + str(int(cap.get(1))))
+                cv2.imwrite("images/%d.png" % epoch, frame, cv2.IMREAD_GRAYSCALE)
+                print('Saved new frame.png')
+
+                print(int(secs))
+
+                tm1 = time.gmtime(secs)
+                print("year:", tm1.tm_year)
+                print("month:", tm1.tm_mon)
+                print("day:", tm1.tm_mday)
+                print("hour:", tm1.tm_hour + 9)
+                print("minute:", tm1.tm_min)
+                print("second:", tm1.tm_sec)
+
+        except ValueError:
+            raise
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+
+cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    run_ipcam()
