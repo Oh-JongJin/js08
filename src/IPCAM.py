@@ -1,44 +1,51 @@
-import cv2
+"""
+To do IP camera output and image capture.
+"""
+
 import time
 import datetime
-from matplotlib import pyplot as plt
-import numpy as np
+import cv2
 
-cap = cv2.VideoCapture('rtsp://admin:1234@192.168.100.253:554/1/1')
-# count = 0
+# ADD is the address to access IP camera.
+ADD = 'rtsp://admin:1234@192.168.100.253:554/1/1'
+# Cap can call protocols to RTSP and stream videos from cameras.
+cap = cv2.VideoCapture(ADD)
 
-while True:
-    ret, frame = cap.read()
-    video = cv2.resize(frame, dsize=(640, 480), interpolation=cv2.INTER_AREA)
-    #cv2.imshow("IP Camera stream", frame)
-    cv2.imshow("IP Camera stream", video)
 
-    secs = time.time()
+def run_ipcam(timer):
+    """It has one parameter, 'timer' is the number that sets the capture time period."""
 
-    #5분이 지나면 캡쳐.
-    if datetime.datetime.now().minute % 5 == 0 and datetime.datetime.now().second == 00:
-        # TIME
+    try:
+        ret, frame = cap.read()
+        video = cv2.resize(frame, dsize=(1920, 1080))
+        cv2.imshow("IP Camera stream", video)
 
-        epoch = int(secs)
+        secs = time.time()
 
-        print('Saved frame number : ' + str(int(cap.get(1))))
-        cv2.imwrite("images/frame.png", frame)
-        gray_img = cv2.imread('images/frame.png', cv2.IMREAD_GRAYSCALE)
-        cv2.imwrite("images/%d.png" % epoch, gray_img)
-        print('Saved new frame.png')
+        if datetime.datetime.now().minute % timer == 0 and datetime.datetime.now().second == 0:
+            """Capture the video you are streaming and save it as an image."""
 
-        print(int(secs))
+            epoch = int(secs)
 
-        tm = time.gmtime(secs)
-        print("year:", tm.tm_year)
-        print("month:", tm.tm_mon)
-        print("day:", tm.tm_mday)
-        print("hour:", tm.tm_hour+9)
-        print("minute:", tm.tm_min)
-        print("second:", tm.tm_sec)
-        # count += 1
+            print('Saved frame number : ' + str(int(cap.get(1))))
+            cv2.imwrite("images/%d.png" % epoch, frame)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+            tm = time.gmtime(secs)
+            print("[{0}년 {1}월 {2}일 {3}시 {4}분] Saved frame - {5}".format(tm.tm_year, tm.tm_mon, tm.tm_mday, tm.tm_hour +
+                                                                      9, tm.tm_min, epoch))
 
-cv2.destroyAllWindows()
+            time.sleep(1)
+        # Enter 'q' to exit a program in progress.
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            print('Close IP Cam')
+            exit()
+
+    except Exception as E:
+        print(E)
+
+
+if __name__ == "__main__":
+    while True:
+        # run_ipcam parameter sets the frequency of video capture.
+        run_ipcam(1)
