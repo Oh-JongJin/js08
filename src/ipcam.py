@@ -6,31 +6,18 @@ import time
 import datetime
 import cv2
 
-#ADD is the address to access IP camera.
-ADD = 'rtsp://admin:1234@192.168.100.253:554/1/1'
-# Cap can call protocols to RTSP and stream videos from cameras.
-cap = cv2.VideoCapture(ADD)
-state = ''
 
+# 프레임에 검은색 픽셀 사각형 그리기    
+def find_black_pixel(frame, th, y_value): #type: image, int
 
-# 프레임에 검은색 픽셀 사각형 그리기.    
-def find_black_pixels(frame, th,y_value):
-
-    """ Find the black pixels with threshold and draw a rectangle.
-        
-        Args:
-            frame (frame): Original image for graying
-            th (int): Threshold for gray value conversion
-            y_value (int): Range to apply the rectangle on the y-axis
+    """ Find the black pixels with threshold and draw a rectangle.    
             
-        Return:
-            frame: The selected threshold part is overlaid on the image.
+        
     """
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
     _, thresh = cv2.threshold(gray, th, 255, cv2.THRESH_BINARY)
-    # thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,30,2)
     
     dilated = cv2.dilate(thresh, None, iterations=3)
     
@@ -42,21 +29,15 @@ def find_black_pixels(frame, th,y_value):
         if cv2.contourArea(contour) > 600 or y >= y_value:
             continue
         # 사각형 및 텍스트 표시하기
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 3)
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
         pixel = f"({x}, {y})"
-        cv2.putText(frame, pixel, (x+3, y-10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
+        cv2.putText(frame, pixel, (x + 3, y - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
 
 
-
-def run_ipcam(args: argparse.Namespace):
-    """It has one parameter, 'timer' is the number that sets the capture time period."""
-    
+# ipcam 실행하기
+def main(args: argparse.Namespace):  # type: int,int,int
     """ Print and save the image and returns the status of the program.
         
-        Args:
-            args.m (int) : time interval for saving pictures (minutes)
-            args.t (int) : Argument value to go to 'find_black_pixels' method
-            args.y (int) : Argument value to go to 'find_black_pixels' method
             
         Returns:
             String : Pressing the keyboard 'q' returns the character 'end'.
@@ -64,7 +45,7 @@ def run_ipcam(args: argparse.Namespace):
 
     try:
         ret, frame = cap.read()
-        find_black_pixels(frame,args.t,args.y)
+        find_black_pixel(frame,args.t,args.y)
         video = cv2.resize(frame, dsize=(1920,1024))        
         cv2.imshow("IP Camera stream", video)
 
@@ -87,15 +68,21 @@ def run_ipcam(args: argparse.Namespace):
             cv2.destroyAllWindows()
             global state
             state = 'end'
-            print('프로그램 종료')
-            
+            print('0')            
         
     except Exception as E:
         print(E)
    
     return state
-
+    
+# 메인함수 실행하기
 if __name__ == "__main__":
+
+    #ADD is the address to access IP camera.
+    ADD = 'rtsp://admin:1234@192.168.100.253:554/1/1'
+    # Cap can call protocols to RTSP and stream videos from cameras.
+    cap = cv2.VideoCapture(ADD)
+    state = ''
 
     parser = argparse.ArgumentParser(description="image save and rectangle on black pixel")
     parser.add_argument("-m", default=1, type=int, help="time interval for saving pictures (minutes) ")
@@ -103,4 +90,4 @@ if __name__ == "__main__":
     parser.add_argument("-y", default=1000, type=int, help="hide y axis")
     args = parser.parse_args()
     while state != 'end':
-       run_ipcam(args)
+       main(args)
