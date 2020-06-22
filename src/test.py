@@ -39,6 +39,8 @@ class pyqt_ipcam(QWidget):
         # 임의 타겟들을 정함 get_target   
         self.get_target()
 
+        self.setMouseTracking(True)
+
         while running:
             ret, img = cap.read()
             if ret:
@@ -50,6 +52,7 @@ class pyqt_ipcam(QWidget):
                 for i in range(10):
                     cv2.rectangle(img,(self.x[i]-5,self.y[i]-5),(self.x[i]+5,self.y[i]+5),(0,255,0),1)
                     pixel = f"(target{i})"
+                    mpixel = f"x : {self.mx}, y : {self.my}"
                     cv2.putText(img, pixel, (self.x[i] + 3, self.y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
             
                 # resize의 fx는 비율로 크기를 조절한다.
@@ -72,6 +75,10 @@ class pyqt_ipcam(QWidget):
         cap.release()
         print("Thread end.")
 
+
+    def mouseMoveEvent(self, event):
+        self.mx = event.x()
+        self.my = event.y()
 
     # 임의 타겟들을 정함 get_target    
     def get_target(self):
