@@ -1,5 +1,6 @@
 # 구글 파이썬 스타일 가이드를 적용해야된다.
 
+#QtWidgets은 PyQT5에서 모든 UI 객체를 포함하고 있는 클래스라서 무조껀 import
 import cv2
 import threading
 import sys
@@ -7,12 +8,13 @@ from random import *
 from PyQt5.QtWidgets import QWidget, QLabel, QApplication
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QGridLayout
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QGridLayout, QGraphicsScene, QGraphicsView
 
 
+# UI를 정의하는 클래스
 # 키입력으로 바꿔서 적용하려면 클래스를 만들어서 해야함.
 # 클래스 안에 생성자에서 사용할 클래스는 parent 자리에 입력해준다.
-# 모든 생성자들을 생성할 때는 self.를 꼭 선언해줘야 한다.
 class pyqt_ipcam(QWidget):
 
     def __init__(self):
@@ -23,6 +25,7 @@ class pyqt_ipcam(QWidget):
         self.label = QLabel()
         self.grid.addWidget(self.label, 0, 0)       
         self.setLayout(self.grid)
+        self.zoom = 1
         
     def run(self):
         
@@ -52,7 +55,6 @@ class pyqt_ipcam(QWidget):
                 for i in range(10):
                     cv2.rectangle(img,(self.x[i]-5,self.y[i]-5),(self.x[i]+5,self.y[i]+5),(0,255,0),1)
                     pixel = f"(target{i})"
-                    mpixel = f"x : {self.mx}, y : {self.my}"
                     cv2.putText(img, pixel, (self.x[i] + 3, self.y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
             
                 # resize의 fx는 비율로 크기를 조절한다.
@@ -75,6 +77,11 @@ class pyqt_ipcam(QWidget):
         cap.release()
         print("Thread end.")
 
+    def wheelEvent(self, event):
+        if event.modifiers() == QtCore.Qt.ControlModifier:
+            self.zoom += event.angleDelta().y()/2400
+        
+        self.view.scale(self.zoom, self.zoom)
 
     def mouseMoveEvent(self, event):
         self.mx = event.x()
@@ -122,9 +129,16 @@ class pyqt_ipcam(QWidget):
             self.showNormal()
 
 def main():
+    #모든 PyQT Application들은 항상 Application Object를 생성해야 한다.
+    #파라미터로 Shell에서 넘긴 값 sys.argv를 받고 있다. []를 넘겨서 안 받아도 된다.
     app = QApplication(sys.argv)
+    #위에서 정의한 pyqt_ipcam 객체를 생성한다.
     ex=pyqt_ipcam()
+    #Widget은 일단 메모리에 적재된 뒤 show 메소드로 화면에 보여준다.
     ex.show()
+    #Application의 Mainloop에 들어가게 된다.
+    #Mainloop가 종료되려면 sys.exit()를 선언하거나 Mian Widget이 죽어야 된다.
+    #exec_는 Python에서 exec를 이미 사용하고 있다.
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
