@@ -24,6 +24,8 @@ class pyqt_ipcam(QWidget):
         self.label = QLabel()
         self.grid.addWidget(self.label, 0, 0)       
         self.setLayout(self.grid)
+        self.show()
+        
         
     def run(self):
         
@@ -31,7 +33,7 @@ class pyqt_ipcam(QWidget):
         cap = cv2.VideoCapture(0)
         width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)                
-        self.label.resize(width, height)
+        self.label.resize(width, height)        
 
         # 초기 사이즈 값을 저장한다. 
         prewidth = width
@@ -116,15 +118,15 @@ class pyqt_ipcam(QWidget):
             self.showFullScreen()
         elif e.key() == Qt.Key_N:
             self.showNormal()
-
+    
 def main():
     #모든 PyQT Application들은 항상 Application Object를 생성해야 한다.
     #파라미터로 Shell에서 넘긴 값 sys.argv를 받고 있다. []를 넘겨서 안 받아도 된다.
     app = QApplication(sys.argv)
     #위에서 정의한 pyqt_ipcam 객체를 생성한다.
     ex=pyqt_ipcam()
-    #Widget은 일단 메모리에 적재된 뒤 show 메소드로 화면에 보여준다.
-    ex.show()
+    #Widget은 일단 메모리에 적재된 뒤 show 메소드로 화면에 보여준다.    
+    ex.start()
     #Application의 Mainloop에 들어가게 된다.
     #Mainloop가 종료되려면 sys.exit()를 선언하거나 Mian Widget이 죽어야 된다.
     #exec_는 Python에서 exec를 이미 사용하고 있다.
