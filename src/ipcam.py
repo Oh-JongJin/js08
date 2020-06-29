@@ -5,12 +5,13 @@ import argparse
 import time
 import datetime
 import cv2
+import numpy as np
 
 
-# 프레임에 검은색 픽셀 사각형 그리기    
-def find_black_pixel(frame, th, y_value): #type: image, int
+# 어두운 영역 주위에 사각형 그리기    
+def find_black_pixel(frame: np.ndarray, th: int, y_value: int):
 
-    """ Find the black pixels with threshold and draw a rectangle.    
+    """ Draw a rectangle around the dark area.    
             
         
     """
@@ -35,7 +36,7 @@ def find_black_pixel(frame, th, y_value): #type: image, int
 
 
 # ipcam 실행하기
-def main(args: argparse.Namespace):  # type: int,int,int
+def main(args: argparse.Namespace) -> str: 
     """ Print and save the image and returns the status of the program.
         
             
