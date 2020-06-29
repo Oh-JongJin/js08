@@ -66,10 +66,14 @@ class pyqt_ipcam(QWidget):
                 # resize의 fx는 비율로 크기를 조절한다.
                 # 레이블의 크기에 따라 영상 크기도 같이 변한다.
                 if prewidth <= self.label.width() or preheight <= self.label.height():
-                    img = cv2.resize(img, dsize=(0, 0), fx=mowidth, fy=moheight, interpolation=cv2.INTER_LINEAR)
+                    img = cv2.resize(img, dsize=(0, 0), fx=mowidth, fy=moheight, 
+                                     interpolation=cv2.INTER_LINEAR)
                 # TODO(성민): 윈도 크기를 작게 조정하는 기능이 작동하지 않습니다.        
-                # elif prewidth > self.label.width() or preheight > self.label.height() :
-                #     img = cv2.resize(img, dsize=(0, 0), fx=self.label.width()/width, fy=self.label.height()/height, interpolation=cv2.INTER_AREA)
+                # elif prewidth > self.label.width() or preheight > self.label.height():
+                #     img = cv2.resize(img, dsize=(0, 0), 
+                #                      fx=self.label.width()/width, 
+                #                      fy=self.label.height()/height, 
+                #                      interpolation=cv2.INTER_AREA)
 
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
                 h, w, c = img.shape
