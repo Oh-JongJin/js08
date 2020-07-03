@@ -28,7 +28,7 @@ def capture(cam: int, filename: str):
     """Take a picture from a specified camera
     
     """
-    cmd = f"raspistill -vf -e png -o {filename}.png"
+    cmd = f"raspistill -hf -vf -e png -o {filename}.png"
     
     if cam == 1:
         i2c = "i2cset -y 1 0x70 0x00 0x04"
@@ -78,10 +78,11 @@ def main(args: argparse.Namespace):
     epoch = str(int(time.time()))
     if args.v:
         print("Take a photo using the NO-IR camera.")
-    capture(1, epoch + "_noir") 
+    capture(2, epoch + "_v2") 
     if args.v:
-        print("Take a photo using the normal camera.")
-    capture(3, epoch + "_v2")
+        print("Take a photo using the NO-IR camera.")
+    capture(3, epoch + "_noir") 
+
 
     if args.v:
         print("Restore GPIO pins")
