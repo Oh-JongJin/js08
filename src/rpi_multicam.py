@@ -81,7 +81,7 @@ def main(args: argparse.Namespace):
     capture(2, epoch + "_v2") 
     if args.v:
         print("Take a photo using the NO-IR camera.")
-    capture(3, epoch + "_noir") 
+    capture(4, epoch + "_noir") 
 
 
     if args.v:

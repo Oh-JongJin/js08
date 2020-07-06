@@ -5,6 +5,7 @@ import this
 import math
 import threading
 import numpy as np
+import pandas as pd
 import RPi.GPIO as gp
 import random
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -49,21 +50,21 @@ class pyqt_ipcam(QWidget):
     # v2 camera on   
     def run1(self):
         self.camnumber = 'v2'
+        self.get_target()
         cap = cv2.VideoCapture(0)
         cap.set(cv2.CAP_PROP_FPS, fps)
-        cap_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        cap_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.get_target(cap_h,cap_h)
+        x = [int(i/5.125)for i in self.x]
+        y = [int(i/5.125)for i in self.y]
         while running:
             rev, img = cap.read()
             img = cv2.flip(img,0)
             img = cv2.flip(img,1)
             self.img = img
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            for i in range(10):
-                cv2.rectangle(img,(self.x[i]-5,self.y[i]-5),(self.x[i]+5,self.y[i]+5),(0,255,0),1)
-                pixel = str(i+1)
-                cv2.putText(img, pixel, (self.x[i] + 3, self.y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 0))        
+            for i in range(len(x)):
+                cv2.rectangle(img,(x[i]-2,y[i]-2),(x[i]+2,y[i]+2),(0,255,0),1)
+                pixel = str(self.d[i]) + "km"
+                cv2.putText(img, pixel, (x[i] + 3, y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.3, (255, 0, 0))        
             h,w,c = img.shape
             qImg = QtGui.QImage(img.data, w, h, w*c, QtGui.QImage.Format_RGB888)
             pixmap = QtGui.QPixmap.fromImage(qImg)
@@ -73,21 +74,23 @@ class pyqt_ipcam(QWidget):
     # noir camera on    
     def run2(self):
         self.camnumber = 'noir'
+        self.get_target()
         cap = cv2.VideoCapture(0)
         cap.set(cv2.CAP_PROP_FPS, fps)
-        cap_w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        cap_h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.get_target(cap_h,cap_h)
+        # capture image size to cv video size
+        x = [int(i/5.125)for i in self.x]
+        y = [int(i/5.125)for i in self.y]
+        
         while running:
             rev, img = cap.read()
             img = cv2.flip(img,0)
             img = cv2.flip(img,1)
             self.img = img
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            for i in range(10):
-                cv2.rectangle(img,(self.x[i]-5,self.y[i]-5),(self.x[i]+5,self.y[i]+5),(0,255,0),1)
-                pixel = str(i+1)
-                cv2.putText(img, pixel, (self.x[i] + 3, self.y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 0, 0))        
+            for i in range(len(x)):
+                cv2.rectangle(img,(x[i]-2,y[i]-2),(x[i]+2,y[i]+2),(0,255,0),1)
+                pixel = str(self.d[i]) + "km"
+                cv2.putText(img, pixel, (x[i] + 3, y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.3, (255, 0, 0))        
             h,w,c = img.shape
             qImg = QtGui.QImage(img.data, w, h, w*c, QtGui.QImage.Format_RGB888)
             pixmap = QtGui.QPixmap.fromImage(qImg)
@@ -105,15 +108,15 @@ class pyqt_ipcam(QWidget):
             os.system(self.i2c)
             gp.output(SEL, True)
             gp.output(EN1, False)
-            gp.output(EN2, True)      
+            gp.output(EN2, True)  
             th1 = threading.Thread(target=self.run1)
             th1.start()
             print("v2 Camera started..")
             
         elif index == 2:
-            self.i2c = "i2cset -y 1 0x70 0x00 0x06"
+            self.i2c = "i2cset -y 1 0x70 0x00 0x07"
             os.system(self.i2c)
-            gp.output(SEL, False)
+            gp.output(SEL, True)
             gp.output(EN1, True)
             gp.output(EN2, False)      
             th2 = threading.Thread(target=self.run2)
@@ -126,14 +129,13 @@ class pyqt_ipcam(QWidget):
         running = False        
         print("Stop..")
         
-    def get_target(self, w: int, h: int):
-        self.x = []
-        self.y = []
-        for i in range(10):
-            self.x.append(random.randrange(10, w - 50))
-            self.y.append(random.randrange(10, h - 50))
+    def get_target(self):
+        df = pd.read_csv(f"data/{self.camnumber}.csv")
+        self.x = df['x']
+        self.y = df['y']
+        self.d = df['distance']
             
-    def img_capture(self, filename: str, img: np.ndarray):
+    def img_capture(self, filename: str, img: np.ndarray):        
         path = str(os.getcwd())
         cmd = f"raspistill -hf -vf -e png -o {path}/images/{filename}.png"
         print('Please wait')
