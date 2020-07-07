@@ -14,7 +14,6 @@ from PyQt5 import uic
 from PyQt5.QtCore import Qt
 from imutils.video import VideoStream
 import rpi_image_get_rgb
-
 import cv2
 
 
@@ -24,9 +23,9 @@ EN2 = 12
 
 gp.setwarnings(False)
 gp.setmode(gp.BOARD)
-gp.setup(SEL,gp.OUT)
-gp.setup(EN1,gp.OUT)
-gp.setup(EN2,gp.OUT)
+gp.setup(SEL, gp.OUT)
+gp.setup(EN1, gp.OUT)
+gp.setup(EN2, gp.OUT)
 
 fps = 5
 path = str(os.getcwd()) + '/images/'
@@ -35,7 +34,7 @@ class pyqt_ipcam(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setGeometry(200,300,750,600)        
+        self.setGeometry(200, 300, 750, 600)        
         self.grid = QGridLayout()
         self.label1 = QLabel()
         self.label2 = QLabel()
@@ -45,7 +44,6 @@ class pyqt_ipcam(QWidget):
         self.grid.addWidget(self.label2, 0, 1)
         self.setLayout(self.grid)
         self.show()
-        
         
     # nomal camera on   
     def run1(self):
@@ -57,20 +55,21 @@ class pyqt_ipcam(QWidget):
         y = [int(i/5.125)for i in self.y]
         while running:
             rev, img = cap.read()
-            img = cv2.flip(img,0)
-            img = cv2.flip(img,1)
+            img = cv2.flip(img, 0)
+            img = cv2.flip(img, 1)
             self.img = img
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             for i in range(len(x)):
-                cv2.rectangle(img,(x[i]-2,y[i]-2),(x[i]+2,y[i]+2),(0,255,0),1)
+                cv2.rectangle(img, (x[i] - 2, y[i] - 2), (x[i] + 2, y[i] + 2), (0, 255, 0), 1)
                 pixel = str(self.d[i]) + "km"
                 cv2.putText(img, pixel, (x[i] + 3, y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.3, (255, 0, 0))        
-            h,w,c = img.shape
-            qImg = QtGui.QImage(img.data, w, h, w*c, QtGui.QImage.Format_RGB888)
+            h, w, c = img.shape
+            qImg = QtGui.QImage(img.data, w, h, w * c, QtGui.QImage.Format_RGB888)
             pixmap = QtGui.QPixmap.fromImage(qImg)
             self.label1.setPixmap(pixmap)            
         cap.release()
         print('Thread end')
+        
     # ir camera on    
     def run2(self):
         self.camnumber = 'ir'
@@ -83,15 +82,15 @@ class pyqt_ipcam(QWidget):
         
         while running:
             rev, img = cap.read()
-            img = cv2.flip(img,0)
-            img = cv2.flip(img,1)
+            img = cv2.flip(img, 0)
+            img = cv2.flip(img, 1)
             self.img = img
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             for i in range(len(x)):
-                cv2.rectangle(img,(x[i]-2,y[i]-2),(x[i]+2,y[i]+2),(0,255,0),1)
+                cv2.rectangle(img, (x[i] - 2, y[i] - 2), (x[i] + 2, y[i] + 2), (0, 255, 0), 1)
                 pixel = str(self.d[i]) + "km"
                 cv2.putText(img, pixel, (x[i] + 3, y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.3, (255, 0, 0))        
-            h,w,c = img.shape
+            h, w, c = img.shape
             qImg = QtGui.QImage(img.data, w, h, w*c, QtGui.QImage.Format_RGB888)
             pixmap = QtGui.QPixmap.fromImage(qImg)
             self.label2.setPixmap(pixmap)                
@@ -123,7 +122,6 @@ class pyqt_ipcam(QWidget):
             th2.start()
             print("ir Camera started..")
             
-            
     def stop(self):
         global running
         running = False        
@@ -136,8 +134,6 @@ class pyqt_ipcam(QWidget):
         self.d = df['distance']
             
     def img_capture(self, foldername: str):
-        
-        
         os.makedirs(os.path.join(f'{path}/{foldername}'))
         print('Please wait')
         self.i2c = "i2cset -y 1 0x70 0x00 0x05"
@@ -186,11 +182,7 @@ class pyqt_ipcam(QWidget):
             rpi_image_get_rgb.get_rgb(foldername, 'ir')
             gp.output(SEL, False)
             gp.output(EN1, False)
-            gp.output(EN2, False)
-            
-            
-            
-
+            gp.output(EN2, False) 
 
 def main():
     app = QApplication(sys.argv)
