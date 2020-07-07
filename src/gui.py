@@ -66,6 +66,7 @@ class pyqt_ipcam(QWidget):
             cv2.rectangle(subimg, (0, h - 100), (w, h), (0, 0, 0), -1)
             img = cv2.addWeighted(img, 0.5, subimg, 0.5, 1)
             
+            # TODO(Kyungwon): Structure the layout using QTableWidget Class.
             # Header for measured values
             text_position = (50, h - 40)
             cv2.putText(img, 'Visibility', (text_position[0], text_position[1] - 10),  
