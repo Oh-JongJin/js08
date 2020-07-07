@@ -9,8 +9,11 @@ import threading
 from influxdb import InfluxDBClient
 
 
-# Select function to call (create, delete, insert)
 def main():
+        """
+        Select function to call (create, delete, insert)
+        """
+
         print("\n\n-----------Select InfluxDB menu-----------")
         print("1. Create DB\n2. Delete DB\n3. Show DB \n"
               "4. Access 'test' DB, insert value randomly\n"
@@ -31,9 +34,14 @@ def main():
                 main()
 
 
-# Create a database with the name you entered.
-def create_db(database_name: str, host="192.168.85.129", port=8086):
-        #
+def create_db(database_name: str, host: str = "192.168.85.129", port: int = 8086):
+        """
+        Create a database with the name you entered.
+        :param database_name: Database name to access internal data.
+        :param host: IP address to access 'Grafana'.
+        :param port: The port address to access 'Grafana'.
+        :return:
+        """
         client = InfluxDBClient(host, port)
         try:
                 client.create_database(database_name)
@@ -52,8 +60,14 @@ def create_db(database_name: str, host="192.168.85.129", port=8086):
         return client
 
 
-# Delete a database with the entered name.
-def drop_db(database_name: str, host="192.168.85.129", port=8086):
+def drop_db(database_name: str, host: str = "192.168.85.129", port: int = 8086):
+        """
+        Delete a database with the entered name.
+        :param database_name: Database name to access internal data.
+        :param host: IP address to access 'Grafana'.
+        :param port: The port address to access 'Grafana'.
+        :return:
+        """
         client = InfluxDBClient(host, port)
         try:
                 client.drop_database(database_name)
@@ -65,8 +79,13 @@ def drop_db(database_name: str, host="192.168.85.129", port=8086):
         return client
 
 
-# Check DB, measurement
-def insert_measure(host="192.168.85.129", port=8086):
+def insert_measure(host: str = "192.168.85.129", port: int = 8086):
+        """
+        Check DB, measurement
+        :param host: IP address to access 'Grafana'.
+        :param port: The port address to access 'Grafana'.
+        :return:
+        """
         client = InfluxDBClient(host, port)
         # Query statements that print a list of databases.
         rs = client.query("SHOW databases")
@@ -87,8 +106,13 @@ def insert_measure(host="192.168.85.129", port=8086):
         time.sleep(2)
 
 
-# Set the field values in the 'test' DB at random.
 def auto_run(host="192.168.85.129", port=8086):
+        """
+        Set the field values in the 'test' DB at random.
+        :param host: IP address to access 'Grafana'.
+        :param port: The port address to access 'Grafana'.
+        :return:
+        """
         client = InfluxDBClient(host, port)
         client.switch_database("test")
         value = random.randrange(0, 300)
@@ -108,5 +132,5 @@ def auto_run(host="192.168.85.129", port=8086):
 
 if __name__ == "__main__":
         # run main() function.
-        # main()
-        auto_run()
+        main()
+        # auto_run()
