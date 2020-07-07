@@ -21,9 +21,7 @@ def read_pixel(camnumber : str):
     distance = df['distance']
     print('target settings.')
 
-def get_rgb(filename: str):
-    camnumber = filename[11:]
-    imgname = filename[:10]
+def get_rgb(foldername: str, camnumber: str):
     read_pixel(camnumber)
     col = ['x', 'y', 'r', 'g', 'b', 'distance']
     resultdf = pd.DataFrame(rpi_x,index=None,columns=col)
@@ -32,7 +30,7 @@ def get_rgb(filename: str):
     g_list= []
     b_list= []
     try:
-        image = Image.open(f"images/{filename}.png")
+        image = Image.open(f"images/{foldername}/{camnumber}.png")
         image_RGB = image.convert("RGB")
         for i in range(0, len(rpi_x)):  
             image_RGB_value = image_RGB.getpixel((int(rpi_x[i]), int(rpi_y[i])))
@@ -43,7 +41,7 @@ def get_rgb(filename: str):
         resultdf['g'] = g_list
         resultdf['b'] = b_list
         resultdf['distance'] = distance
-        resultdf.to_csv(f"data/{filename}.csv", mode='w', index=False)
+        resultdf.to_csv(f"images/{foldername}/{camnumber}.csv", mode='w', index=False)
         print('rgb save.')
     except Exception as e:
         print('error: ', e)

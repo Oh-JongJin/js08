@@ -73,23 +73,23 @@ class pyqt_ipcam(QWidget):
             # content text
             text_position = (50, h-40) 
             cv2.putText(img, 'Visibility', (text_position[0], text_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, 'Micro Dust(PM10)', (text_position[0]+150, text_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, 'Temperature', (text_position[0]+350, text_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, 'Humidity', (text_position[0]+510, text_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, 'Barometer', (text_position[0]+640, text_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
+            cv2.putText(img, 'PM10', (text_position[0]+180, text_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
+            cv2.putText(img, 'Temp.', (text_position[0]+330, text_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
+            cv2.putText(img, 'Humidity', (text_position[0]+460, text_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
+            cv2.putText(img, 'Atm. Pres.', (text_position[0]+610, text_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
             
             self.bottom_value()
             
             # value text
             value_position = (50, h-15)            
-            cv2.putText(img, f'{self.vi} km', (value_position[0]+10, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, f'{self.md} ug/m', (value_position[0]+180, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, f'{self.tm} C', (value_position[0]+380, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, f'{self.hm} %', (value_position[0]+530, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, f'{self.br} hpa', (value_position[0]+650, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255))
+            cv2.putText(img, f'{self.vi} km', (value_position[0]+5, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
+            cv2.putText(img, f'{self.md} ug/m3', (value_position[0]+160, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
+            cv2.putText(img, f'{self.tm} C', (value_position[0]+335, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
+            cv2.putText(img, f'{self.hm} %', (value_position[0]+480, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
+            cv2.putText(img, f'{self.br} hpa', (value_position[0]+620, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
             epoch = int(time.time())
-            epoch = time.strftime("%Y.%m.%d %H:%M:%S", time.localtime(epoch))            
-            cv2.putText(img, epoch, (value_position[0]+750, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255))
+            epoch = time.strftime("%Y.%m.%d %H:%M:%S :%z", time.localtime(epoch))            
+            cv2.putText(img, epoch, (value_position[0]+830, value_position[1] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.4, (255, 255, 255))
             qImg = QtGui.QImage(img.data, w, h, w*c, QtGui.QImage.Format_RGB888)
             pixmap = QtGui.QPixmap.fromImage(qImg)
             self.label1.setPixmap(pixmap)    
@@ -101,15 +101,15 @@ class pyqt_ipcam(QWidget):
         global running
         running = True
         if index == 1:
-            self.camnumber = 'v2'
+            self.camnumber = 'nomal'
             th1 = threading.Thread(target=self.run)
             th1.start()
-            print("v2 Camera started..")
+            print("nomal Camera started..")
         elif index == 2:
-            self.camnumber = 'noir'
+            self.camnumber = 'ir'
             th1 = threading.Thread(target=self.run)
             th1.start()
-            print("noir Camera started..")
+            print("ir Camera started..")
             
     def stop(self):
         global running
@@ -130,14 +130,14 @@ class pyqt_ipcam(QWidget):
         print("Image Save")
     def bottom_value(self):
         
-        a = [0.1,0.12,0.21,0.28,0.91,0.93,0.33,1.3,2.0,3.7,5.4,5.0,6.5,1.7]
+        a = [0.1, 0.12, 0.21, 0.28, 0.91, 0.93, 0.33, 1.3, 2.0, 3.7, 5.4, 5.0, 6.5, 1.7]
         
-        i = random.randint(0,len(a)-1)
+        i = random.randint(0, len(a)-1)
         self.vi = str(a[i])        
-        self.md = str(random.randint(20,60))
-        self.tm = str(random.randint(28,33))
-        self.hm = str(random.randint(40,70))
-        self.br = str(random.randint(990,1000))
+        self.md = str(random.randint(20, 60))
+        self.tm = str(random.randint(28, 33))
+        self.hm = str(random.randint(40, 70))
+        self.br = str(random.randint(990, 1000))
     def keyPressEvent(self, e: QtGui.QKeyEvent):
         print(type(e))
         # v2 image read
