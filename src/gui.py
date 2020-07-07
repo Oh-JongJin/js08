@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import sys
 import time
@@ -16,7 +18,6 @@ from imutils.video import VideoStream
 import rpi_image_get_rgb
 import cv2
 
-
 SEL = 7
 EN1 = 11
 EN2 = 12
@@ -31,8 +32,8 @@ fps = 5
 # img size and target point
 scale = 3
 path = 'images/2020070313/'
-class pyqt_ipcam(QWidget):
 
+class pyqt_ipcam(QWidget):
     def __init__(self):
         super().__init__()
         self.setGeometry(0, 50, 750, 600)        
@@ -50,7 +51,7 @@ class pyqt_ipcam(QWidget):
         while running:
             img = cv2.imread(f'images/2020070313_{self.camnumber}.png', cv2.IMREAD_COLOR)            
             h, w, c = img.shape
-            dim = int(w / scale), int(h / scale)
+            dim = w // scale, h // scale
             self.img = img
             img = cv2.resize(img, None, fx=1/scale, fy=1/scale, interpolation=cv2.INTER_AREA)
             h, w, c = img.shape
@@ -69,9 +70,9 @@ class pyqt_ipcam(QWidget):
             text_position = (50, h - 40)
             cv2.putText(img, 'Visibility', (text_position[0], text_position[1] - 10),  
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, 'PM10', (text_position[0] + 180,   text_position[1] - 10),  
+            cv2.putText(img, 'PM10', (text_position[0] + 180, text_position[1] - 10),  
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, 'Temp.', (text_position[0] + 330,   text_position[1] - 10),  
+            cv2.putText(img, 'Temp.', (text_position[0] + 330, text_position[1] - 10),  
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
             cv2.putText(img, 'Humidity', (text_position[0] + 460, text_position[1] - 10),  
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
@@ -99,19 +100,19 @@ class pyqt_ipcam(QWidget):
             qImg = QtGui.QImage(img.data, w, h, w * c, QtGui.QImage.Format_RGB888)
             pixmap = QtGui.QPixmap.fromImage(qImg)
             self.label1.setPixmap(pixmap)
-        print('Thread end')
+        print("End thread")
         
     # Start video stream
     def start(self, index: int):
         global running
         running = True
         if index == 1:
-            self.camnumber = 'nomal'
+            self.camnumber = "nomal"
             th1 = threading.Thread(target=self.run)
             th1.start()
             print("Nomal camera started...")
         elif index == 2:
-            self.camnumber = 'ir'
+            self.camnumber = "ir"
             th1 = threading.Thread(target=self.run)
             th1.start()
             print("IR camera started...")
@@ -130,9 +131,9 @@ class pyqt_ipcam(QWidget):
     def img_capture(self, filename: str, img: np.ndarray):        
         path = str(os.getcwd())
         cmd = f"raspistill -hf -vf -e png -o {path}/images/{filename}.png"
-        print("Please wait")
+        print("Please wait...")
         os.system(cmd)
-        print("Save image")
+        print("Save image...")
         
     def bottom_value(self):        
         a = [0.1, 0.12, 0.21, 0.28, 0.91, 0.93, 0.33, 1.3, 2.0,
@@ -158,6 +159,7 @@ class pyqt_ipcam(QWidget):
             self.stop()
             time.sleep(1)            
             self.start(2)
+            
         # Quit program
         elif e.key() == Qt.Key_G:
             self.stop()
@@ -166,7 +168,7 @@ class pyqt_ipcam(QWidget):
 def main():
     app = QApplication(sys.argv)
     ex = pyqt_ipcam()
-    # Default behavior is to read nomal image
+    # Default behavior is to read a nomal image
     ex.start(1)
     sys.exit(app.exec_())
 
