@@ -1,5 +1,10 @@
 <<<<<<< HEAD
-#TODO(ChaeSeongMin): 
+"""
+ JS06 UI 초안을 만들었습니다. CV와 Pyqt로 이미지를 계속 보여주고 지정한 타겟 픽셀에 사각형을 표시합니다. 
+ 그리고 하단에 날씨와 관련된 데이터들을 임의의 값으로 표시했습니다.
+"""
+#TODO(ChaeSeongMin): 실제 기상청 데이터를 InfluxDB에 저장시킨 뒤 연동해서 실제값을 보여줘야 합니다.
+
 =======
 #!/usr/bin/env python3
 
@@ -12,7 +17,6 @@ import math
 import threading
 import numpy as np
 import pandas as pd
-import RPi.GPIO as gp
 import random
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget, QLabel, QApplication, QGridLayout
@@ -21,16 +25,6 @@ from PyQt5.QtCore import Qt
 from imutils.video import VideoStream
 import rpi_image_get_rgb
 import cv2
-
-SEL = 7
-EN1 = 11
-EN2 = 12
-
-gp.setwarnings(False)
-gp.setmode(gp.BOARD)
-gp.setup(SEL, gp.OUT)
-gp.setup(EN1, gp.OUT)
-gp.setup(EN2, gp.OUT)
 
 fps = 5
 # img size and target point
@@ -139,12 +133,6 @@ class pyqt_ipcam(QWidget):
         self.y = df['y']
         self.d = df['distance']
             
-    def img_capture(self, filename: str, img: np.ndarray):        
-        path = str(os.getcwd())
-        cmd = f"raspistill -hf -vf -e png -o {path}/images/{filename}.png"
-        print("Please wait...")
-        os.system(cmd)
-        print("Save image...")
         
     def bottom_value(self):        
         a = [0.1, 0.12, 0.21, 0.28, 0.91, 0.93, 0.33, 1.3, 2.0,
