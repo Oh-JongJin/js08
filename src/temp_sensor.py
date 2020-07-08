@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #
 # Output the temperature and humidity sensor using SHT 10.
 #
@@ -16,8 +16,8 @@ import RPi.GPIO as GPIO
 
 
 def main(data_pin: int, clock_pin: int):
-    """
-    Output temperature and humidity values via SHT 10.
+    """Output temperature and humidity values via SHT 10.
+    
     :param data_pin: SHT 10 sensor data pin number.
     :param clock_pin: SHT 10 sensor clock pin number.
     :return:
