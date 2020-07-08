@@ -1,25 +1,21 @@
 import os
 import sys
 import time
-import this
-import math
 import threading
-import numpy as np
 import pandas as pd
 import RPi.GPIO as gp
 import random
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtGui
 from PyQt5.QtWidgets import QWidget, QLabel, QApplication, QGridLayout
-from PyQt5 import uic
 from PyQt5.QtCore import Qt
-from imutils.video import VideoStream
 import rpi_image_get_rgb
 import cv2
-
 
 SEL = 7
 EN1 = 11
 EN2 = 12
+fps = 5
+path = "images/"
 
 gp.setwarnings(False)
 gp.setmode(gp.BOARD)
@@ -27,10 +23,8 @@ gp.setup(SEL, gp.OUT)
 gp.setup(EN1, gp.OUT)
 gp.setup(EN2, gp.OUT)
 
-fps = 5
-path = str(os.getcwd()) + '/images/'
-
 class pyqt_ipcam(QWidget):
+
 
     def __init__(self):
         super().__init__()
@@ -45,9 +39,9 @@ class pyqt_ipcam(QWidget):
         self.setLayout(self.grid)
         self.show()
         
-    # nomal camera on   
+    # v2 camera on   
     def run1(self):
-        self.camnumber = 'nomal'
+        self.camnumber = "v2"
         self.get_target()
         cap = cv2.VideoCapture(0)
         cap.set(cv2.CAP_PROP_FPS, fps)
@@ -68,17 +62,17 @@ class pyqt_ipcam(QWidget):
             pixmap = QtGui.QPixmap.fromImage(qImg)
             self.label1.setPixmap(pixmap)            
         cap.release()
-        print('Thread end')
+        print("Thread end")
         
     # ir camera on    
     def run2(self):
-        self.camnumber = 'ir'
+        self.camnumber = "ir"
         self.get_target()
         cap = cv2.VideoCapture(0)
         cap.set(cv2.CAP_PROP_FPS, fps)
         # capture image size to cv video size
-        x = [int(i/5.125)for i in self.x]
-        y = [int(i/5.125)for i in self.y]
+        x = [int(i / 5.125)for i in self.x]
+        y = [int(i / 5.125)for i in self.y]
         
         while running:
             rev, img = cap.read()
@@ -91,11 +85,11 @@ class pyqt_ipcam(QWidget):
                 pixel = str(self.d[i]) + "km"
                 cv2.putText(img, pixel, (x[i] + 3, y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.3, (255, 0, 0))        
             h, w, c = img.shape
-            qImg = QtGui.QImage(img.data, w, h, w*c, QtGui.QImage.Format_RGB888)
+            qImg = QtGui.QImage(img.data, w, h, w * c, QtGui.QImage.Format_RGB888)
             pixmap = QtGui.QPixmap.fromImage(qImg)
             self.label2.setPixmap(pixmap)                
         cap.release()
-        print('Thread end')
+        print("Thread end")
         
     #video run    
     def start(self, index: int):
@@ -110,7 +104,7 @@ class pyqt_ipcam(QWidget):
             gp.output(EN2, True)  
             th1 = threading.Thread(target=self.run1)
             th1.start()
-            print("nomal Camera started..")
+            print("v2 Camera started..")
             
         elif index == 2:
             self.i2c = "i2cset -y 1 0x70 0x00 0x07"
@@ -129,19 +123,19 @@ class pyqt_ipcam(QWidget):
         
     def get_target(self):
         df = pd.read_csv(f"data/{self.camnumber}.csv")
-        self.x = df['x']
-        self.y = df['y']
-        self.d = df['distance']
+        self.x = df["x"]
+        self.y = df["y"]
+        self.d = df["distance"]
             
     def img_capture(self, foldername: str):
-        os.makedirs(os.path.join(f'{path}/{foldername}'))
-        print('Please wait')
+        os.makedirs(os.path.join(f"{path}/{foldername}"))
+        print("Please wait")
         self.i2c = "i2cset -y 1 0x70 0x00 0x05"
         os.system(self.i2c)
         gp.output(SEL, True)
         gp.output(EN1, False)
         gp.output(EN2, True)
-        cmd = f"raspistill -hf -vf -e png -o {path}/{foldername}/nomal.png"
+        cmd = f"raspistill -hf -vf -e png -o {path}/{foldername}/v2.png"
         os.system(cmd)
         self.i2c = "i2cset -y 1 0x70 0x00 0x07"
         os.system(self.i2c)
@@ -153,11 +147,9 @@ class pyqt_ipcam(QWidget):
         print("Image Save")
 
     def keyPressEvent(self, e: QtGui.QKeyEvent):
-        print(type(e))
-        # nomal camera on
+        # v2 camera on
         if e.key() == Qt.Key_Q:            
             self.stop()
-            # sleep
             time.sleep(1)
             self.start(1)
         # ir camera on    
@@ -178,8 +170,8 @@ class pyqt_ipcam(QWidget):
             # img capture
             self.img_capture(foldername)
             # get target rgb
-            rpi_image_get_rgb.get_rgb(foldername, 'nomal')
-            rpi_image_get_rgb.get_rgb(foldername, 'ir')
+            rpi_image_get_rgb.get_rgb(foldername, "v2")
+            rpi_image_get_rgb.get_rgb(foldername, "ir")
             gp.output(SEL, False)
             gp.output(EN1, False)
             gp.output(EN2, False) 
@@ -187,11 +179,11 @@ class pyqt_ipcam(QWidget):
 def main():
     app = QApplication(sys.argv)
     ex=pyqt_ipcam()
-    #Default nomal Camera Start
+    # Default behavior is to read a v2 image
     ex.start(1)
     sys.exit(app.exec_())
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 

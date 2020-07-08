@@ -1,20 +1,18 @@
 # 구글 파이썬 스타일 가이드를 적용해야된다.
-
 #QtWidgets은 PyQT5에서 모든 UI 객체를 포함하고 있는 클래스라서 무조껀 import
 import cv2
 import threading
 import sys
-from random import *
-from PyQt5.QtWidgets import QWidget, QLabel, QApplication
+import random
 from PyQt5 import QtGui
+from PyQt5.QtWidgets import QWidget, QLabel, QApplication, QGridLayout
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QGridLayout
-
 
 # UI를 정의하는 클래스
 # 키입력으로 바꿔서 적용하려면 클래스를 만들어서 해야함.
 # 클래스 안에 생성자에서 사용할 클래스는 parent 자리에 입력해준다.
 class pyqt_ipcam(QWidget):
+
 
     def __init__(self):
         super().__init__()
@@ -25,46 +23,37 @@ class pyqt_ipcam(QWidget):
         self.grid.addWidget(self.label, 0, 0)       
         self.setLayout(self.grid)
         
-    def run(self):
-        
+    def run(self):        
         # 웹캠으로 테스트
         cap = cv2.VideoCapture(0)
         width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)                
         self.label.resize(width, height)
-
         # 초기 사이즈 값을 저장한다. 
         prewidth = width
         preheight = height
-
         # 임의 타겟들을 정함 get_target   
         self.get_target()
-
         self.setMouseTracking(True)
-
         while running:
             ret, img = cap.read()
             if ret:
                 mowidth = self.label.width()/width
-                moheight = self.label.height()/height
-                
-
+                moheight = self.label.height()/height    
                 # 타겟들을 사각형으로 호출 get_target
                 for i in range(10):
-                    cv2.rectangle(img,(self.x[i]-5,self.y[i]-5),(self.x[i]+5,self.y[i]+5),(0,255,0),1)
+                    cv2.rectangle(img, (self.x[i]-5, self.y[i]-5), (self.x[i]+5, self.y[i]+5), (0, 255, 0), 1)
                     pixel = f"{i}"
-                    cv2.putText(img, pixel, (self.x[i] + 3, self.y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
-            
+                    cv2.putText(img, pixel, (self.x[i] + 3, self.y[i] - 10), cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))            
                 # resize의 fx는 비율로 크기를 조절한다.
                 # 레이블의 크기에 따라 영상 크기도 같이 변한다.
                 if prewidth <= self.label.width() or preheight <= self.label.height():
                     img = cv2.resize(img, dsize=(0, 0), fx=mowidth, fy=moheight, interpolation=cv2.INTER_LINEAR)           
                 # elif prewidth > self.label.width() or preheight > self.label.height() :
-                #     img = cv2.resize(img, dsize=(0, 0), fx=self.label.width()/width, fy=self.label.height()/height, interpolation=cv2.INTER_AREA)
-
+                #     img = cv2.resize(img,  dsize=(0,  0),  fx=self.label.width()/width,  fy=self.label.height()/height,  interpolation=cv2.INTER_AREA)
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
-                h,w,c = img.shape
-                qImg = QtGui.QImage(img.data, w, h, w*c, QtGui.QImage.Format_RGB888)
+                h, w, c = img.shape
+                qImg = QtGui.QImage(img.data, w, h, w * c, QtGui.QImage.Format_RGB888)
                 pixmap = QtGui.QPixmap.fromImage(qImg)
                 self.label.setPixmap(pixmap)
                 prewidth = self.label.width()
@@ -75,14 +64,13 @@ class pyqt_ipcam(QWidget):
         cap.release()
         print("Thread end.")
 
-
     # 임의 타겟들을 정함 get_target    
     def get_target(self):
         self.x = []
         self.y = []
         for i in range(10):
-            self.x.append(randrange(10,620))
-            self.y.append(randrange(10,460))
+            self.x.append(random.randrange(10, 620))
+            self.y.append(random.randrange(10, 460))
     
     # 영상 읽기를 중단한다.
     def stop(self):
@@ -130,5 +118,5 @@ def main():
     #exec_는 Python에서 exec를 이미 사용하고 있다.
     sys.exit(app.exec_())
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

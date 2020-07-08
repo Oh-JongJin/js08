@@ -1,35 +1,26 @@
-<<<<<<< HEAD
 """
  JS06 UI 초안을 만들었습니다. CV와 Pyqt로 이미지를 계속 보여주고 지정한 타겟 픽셀에 사각형을 표시합니다. 
  그리고 하단에 날씨와 관련된 데이터들을 임의의 값으로 표시했습니다.
 """
-#TODO(ChaeSeongMin): 실제 기상청 데이터를 InfluxDB에 저장시킨 뒤 연동해서 실제값을 보여줘야 합니다.
 
-=======
 #!/usr/bin/env python3
 
->>>>>>> 74deeb56856011081ff3ff004fd7cb3606627a6f
+import glob
 import os
 import sys
 import time
-import this
-import math
 import threading
-import numpy as np
 import pandas as pd
 import random
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtGui
 from PyQt5.QtWidgets import QWidget, QLabel, QApplication, QGridLayout
-from PyQt5 import uic
 from PyQt5.QtCore import Qt
-from imutils.video import VideoStream
 import rpi_image_get_rgb
 import cv2
 
 fps = 5
-# img size and target point
 scale = 3
-path = 'images/2020070313/'
+path = "images/2020070810/"
 
 class pyqt_ipcam(QWidget):
     def __init__(self):
@@ -42,20 +33,14 @@ class pyqt_ipcam(QWidget):
         self.show()        
         
     # Read image   
-    def run(self):        
+    def run(self):     
         self.get_target()        
         x = [i // scale for i in self.x]
         y = [i // scale for i in self.y]
         while running:
-<<<<<<< HEAD
-            img = cv2.imread(f'{path}_{self.camnumber}.png', cv2.IMREAD_COLOR)            
+            img = cv2.imread(glob.glob(f"{path}*_{self.camnumber}.png")[0], cv2.IMREAD_COLOR)            
             h, w, c= img.shape
-            dim = (int(w/scale), int(h/scale))
-=======
-            img = cv2.imread(f'images/2020070313_{self.camnumber}.png', cv2.IMREAD_COLOR)            
-            h, w, c = img.shape
             dim = w // scale, h // scale
->>>>>>> 74deeb56856011081ff3ff004fd7cb3606627a6f
             self.img = img
             img = cv2.resize(img, None, fx=1/scale, fy=1/scale, interpolation=cv2.INTER_AREA)
             h, w, c = img.shape
@@ -73,30 +58,30 @@ class pyqt_ipcam(QWidget):
             # TODO(Kyungwon): Structure the layout using QTableWidget Class.
             # Header for measured values
             text_position = (50, h - 40)
-            cv2.putText(img, 'Visibility', (text_position[0], text_position[1] - 10),  
+            cv2.putText(img, "Visibility", (text_position[0], text_position[1] - 10),  
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, 'PM10', (text_position[0] + 180, text_position[1] - 10),  
+            cv2.putText(img, "PM10", (text_position[0] + 180, text_position[1] - 10),  
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, 'Temp.', (text_position[0] + 330, text_position[1] - 10),  
+            cv2.putText(img, "Temp.", (text_position[0] + 330, text_position[1] - 10),  
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, 'Humidity', (text_position[0] + 460, text_position[1] - 10),  
+            cv2.putText(img, "Humidity", (text_position[0] + 460, text_position[1] - 10),  
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, 'Atm. Pres.', (text_position[0] + 610, text_position[1] - 10),
+            cv2.putText(img, "Atm. Pres.", (text_position[0] + 610, text_position[1] - 10),
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
             
             self.bottom_value()
             
             # Values of the content
             value_position = (50, h - 15)
-            cv2.putText(img, f'{self.vi} km', (value_position[0] + 5, value_position[1] - 10),
+            cv2.putText(img, f"{self.vi} km", (value_position[0] + 5, value_position[1] - 10),
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, f'{self.md} ug/m3', (value_position[0] + 160, value_position[1] - 10),  
+            cv2.putText(img, f"{self.md} ug/m3", (value_position[0] + 160, value_position[1] - 10),  
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, f'{self.tm} oC', (value_position[0] + 335, value_position[1] - 10),
+            cv2.putText(img, f"{self.tm} oC", (value_position[0] + 335, value_position[1] - 10),
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, f'{self.hm} %', (value_position[0] + 480, value_position[1] - 10),
+            cv2.putText(img, f"{self.hm} %", (value_position[0] + 480, value_position[1] - 10),
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
-            cv2.putText(img, f'{self.br} hpa', (value_position[0] + 620, value_position[1] - 10), 
+            cv2.putText(img, f"{self.br} hpa", (value_position[0] + 620, value_position[1] - 10), 
                         cv2.FONT_HERSHEY_COMPLEX, 0.5, (255, 255, 255))
             epoch = int(time.time())
             epoch = time.strftime("%Y.%m.%d %H:%M:%S :%z", time.localtime(epoch))            
@@ -112,13 +97,13 @@ class pyqt_ipcam(QWidget):
         global running
         running = True
         if index == 1:
-            self.camnumber = "nomal"
-            th1 = threading.Thread(target=self.run)
+            self.camnumber = "v2"
+            th1 = threading.Thread(target = self.run)
             th1.start()
-            print("Nomal camera started...")
+            print("v2 camera started...")
         elif index == 2:
             self.camnumber = "ir"
-            th1 = threading.Thread(target=self.run)
+            th1 = threading.Thread(target = self.run)
             th1.start()
             print("IR camera started...")
             
@@ -128,12 +113,12 @@ class pyqt_ipcam(QWidget):
         print("Stop...")
         
     def get_target(self):
-        df = pd.read_csv(f"data/{self.camnumber}.csv")
-        self.x = df['x']
-        self.y = df['y']
-        self.d = df['distance']
-            
-        
+        df = pd.read_csv(f"{path}{self.camnumber}.csv")
+        self.x = df["x"]
+        self.y = df["y"]
+        self.d = df["distance"]       
+             
+    #TODO(ChaeSeongMin): 실제 기상청 데이터를 InfluxDB에 저장시킨 뒤 연동해서 실제값을 보여줘야 합니다.    
     def bottom_value(self):        
         a = [0.1, 0.12, 0.21, 0.28, 0.91, 0.93, 0.33, 1.3, 2.0,
              3.7, 5.4, 5.0, 6.5, 1.7]        
@@ -145,11 +130,9 @@ class pyqt_ipcam(QWidget):
         self.br = str(random.randint(990, 1000))
         
     def keyPressEvent(self, e: QtGui.QKeyEvent):
-        print(type(e))
-        # nomal image read
+        # v2 image read
         if e.key() == Qt.Key_Q:            
             self.stop()
-            # sleep
             time.sleep(1)            
             self.start(1)
             
@@ -167,10 +150,10 @@ class pyqt_ipcam(QWidget):
 def main():
     app = QApplication(sys.argv)
     ex = pyqt_ipcam()
-    # Default behavior is to read a nomal image
+    # Default behavior is to read a v2 image
     ex.start(1)
     sys.exit(app.exec_())
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
     
