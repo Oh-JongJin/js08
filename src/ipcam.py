@@ -8,7 +8,7 @@ import cv2
 
 
 # 프레임에 검은색 픽셀 사각형 그리기    
-def find_black_pixel(frame, th, y_value): #type: image, int
+def find_black_pixel(frame, th, y_value): #type: ndarray, int
 
     """ Find the black pixels with threshold and draw a rectangle.    
             
@@ -45,7 +45,7 @@ def main(args: argparse.Namespace):  # type: int,int,int
 
     try:
         ret, frame = cap.read()
-        find_black_pixel(frame,args.t,args.y)
+        find_black_pixel(frame, args.t, args.y)
         video = cv2.resize(frame, dsize=(1920,1024))        
         cv2.imshow("IP Camera stream", video)
 

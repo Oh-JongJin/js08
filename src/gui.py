@@ -1,3 +1,4 @@
+#TODO(ChaeSeongMin): 
 import os
 import sys
 import time
@@ -48,7 +49,7 @@ class pyqt_ipcam(QWidget):
         x = [int(i/scale) for i in self.x]
         y = [int(i/scale) for i in self.y]
         while running:
-            img = cv2.imread(f'images/2020070313_{self.camnumber}.png', cv2.IMREAD_COLOR)            
+            img = cv2.imread(f'{path}_{self.camnumber}.png', cv2.IMREAD_COLOR)            
             h, w, c= img.shape
             dim = (int(w/scale), int(h/scale))
             self.img = img
@@ -138,7 +139,7 @@ class pyqt_ipcam(QWidget):
     def bottom_value(self):        
         a = [0.1, 0.12, 0.21, 0.28, 0.91, 0.93, 0.33, 1.3, 2.0,
              3.7, 5.4, 5.0, 6.5, 1.7]        
-        i = random.randint(0, len(a)-1)
+        i = random.randint(0, len(a) - 1)
         self.vi = str(a[i])        
         self.md = str(random.randint(20, 60))
         self.tm = str(random.randint(28, 33))
