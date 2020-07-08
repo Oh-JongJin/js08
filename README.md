@@ -8,12 +8,14 @@ The successor of JS-02. The goal of JS-06 is improved surveillance, sensor integ
 - Estimate of visibility based on visible targets on a camera image
 - Acquisition of weather data from attached sensors.
 
-## Hardware Supports
+## Hardware Flatforms
 JS-06 is being developed on the following target platforms.
 - [Raspberry PI Model B with 8MB RAM](https://www.raspberrypi.org/products/raspberry-pi-4-model-b/)
 - [NVIDIA Jetson Nano](https://developer.nvidia.com/embedded/jetson-nano-developer-kit)
 - [NVIDIA Xavier NX](https://developer.nvidia.com/embedded/jetson-xavier-nx-devkit)
 
-## Camera
+## Camera Supports
 - [Pi Camera Module V2.1](https://www.raspberrypi.org/products/camera-module-v2/)
 - [Pi NoIR Camera Module V2.1](https://www.raspberrypi.org/products/pi-noir-camera-v2/)
+- IP cameras
+- Web cams
