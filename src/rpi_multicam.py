@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+"""라즈베리파이 카메라 캡쳐
+
+라즈베리파이 카메라에서 영상을 캡쳐해 png로 저장한다.
+파일이름은 epoch로 한다.
+
+Required packages: python3-RPi
+
+Typical usage example: 
+
+  python3 rpi_multicam.py -v -q
+
+"""
 
 import argparse
 import os

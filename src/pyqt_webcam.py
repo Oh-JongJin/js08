@@ -1,6 +1,18 @@
 #!/usr/bin/env python3
-# 구글 파이썬 스타일 가이드를 적용해야된다.
-#QtWidgets은 PyQT5에서 모든 UI 객체를 포함하고 있는 클래스라서 무조껀 import
+
+"""PyQt에 웹캠 재생
+
+PyQt의 QLabel 위젯 안에 OpenCV의 영상을 보여준다. 
+QLabel 위젯을 GridLayout 위젯에 넣어 QLabel 크기가 변하면 영상도 같이 변하게 한다.
+동작들을 키보드로 제어한다.
+
+Required packages: python3-pyqt5, python3-opencv
+
+Typical usage example: 
+
+  python3 pyqt_ipcam.py
+
+"""
 
 import random
 import sys

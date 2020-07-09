@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+"""이미지 RGB값 추출
+
+소산계수 추정용 타겟의 위치를 저장 후 이미지의 RGB 값을 추출한다.
+
+Required packages: python3-opencv
+
+Typical usage example: 
+
+  python3 rpi_image_get_rgb.py
+
+"""
 import datetime
 import glob
 import os

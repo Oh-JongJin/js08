@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+"""라즈베리파이 카메라 영상 재생 및 캡쳐
+
+라즈베리파이 카메라 영상을 실시간으로 보여준다. 
+PyQt의 QLabel 위젯 안에 OpenCV의 영상을 재생하고 소산계수 추정용 타켓의 위치를 사각형으로 표시한다.
+캡쳐 'C'키를 누르면 영상이 중지되고 영상을 캡쳐한다.
+
+Required packages: python3-opencv, python3-pyqt5, python3-RPi
+
+Typical usage example: 
+
+  python3 twocam_capture.py
+
+"""
 
 import os
 import random

@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
 
+"""IP 카메라 연결
+
+IP 카메라 영상을 OpenCV로 보여주며, contour 범위가 문턱 값 이상이면 사각형으로 표시한다.
+1분마다 영상을 저장한다.
+
+Required packages: python3-opencv
+
+Typical usage example: 
+
+  python3 ipcam.py -m=1 -t=60 -y=1000
+
+"""
 import argparse
 import datetime
 import numpy
