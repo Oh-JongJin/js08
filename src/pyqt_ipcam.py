@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # 구글 파이썬 스타일 가이드를 적용해야된다.
 #QtWidgets은 PyQT5에서 모든 UI 객체를 포함하고 있는 클래스라서 무조껀 import
-# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
+
 import random
 import sys
 

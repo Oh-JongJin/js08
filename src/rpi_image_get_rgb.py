@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
 import datetime
 import glob
 import os
@@ -12,13 +11,13 @@ from PIL import Image
 rpi_x = []
 rpi_y = []
 distance = []
-path = "images/2020070810_50/"
+path = "images/2020070614/"
 
 def read_pixel(camnumber : str):
     global rpi_x
     global rpi_y
     global distance
-    df = pd.read_csv(f"{path}{camnumber}.csv")
+    df = pd.read_csv(glob.glob(f"{path}*_{camnumber}.csv")[0])
     rpi_x = df["x"]
     rpi_y = df["y"]
     distance = df["distance"]
@@ -44,7 +43,7 @@ def get_rgb(camnumber: str):
         resultdf["g"] = g_list
         resultdf["b"] = b_list
         resultdf["distance"] = distance
-        resultdf.to_csv(f"{path}{camnumber}.csv", mode="w", index=False)
+        resultdf.to_csv(glob.glob(f"{path}*_{camnumber}.csv")[0], mode="w", index=False)
         print("rgb save.")
     except Exception as e:
         print("error: ", e)

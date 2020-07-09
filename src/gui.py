@@ -3,7 +3,6 @@
  JS06 UI 초안을 만들었습니다. CV와 Pyqt로 이미지를 계속 보여주고 지정한 타겟 픽셀에 사각형을 표시합니다. 
  그리고 하단에 날씨와 관련된 데이터들을 임의의 값으로 표시했습니다.
 """
-# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
 import glob
 import os
 import random

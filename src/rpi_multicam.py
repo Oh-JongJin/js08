@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
+
 import argparse
 import os
 import RPi.GPIO as gp
