@@ -17,6 +17,7 @@ TODO(Kyungwon): Display two images in a separate thread
 """
 
 import cv2
+import os
 import threading
 import numpy as np
 
@@ -182,4 +183,15 @@ def start_cameras():
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    start_cameras()
+    machine = os.uname().machine
+
+    if machine == "aarch64":
+        print("This system is identified as one of the NVIDIA embedded platform.")
+        start_cameras()
+    elif machine == "armv7l":
+        print("This system looks like Raspberry Pi.")
+        pass
+    else:
+        print("This system can not be identified.")
+        pass
+    
