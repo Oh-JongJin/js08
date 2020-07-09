@@ -3,15 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-
 # Ignore image data files
 *.png
 *.jpg
 
 # Ignore data files
 *.csv
-
-
 
 # C extensions
 *.so
