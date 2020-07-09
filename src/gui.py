@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
+
+"""JS-06 그래픽 사용자 인테피이스
+
+PyQt의 QLabel 위젯 안에 OpenCV의 영상을 보여준다. 소산계수 추정용 타켓의 위치를 사각형으로 표시한다.
+하단 영역에 센서에서 수집한 데이터 등을 표시한다.
+
+Required packages: python3-pyqt5, python3-opencv
+
+Typical usage example: 
+
+  python3 gui.py
+
 """
- JS06 UI 초안을 만들었습니다. CV와 Pyqt로 이미지를 계속 보여주고 지정한 타겟 픽셀에 사각형을 표시합니다. 
- 그리고 하단에 날씨와 관련된 데이터들을 임의의 값으로 표시했습니다.
-"""
-# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
+
 import glob
 import os
 import random
@@ -122,7 +131,7 @@ class pyqt_ipcam(QWidget):
         self.y = df["y"]
         self.d = df["distance"]       
 
-    #TODO(ChaeSeongMin): 실제 기상청 데이터를 InfluxDB에 저장시킨 뒤 연동해서 실제값을 보여줘야 합니다.    
+    #TODO(ChaeSeongMin): 센서에서 수집한 데이터를 InfluxDB에 저장한 후 값을 보여준다.    
     def bottom_value(self):        
         a = [0.1, 0.12, 0.21, 0.28, 0.91, 0.93, 0.33, 1.3, 2.0,
              3.7, 5.4, 5.0, 6.5, 1.7]        
