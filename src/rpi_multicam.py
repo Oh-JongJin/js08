@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-
-import RPi.GPIO as gp
+# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
 import argparse
 import os
+import RPi.GPIO as gp
 import time
 
 gp.setmode(gp.BOARD)

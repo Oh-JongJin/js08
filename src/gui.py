@@ -1,22 +1,26 @@
+#!/usr/bin/env python3
 """
  JS06 UI 초안을 만들었습니다. CV와 Pyqt로 이미지를 계속 보여주고 지정한 타겟 픽셀에 사각형을 표시합니다. 
  그리고 하단에 날씨와 관련된 데이터들을 임의의 값으로 표시했습니다.
 """
-
-#!/usr/bin/env python3
-
+# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
 import glob
 import os
+import random
 import sys
 import time
-import threading
-import pandas as pd
-import random
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QLabel, QApplication, QGridLayout
-from PyQt5.QtCore import Qt
-import rpi_image_get_rgb
+
 import cv2
+import pandas as pd
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QGridLayout
+from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QWidget
+import threading
+
+import rpi_image_get_rgb
 
 fps = 5
 scale = 3
@@ -117,7 +121,7 @@ class pyqt_ipcam(QWidget):
         self.x = df["x"]
         self.y = df["y"]
         self.d = df["distance"]       
-             
+
     #TODO(ChaeSeongMin): 실제 기상청 데이터를 InfluxDB에 저장시킨 뒤 연동해서 실제값을 보여줘야 합니다.    
     def bottom_value(self):        
         a = [0.1, 0.12, 0.21, 0.28, 0.91, 0.93, 0.33, 1.3, 2.0,

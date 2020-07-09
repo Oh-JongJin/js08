@@ -1,15 +1,22 @@
+#!/usr/bin/env python3
+# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
 import os
+import random
 import sys
 import time
-import threading
-import pandas as pd
-import RPi.GPIO as gp
-import random
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QLabel, QApplication, QGridLayout
-from PyQt5.QtCore import Qt
-import rpi_image_get_rgb
+
 import cv2
+import pandas as pd
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QGridLayout
+from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QWidget
+import RPi.GPIO as gp
+import threading
+
+import rpi_image_get_rgb
 
 SEL = 7
 EN1 = 11

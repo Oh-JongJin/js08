@@ -1,12 +1,11 @@
-"""
-To do IP camera output and image capture.
-"""
+#!/usr/bin/env python3
+# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
 import argparse
-import time
 import datetime
 import numpy
-import cv2
+import time
 
+import cv2
 
 # 프레임에 검은색 픽셀 사각형 그리기    
 def find_black_pixel(frame: numpy.ndarray, th: int, y_value: int):

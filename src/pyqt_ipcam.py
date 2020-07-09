@@ -1,12 +1,19 @@
+#!/usr/bin/env python3
 # 구글 파이썬 스타일 가이드를 적용해야된다.
 #QtWidgets은 PyQT5에서 모든 UI 객체를 포함하고 있는 클래스라서 무조껀 import
-import cv2
-import threading
-import sys
+# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
 import random
+import sys
+
+import cv2
+import pandas as pd
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QLabel, QApplication, QGridLayout
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QGridLayout
+from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QWidget
+import threading
 
 # UI를 정의하는 클래스
 # 키입력으로 바꿔서 적용하려면 클래스를 만들어서 해야함.

@@ -1,15 +1,18 @@
+#!/usr/bin/env python3
+# TODO(ChaeSeongMin): Apply Google Python Style Guide 3.13 Imports formatting
+import datetime
 import glob
 import os
+import time
+
+import cv2
 import pandas as pd
 from PIL import Image
-import cv2
-import time
-import datetime
 
 rpi_x = []
 rpi_y = []
 distance = []
-path = "images/2020070810/"
+path = "images/2020070810_50/"
 
 def read_pixel(camnumber : str):
     global rpi_x
@@ -21,7 +24,7 @@ def read_pixel(camnumber : str):
     distance = df["distance"]
     print("target settings.")
 
-def get_rgb(foldername: str, camnumber: str):
+def get_rgb(camnumber: str):
     read_pixel(camnumber)
     col = ["x", "y", "r", "g", "b", "distance"]
     resultdf = pd.DataFrame(rpi_x,index=None,columns=col)
@@ -47,7 +50,7 @@ def get_rgb(foldername: str, camnumber: str):
         print("error: ", e)
 
 def main():
-    get_rgb()
+    get_rgb('v2')
 
 if __name__ == "__main__": 
     main()
