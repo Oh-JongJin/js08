@@ -36,32 +36,46 @@ class pyqt_ipcam(QWidget):
         self.show()
         
     def run(self):
-        self.cap = cv2.VideoCapture(self.ADD)
-        width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-        height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT) 
-        print("video size", width,", ", height)
-        # self.label.resize(width, height)        
+        if self.camname == "img":
+            img = cv2.imread("test.png", cv2.IMREAD_COLOR)
+            height, width, ch = img.shape
+        else:            
+            self.cap = cv2.VideoCapture(self.ADD)
+            width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+            height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            print("video size", width,", ", height)
+            # self.label.resize(width, height)
 
-        # 초기 사이즈 값을 저장한다. 
+        # 초기 사이즈 값을 저장한다.
         prewidth = width
-        preheight = height       
-        
-        #마우스 트래킹 감지 False이면 클릭시 이동을 감지
-        self.setMouseTracking(False)       
+        preheight = height
 
         while running:
-            ret, img = self.cap.read()
-            # resize의 fx는 비율로 크기를 조절한다.
-            # 레이블의 크기에 따라 영상 크기도 같이 변한다.
-            # if prewidth <= self.label.width() or preheight <= self.label.height():
-            #     img = cv2.resize(img, dsize=(0, 0), fx=mowidth, fy=moheight, 
-            #                         interpolation=cv2.INTER_LINEAR)
-            if prewidth > self.label.width() or preheight > self.label.height():
-                img = cv2.resize(img, dsize=(0, 0), 
-                        fx=self.label.width()/width, 
-                        fy=self.label.height()/height, 
-                        interpolation=cv2.INTER_AREA)
+            #마우스 트래킹 감지 False이면 클릭시 이동을 감지
+            self.setMouseTracking(False)
             
+            # camname이 이미지가 아닐 때 cap으로 읽기
+            if not self.camname == "img":
+                ret, img = self.cap.read()
+                # TODO(성민): 윈도 크기를 작게 조정하는 기능이 작동하지 않습니다.            
+                # resize의 fx는 비율로 크기를 조절한다.
+                # 레이블의 크기에 따라 영상 크기도 같이 변한다.
+                # if prewidth <= self.label.width() or preheight <= self.label.height():
+                #     img = cv2.resize(img, dsize=(0, 0), fx=mowidth, fy=moheight, 
+                #                         interpolation=cv2.INTER_LINEAR)
+                # if prewidth > self.label.width() or preheight > self.label.height():
+                #     img = cv2.resize(img, dsize=(0, 0), 
+                #             fx=self.label.width()/width, 
+                #             fy=self.label.height()/height, 
+                #             interpolation=cv2.INTER_AREA)        
+
+            # camname이 이미지가 일 때 imread 메서드로 읽기        
+            else:
+                img = cv2.imread("test.png", cv2.IMREAD_COLOR)
+                img = cv2.resize(img, dsize=(self.label.width(), self.label.height()))
+                ret = 1
+
+            # 이미지를 읽어오면 실행
             if ret:
                 # 타겟들을 사각형으로 호출 get_target
                 if len(self.x) >= 0:
@@ -73,13 +87,6 @@ class pyqt_ipcam(QWidget):
                         text_loc = self.x[i] + 3, self.y[i] - 10
                         cv2.putText(img, self.dis[i] + " km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                                     0.5, (0, 0, 255))            
-                
-                # TODO(성민): 윈도 크기를 작게 조정하는 기능이 작동하지 않습니다.        
-                # elif prewidth > self.label.width() or preheight > self.label.height():
-                #     img = cv2.resize(img, dsize=(0, 0), 
-                #                      fx=self.label.width()/width, 
-                #                      fy=self.label.height()/height, 
-                #                      interpolation=cv2.INTER_AREA)
 
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
                 h, w, c = img.shape
@@ -89,6 +96,7 @@ class pyqt_ipcam(QWidget):
             else:                
                 print("Cannot read frame.")
                 break
+
         self.cap.release()
 
         # 타겟 정보 저장.
@@ -115,13 +123,6 @@ class pyqt_ipcam(QWidget):
             self.dis = result["dis"]
             print("target을 불러옵니다.")
     
-    # 영상 읽기를 중단한다.
-    def stop(self):
-        global running        
-        running = False
-        print("stoped..")
-        time.sleep(1)
-
     # 영상을 읽는다
     # Thread로 실행한다.
     def start(self):
@@ -132,6 +133,13 @@ class pyqt_ipcam(QWidget):
         # 임의 타겟들을 정함 get_target   
         self.get_target()                
         print("started..")
+    
+    # 영상 읽기를 중단한다.
+    def stop(self):
+        global running        
+        running = False
+        print("stoped..")
+        time.sleep(1)
 
     # 프로그램을 종료한다.
     def onExit(self):
@@ -159,6 +167,10 @@ class pyqt_ipcam(QWidget):
             self.stop()
             self.camname = "commax"
             self.ADD = "rtsp://admin:1234@192.168.100.251:554/1/1"
+            self.start()
+        elif e.key() == Qt.Key_3:
+            self.stop()
+            self.camname = "img"            
             self.start()
         
 
