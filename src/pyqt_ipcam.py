@@ -63,11 +63,11 @@ class pyqt_ipcam(QWidget):
                 # if prewidth <= self.label.width() or preheight <= self.label.height():
                 #     img = cv2.resize(img, dsize=(0, 0), fx=mowidth, fy=moheight, 
                 #                         interpolation=cv2.INTER_LINEAR)
-                # if prewidth > self.label.width() or preheight > self.label.height():
-                #     img = cv2.resize(img, dsize=(0, 0), 
-                #             fx=self.label.width()/width, 
-                #             fy=self.label.height()/height, 
-                #             interpolation=cv2.INTER_AREA)        
+                if prewidth > self.label.width() or preheight > self.label.height():
+                    img = cv2.resize(img, dsize=(0, 0), 
+                            fx=self.label.width()/width, 
+                            fy=self.label.height()/height, 
+                            interpolation=cv2.INTER_AREA)        
 
             # camname이 이미지가 일 때 imread 메서드로 읽기        
             else:
@@ -85,7 +85,7 @@ class pyqt_ipcam(QWidget):
                         cv2.rectangle(img, upper_left, lower_right, (0, 255, 0), 1)
                         pixel = str(i+1)
                         text_loc = self.x[i] + 3, self.y[i] - 10
-                        cv2.putText(img, self.dis[i] + " km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
+                        cv2.putText(img, str(self.dis[i]) + " km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                                     0.5, (0, 0, 255))            
 
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
@@ -102,10 +102,11 @@ class pyqt_ipcam(QWidget):
         # 타겟 정보 저장.
         if len(self.x) >= 0:
             col = ["x","y","dis"]
-            result = pd.DataFrame(self.x, index=None, columns=col)
+            result = pd.DataFrame(columns=col)
+            result["x"] = self.x
             result["y"] = self.y
             result["dis"] = self.dis
-            result.to_csv(f"target/{camname}.csv", mode="w", index=False)
+            result.to_csv(f"target/{self.camname}.csv", mode="w", index=False)
             print("target이 저장되었습니다.")
         
         print("Thread end.")
@@ -118,9 +119,9 @@ class pyqt_ipcam(QWidget):
         self.dis = []
         if os.path.isfile(f"target/{self.camname}.csv") == True:
             result = pd.read_csv(f"target/{self.camname}.csv")
-            self.x = result["x"]
-            self.y = result["y"]
-            self.dis = result["dis"]
+            self.x = result.x.tolist()
+            self.y = result.x.tolist()
+            self.dis = result.x.tolist()
             print("target을 불러옵니다.")
     
     # 영상을 읽는다
