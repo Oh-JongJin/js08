@@ -1,11 +1,25 @@
 #!/usr/bin/env python3
+"""Connect IP camera and specify target to get dissipation factor
+
+Hanwha and COMMAX IP cameras and images are imported and displayed in real time 
+The UI is implemented using the PyQT5 library, and input data can be changed 
+or targets can be designated and deleted with a keyboard and mouse
+
+Typical usage example:
+
+    python pyqt_ipcam.py
+
+Keyboard key:
+    
+    1 : Read Hanhwa camera 
+    2 : Read Commax camera
+    3 : Read Image
+
+Mouse event:
+    
+    Left click : Add target
+    Right click : Remove recently created target
 """
-
-required packages: python3-opencv python3-pyqt5.qwt
-
-"""
-# TODO(성민): 구글 파이썬 스타일 가이드를 적용해야한다.
-
 # QtWidgets은 PyQT5에서 모든 UI 객체를 포함하고 있는 클래스라서 무조건 import
 
 import os
