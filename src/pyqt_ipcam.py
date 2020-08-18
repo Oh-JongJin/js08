@@ -41,7 +41,8 @@ class pyqt_ipcam(QWidget):
         # 설정해줘야 한다.
         self.grid = QGridLayout()
         self.label = QLabel()        
-        self.setGeometry(50, 50, 1820, 980) 
+        # self.setGeometry(50, 50, 1820, 980) 
+        self.showFullScreen()
         self.grid.addWidget(self.label, 0, 0)
         self.grid.setContentsMargins(0, 0, 0, 0)     
         self.setLayout(self.grid)
@@ -91,21 +92,36 @@ class pyqt_ipcam(QWidget):
             if ret:
                 # 타겟들을 사각형으로 호출 get_target
                 if len(self.x) >= 0:
-                    for i in range(len(self.x)):
-                        upper_left = self.x[i] - 5, self.y[i] - 5
-                        lower_right = self.x[i] + 5, self.y[i] + 5
-                        cv2.rectangle(img, upper_left, lower_right, (0, 255, 0), 1)
-                        pixel = str(i+1)
-                        text_loc = self.x[i] + 3, self.y[i] - 10
-                        cv2.putText(img, str(self.dis[i]) + " km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
-                                    0.5, (0, 0, 255))            
+                    try:
+                        for i in range(len(self.x)):
+                            upper_left = self.x[i] - 5, self.y[i] - 5
+                            lower_right = self.x[i] + 5, self.y[i] + 5
+                            cv2.rectangle(img, upper_left, lower_right, (0, 255, 0), 1)
+                            pixel = str(i+1)
+                            text_loc = self.x[i] + 3, self.y[i] - 10
+                            cv2.putText(img, str(self.dis[i]) + " km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
+                                        0.5, (0, 0, 255))            
+                    except Exception as e:
+                        print("error : ", e)
+                        pass
+                else:
+                    pass
+                h, w, c=  img.shape
 
+                # 하단 컨텐츠 소스
+                # Dark background for the textual contents on the bottom
+                subimg = img.copy()
+                cv2.rectangle(subimg, (0, h - 100), (w, h), (0, 0, 0), -1)
+                img = cv2.addWeighted(img, 0.5, subimg, 0.5, 1)
+
+
+                # GUI에 작업한 이미지 출력
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
                 h, w, c = img.shape
                 qImg = QtGui.QImage(img.data, w, h, w * c, QtGui.QImage.Format_RGB888)
                 pixmap = QtGui.QPixmap.fromImage(qImg)
                 self.label.setPixmap(pixmap)
-                cv2.waitKey(0)
+                cv2.waitKey(0)                
             else:                
                 print("Cannot read frame.")
                 break
@@ -171,7 +187,8 @@ class pyqt_ipcam(QWidget):
         elif e.key() == Qt.Key_Q:
             self.onExit()
         elif e.key() == Qt.Key_F:
-            self.showMaximized()
+            # self.showMaximized()
+            self.showFullScreen()
         elif e.key() == Qt.Key_N:
             self.showNormal()
         elif e.key() == Qt.Key_1:
@@ -199,15 +216,19 @@ class pyqt_ipcam(QWidget):
                 self.x.append(e.x())
                 self.y.append(e.y())
                 print("타겟위치:", e.x(),", ", e.y())
+                time.sleep(1)
         elif e.button() == Qt.RightButton:
             if len(self.x) >= 1:
                 del self.x[-1]
                 del self.y[-1]
                 del self.dis[-1]            
                 print("타겟을 제거했습니다.")       
+                time.sleep(1)
             else:
                 pass
                 print("제거할 타겟이 없습니다.")
+    def mouseReleaseEvent(self, e):
+        return super().mouseReleaseEvent(e)
     
 def main():
     app = QApplication(sys.argv)
