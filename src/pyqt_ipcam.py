@@ -21,7 +21,6 @@ Mouse event:
     Right click : Remove recently created target
 """
 # QtWidgets은 PyQT5에서 모든 UI 객체를 포함하고 있는 클래스라서 무조건 import
-
 import os
 import sys
 import threading
@@ -31,7 +30,6 @@ import pandas as pd
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QGridLayout, QWidget, QLabel, QApplication, QLineEdit, QInputDialog
-
 
 # UI를 정의하는 클래스
 # 키입력으로 바꿔서 적용하려면 클래스를 만들어서 해야함.
@@ -107,6 +105,7 @@ class pyqt_ipcam(QWidget):
                 qImg = QtGui.QImage(img.data, w, h, w * c, QtGui.QImage.Format_RGB888)
                 pixmap = QtGui.QPixmap.fromImage(qImg)
                 self.label.setPixmap(pixmap)
+                cv2.waitKey(0)
             else:                
                 print("Cannot read frame.")
                 break
@@ -115,6 +114,8 @@ class pyqt_ipcam(QWidget):
 
         # 타겟 정보 저장.
         if len(self.x) >= 0:
+            for i in range(len(self.x)):
+                print(self.x[i], ", ", self.y[i], ", ", self.dis[i])
             col = ["x","y","dis"]
             result = pd.DataFrame(columns=col)
             result["x"] = self.x
@@ -134,8 +135,8 @@ class pyqt_ipcam(QWidget):
         if os.path.isfile(f"target/{self.camname}.csv") == True:
             result = pd.read_csv(f"target/{self.camname}.csv")
             self.x = result.x.tolist()
-            self.y = result.x.tolist()
-            self.dis = result.x.tolist()
+            self.y = result.y.tolist()
+            self.dis = result.dis.tolist()
             print("target을 불러옵니다.")
     
     # 영상을 읽는다
@@ -197,18 +198,23 @@ class pyqt_ipcam(QWidget):
                 self.dis.append(str(text))
                 self.x.append(e.x())
                 self.y.append(e.y())
-                print()
                 print("타겟위치:", e.x(),", ", e.y())
         elif e.button() == Qt.RightButton:
-            del self.x[-1]
-            del self.y[-1]
-            del self.dis[-1]            
-            print("타겟을 제거했습니다.")       
+            if len(self.x) >= 1:
+                del self.x[-1]
+                del self.y[-1]
+                del self.dis[-1]            
+                print("타겟을 제거했습니다.")       
+            else:
+                pass
+                print("제거할 타겟이 없습니다.")
     
 def main():
     app = QApplication(sys.argv)
     ex = pyqt_ipcam()
+    ex.show()
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
     main()
+    
