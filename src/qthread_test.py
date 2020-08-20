@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
 """Connect IP camera and specify target to get dissipation factor
+
 Hanwha and COMMAX IP cameras and images are imported and displayed in real time 
 The UI is implemented using the PyQT5 library, and input data can be changed 
 or targets can be designated and deleted with a keyboard and mouse
+
 Typical usage example:
+
     python pyqt_ipcam.py
+
 Keyboard key:
     
     1 : Read Hanhwa camera 
     2 : Read Commax camera
     3 : Read Image
+
 Mouse event:
     
     Left click : Add target
     Right click : Remove recently created target
 """
-# QtWidgets은 PyQT5에서 모든 UI 객체를 포함하고 있는 클래스라서 무조건 import
+# QtWidgets은 PyQt5에서 모든 UI 객체를 포함하고 있는 클래스라서 무조건 import
 import os
 import sys
 import threading
@@ -23,27 +28,36 @@ import time
 import cv2
 import pandas as pd
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QGridLayout, QWidget, QLabel, QApplication, QLineEdit, QInputDialog
 
-# UI를 정의하는 클래스
-# 키입력으로 바꿔서 적용하려면 클래스를 만들어서 해야함.
-class pyqt_ipcam(QWidget):
 
-    def __init__(self):
-        super().__init__()
-        # label의 크기에 따라 Widget의 크기를 변경한다. 위젯은 변하지만 영상의 크기는 고정되어 있기때문에 따로 
-        # 설정해줘야 한다.
-        self.grid = QGridLayout()
-        self.label = QLabel()        
-        # self.setGeometry(50, 50, 1820, 980) 
-        self.showFullScreen()
-        self.grid.addWidget(self.label, 0, 0)
-        self.grid.setContentsMargins(0, 0, 0, 0)     
-        self.setLayout(self.grid)
-        self.show()
-        
+class worker(QThread):
+
+    Videosig = pyqtSignal(QtGui.QImage)
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.camname = ""
+    # 저장된 타겟들을 불러온다 없으면 빈 리스트만 선언
+    def get_target(self):
+        self.x = []
+        self.y = []
+        self.dis = []
+        if os.path.isfile(f"target/{self.camname}.csv") == True:
+            result = pd.read_csv(f"target/{self.camname}.csv")
+            self.x = result.x.tolist()
+            self.y = result.y.tolist()
+            self.dis = result.dis.tolist()
+            print("target을 불러옵니다.")
+
+    
     def run(self):
+        global img
+        # 타겟들을 불러오기  
+        self.get_target()
+        print(self.camname)
+        print(self.ADD)
+        print(self.isRun)
         if self.camname == "img":
             img = cv2.imread("test.png", cv2.IMREAD_COLOR)
             height, width, ch = img.shape
@@ -58,29 +72,27 @@ class pyqt_ipcam(QWidget):
         prewidth = width
         preheight = height
 
-        while running:
-            #마우스 트래킹 감지 False이면 클릭시 이동을 감지
-            self.setMouseTracking(False)
-            
+        while self.isRun: 
             # camname이 이미지가 아닐 때 cap으로 읽기
-            if not self.camname == "img":
+            if self.cap.isOpened():
                 ret, img = self.cap.read()
-                # TODO(성민): 윈도 크기를 작게 조정하는 기능이 작동하지 않습니다.            
+                print("이미지를 읽어옵니다.", ret)
+                # TODO(성민): 윈도 크기를 작게 조정하는 기능이 작동하지 않습니다.             
                 # resize의 fx는 비율로 크기를 조절한다.
                 # 레이블의 크기에 따라 영상 크기도 같이 변한다.
                 # if prewidth <= self.label.width() or preheight <= self.label.height():
                 #     img = cv2.resize(img, dsize=(0, 0), fx=mowidth, fy=moheight, 
                 #                         interpolation=cv2.INTER_LINEAR)
-                if prewidth > self.label.width() or preheight > self.label.height():
-                    img = cv2.resize(img, dsize=(0, 0), 
-                            fx=self.label.width()/width, 
-                            fy=self.label.height()/height, 
-                            interpolation=cv2.INTER_AREA)        
+                # if prewidth > self.label.width() or preheight > self.label.height():
+                #     img = cv2.resize(img, dsize=(0, 0), 
+                #             fx=self.label.width()/width, 
+                #             fy=self.label.height()/height, 
+                #             interpolation=cv2.INTER_AREA)        
 
             # camname이 이미지가 일 때 imread 메서드로 읽기        
             else:
                 img = cv2.imread("test.png", cv2.IMREAD_COLOR)
-                img = cv2.resize(img, dsize=(self.label.width(), self.label.height()))
+                # img = cv2.resize(img, dsize=(self.label.width(), self.label.height()))
                 ret = 1
 
             # 이미지를 읽어오면 실행
@@ -108,22 +120,15 @@ class pyqt_ipcam(QWidget):
                 subimg = img.copy()
                 cv2.rectangle(subimg, (0, h - 100), (w, h), (0, 0, 0), -1)
                 img = cv2.addWeighted(img, 0.5, subimg, 0.5, 1)
-
-
-                # GUI에 작업한 이미지 출력
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
-                h, w, c = img.shape
-                qImg = QtGui.QImage(img.data, w, h, w * c, QtGui.QImage.Format_RGB888)
-                pixmap = QtGui.QPixmap.fromImage(qImg)
-                self.label.setPixmap(pixmap)
-                cv2.waitKey(0)                
+                self.qimg = QtGui.QImage(img.data, w, h, w * c, QtGui.QImage.Format_RGB888)
+                self.Videosig.emit(self.qimg)
             else:                
                 print("Cannot read frame.")
                 break
+            self.cap.release()
+            # 타겟 정보 저장.
 
-        self.cap.release()
-
-        # 타겟 정보 저장.
         if len(self.x) >= 0:
             for i in range(len(self.x)):
                 print(self.x[i], ", ", self.y[i], ", ", self.dis[i])
@@ -133,38 +138,50 @@ class pyqt_ipcam(QWidget):
             result["y"] = self.y
             result["dis"] = self.dis
             result.to_csv(f"target/{self.camname}.csv", mode="w", index=False)
-            print("target이 저장되었습니다.")
-        
+            print("target이 저장되었습니다.")        
         print("Thread end.")
 
 
-    # 임의 타겟들을 정함 get_target    
-    def get_target(self):
-        self.x = []
-        self.y = []
-        self.dis = []
-        if os.path.isfile(f"target/{self.camname}.csv") == True:
-            result = pd.read_csv(f"target/{self.camname}.csv")
-            self.x = result.x.tolist()
-            self.y = result.y.tolist()
-            self.dis = result.dis.tolist()
-            print("target을 불러옵니다.")
+        
+# UI를 정의하는 클래스
+# 키입력으로 바꿔서 적용하려면 클래스를 만들어서 해야함.
+class pyqt_ipcam(QWidget):
+
+    def __init__(self):
+        super().__init__()
+        # label의 크기에 따라 Widget의 크기를 변경한다. 위젯은 변하지만 영상의 크기는 고정되어 있기때문에 따로 
+        # 설정해줘야 한다.
+        self.grid = QGridLayout()
+        self.label = QLabel()       
+        # self.setGeometry(50, 50, 1820, 980) 
+        self.showFullScreen()
+        self.grid.addWidget(self.label, 0, 0)
+        self.grid.setContentsMargins(0, 0, 0, 0)     
+        self.setLayout(self.grid)
+        self.th = worker(self)
+        self.th.Videosig.connect(self.read_start)        
+        self.show()
+        #마우스 트래킹 감지 False이면 클릭시 이동을 감지
+        self.setMouseTracking(False)        
     
+    @pyqtSlot(QtGui.QImage)
+    def read_start(self, qimg):
+        pixmap = QtGui.QPixmap.fromImage(qimg)
+        self.label.setPixmap(pixmap)
+
     # 영상을 읽는다
     # Thread로 실행한다.
     def start(self):
-        global running
-        running = True
-        th = threading.Thread(target=self.run)
-        th.start()
-        # 임의 타겟들을 정함 get_target   
-        self.get_target()                
+        self.th.isRun = True
+        # th = threading.Thread(target=self.run)
+        # th.start()
+        self.th.start() 
         print("started..")
     
     # 영상 읽기를 중단한다.
     def stop(self):
-        global running        
-        running = False
+        self.th.isRun = False
+        self.th.wait()
         print("stoped..")
         time.sleep(1)
 
@@ -188,17 +205,17 @@ class pyqt_ipcam(QWidget):
             self.showNormal()
         elif e.key() == Qt.Key_1:
             self.stop()
-            self.camname = "hanhwa"
-            self.ADD = "rtsp://nalgaem:zf!w58DN4jCu@192.168.100.115/profile2/media.smp"
+            self.th.camname = "hanhwa"
+            self.th.ADD = "rtsp://nalgaem:zf!w58DN4jCu@192.168.100.115/profile2/media.smp"
             self.start()
         elif e.key() == Qt.Key_2:
             self.stop()
-            self.camname = "commax"
-            self.ADD = "rtsp://admin:1234@192.168.100.251:554/1/1"
+            self.th.camname = "commax"
+            self.th.ADD = "rtsp://admin:1234@192.168.100.251:554/1/1"
             self.start()
         elif e.key() == Qt.Key_3:
             self.stop()
-            self.camname = "img"            
+            self.th.camname = "img"            
             self.start()
         
 
