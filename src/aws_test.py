@@ -30,12 +30,6 @@ def serial_test():
             res = ser.readline()
             print(f"\nWind direction: {int(binascii.hexlify(res[5:7]), 16)}°")  # Wind direction
 
-            # print("Speed section: ", hex(res[7]), hex(res[8]), hex(res[9]), hex(res[10]))           # Wind speed section
-            # print("Temp section: ", hex(res[11]), hex(res[12]), hex(res[13]), hex(res[14]))          # Temp section
-            # print("Humid section: ", hex(res[15]), hex(res[16]), hex(res[17]), hex(res[18]))          # Humid section
-            # print("Atmospheric Pressure: ", hex(res[19]), hex(res[20]), hex(res[21]), hex(res[22]))    # Press section
-            # print("PM2.5 : ", hex(res[53]), hex(res[54]), hex(res[55]), hex(res[56]))                   # PM2.5 section
-
             wind_speed_hex = f"{hex(res[8]) + ' ' + hex(res[7]) + ' ' + hex(res[10]) + ' ' + hex(res[9])}"
             temp_hex = f"{hex(res[12]) + ' ' + hex(res[11]) + ' ' + hex(res[14]) + ' ' + hex(res[13])}"
             humid_hex = f"{hex(res[16]) + ' ' + hex(res[15]) + ' ' + hex(res[18]) + ' ' + hex(res[17])}"
@@ -47,10 +41,7 @@ def serial_test():
             humid_non = humid_hex.replace("0x", '')
             pressure_non = pressure_hex.replace("0x", '')
             pm25_non = pm25_hex.replace("0x", '')
-            # print(f"\nWind Speed: {wind_speed_non}\nTemp: {temp_non}\nHumid: {humid_non}\nPressure: {pressure_non}"
-            #       f"\nPM2.5: {pm25_non}")
 
-            # data = pressure_non
             if wind_speed_non == '0 0 0 0':
                 wind_speed = (1,)
                 lst_ws = list(wind_speed)
