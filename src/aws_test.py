@@ -2,9 +2,9 @@
 #
 # Analyze and output weather sensor values through Serial communications.
 #
-# required packages: python3-serial, python3-binascii, python3-struct
+# required packages: python3-serial, python3-binascii, python3-struct, python3-influxdb
 #
-# TODO(Jongjin): Exception processing necessary.
+# TODO(Jongjin): Exception Error processing necessary.
 #
 
 import serial
@@ -40,15 +40,20 @@ def serial_test():
             # print("PM2.5 : ", hex(res[53]), hex(res[54]), hex(res[55]), hex(res[56]))                   # PM2.5 section
 
             wind_speed_hex = f"{hex(res[8]) + ' ' + hex(res[7]) + ' ' + hex(res[10]) + ' ' + hex(res[9])}".replace(
-                "0x0", "0x00")
+                "0x0", "0x00").replace("0x1 ", "0xA0 ").replace("0x2 ", "0xB0 ").replace("0x3 ", "0xC0 ").replace(
+                "0x4 ", "0xD0 ").replace("0x5 ", "0xE0 ").replace("0xc ", "0xc0 ").replace(" 0x0'", " 0x00'")
             temp_hex = f"{hex(res[12]) + ' ' + hex(res[11]) + ' ' + hex(res[14]) + ' ' + hex(res[13])}".replace(
-                "0x0 ", "0x00 ")
+                "0x0 ", "0x00 ").replace("0x1 ", "0xA0 ").replace("0x2 ", "0xB0 ").replace("0x3 ", "0xC0 ").replace(
+                "0x4 ", "0xD0 ").replace("0x5 ", "0xE0 ").replace("0xc ", "0xc0 ").replace(" 0x0'", " 0x00'")
             humid_hex = f"{hex(res[16]) + ' ' + hex(res[15]) + ' ' + hex(res[18]) + ' ' + hex(res[17])}".replace(
-                "0x0 ", "0x00 ")
+                "0x0 ", "0x00 ").replace("0x1 ", "0xA0 ").replace("0x2 ", "0xB0 ").replace("0x3 ", "0xC0 ").replace(
+                "0x4 ", "0xD0 ").replace("0x5 ", "0xE0 ").replace("0xc ", "0xc0 ").replace(" 0x0'", " 0x00'")
             pressure_hex = f"{hex(res[20]) + ' ' + hex(res[19]) + ' ' + hex(res[22]) + ' ' + hex(res[21])}".replace(
-                "0x0 ", "0x00 ")
+                "0x0 ", "0x00 ").replace("0x1 ", "0xA0 ").replace("0x2 ", "0xB0 ").replace("0x3 ", "0xC0 ").replace(
+                "0x4 ", "0xD0 ").replace("0x5 ", "0xE0 ").replace("0xc ", "0xc0 ").replace(" 0x0'", " 0x00'")
             pm25_hex = f"{hex(res[54]) + ' ' + hex(res[53]) + ' ' + hex(res[56]) + ' ' + hex(res[55])}".replace(
-                "0x0 ", "0x00 ")
+                "0x0 ", "0x00 ").replace("0x1 ", "0xA0 ").replace("0x2 ", "0xB0 ").replace("0x3 ", "0xC0 ").replace(
+                "0x4 ", "0xD0 ").replace("0x5 ", "0xE0 ").replace("0xc ", "0xc0 ").replace("0x00 0x00 0x00 0x0", "0x00 0x00 0x00 0x00")
 
             wind_speed_non = wind_speed_hex.replace("0x", '')
             temp_non = temp_hex.replace("0x", '')
@@ -62,7 +67,7 @@ def serial_test():
             if wind_speed_non == '00 00 00 00':
                 wind_speed = (1,)
                 lst_ws = list(wind_speed)
-                lst_ws[0] = 0.01
+                lst_ws[0] = 0.00
                 wind_speed = tuple(lst_ws)
             else:
                 wind_speed = struct.unpack('<f', binascii.unhexlify(wind_speed_non.replace(' ', '')))
@@ -75,8 +80,11 @@ def serial_test():
                   f"\nAtmospheric Pressure: {round(pressure[0], 2)} hPa \nHumidity: {round(humid[0], 2)} %"
                   f"\nPM2.5: {round(pm25[0], 2)} ug/m3")
 
+            # Access Virtual-Machine Ubuntu IP and PORT.
             client = InfluxDBClient("192.168.85.129", 8086)
+            # Use Database named 'AWS'
             client.switch_database("AWS")
+            # Inserts Database's tags and field values.
             points = [
                 {"measurement": "test1",
                  "tags": {"name": "OJJ"},
@@ -87,9 +95,9 @@ def serial_test():
                  "time": time.time_ns()}
             ]
             client.write_points(points=points, protocol="json")
+            print("- Save complete at InfluxDB")
 
             time.sleep(3)
-        ser.close()
 
     except Exception as e:
         print("Error code: ", e)
