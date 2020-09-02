@@ -47,6 +47,7 @@
     <addaction name="actionImage_File"/>
     <addaction name="actionCamera_1"/>
     <addaction name="actionCamera_2"/>
+    <addaction name="actionCamera_3"/>
     <addaction name="actionExit"/>
    </widget>
    <addaction name="menuSource"/>
@@ -65,7 +66,7 @@
     <string>Camera 1</string>
    </property>
    <property name="statusTip">
-    <string>Get video from camera 1</string>
+    <string>Get video from webcam</string>
    </property>
   </action>
   <action name="actionCamera_2">
@@ -73,7 +74,7 @@
     <string>Camera 2</string>
    </property>
    <property name="statusTip">
-    <string>Get video from camera 2</string>
+    <string>Get video from Hanwha PNM-9030V</string>
    </property>
   </action>
   <action name="actionExit">
@@ -85,6 +86,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionCamera_3">
+   <property name="text">
+    <string>Camera 3</string>
+   </property>
+   <property name="statusTip">
+    <string>Get video from Hanwha XNO-8080R</string>
    </property>
   </action>
  </widget>

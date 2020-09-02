@@ -42,9 +42,12 @@ class Ui_MainWindow(object):
         self.actionCamera_2.setObjectName("actionCamera_2")
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
+        self.actionCamera_3 = QtWidgets.QAction(MainWindow)
+        self.actionCamera_3.setObjectName("actionCamera_3")
         self.menuSource.addAction(self.actionImage_File)
         self.menuSource.addAction(self.actionCamera_1)
         self.menuSource.addAction(self.actionCamera_2)
+        self.menuSource.addAction(self.actionCamera_3)
         self.menuSource.addAction(self.actionExit)
         self.menubar.addAction(self.menuSource.menuAction())
 
@@ -59,12 +62,14 @@ class Ui_MainWindow(object):
         self.actionImage_File.setText(_translate("MainWindow", "Image File"))
         self.actionImage_File.setStatusTip(_translate("MainWindow", "Open an image file"))
         self.actionCamera_1.setText(_translate("MainWindow", "Camera 1"))
-        self.actionCamera_1.setStatusTip(_translate("MainWindow", "Get video from camera 1"))
+        self.actionCamera_1.setStatusTip(_translate("MainWindow", "Get video from webcam"))
         self.actionCamera_2.setText(_translate("MainWindow", "Camera 2"))
-        self.actionCamera_2.setStatusTip(_translate("MainWindow", "Get video from camera 2"))
+        self.actionCamera_2.setStatusTip(_translate("MainWindow", "Get video from Hanwha PNM-9030V"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
         self.actionExit.setStatusTip(_translate("MainWindow", "Exit JS-06"))
         self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+W"))
+        self.actionCamera_3.setText(_translate("MainWindow", "Camera 3"))
+        self.actionCamera_3.setStatusTip(_translate("MainWindow", "Get video from Hanwha XNO-8080R"))
 
 
 if __name__ == "__main__":
