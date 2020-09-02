@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>JS-06</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
@@ -23,7 +23,7 @@
       <item>
        <widget class="QLabel" name="image_label">
         <property name="text">
-         <string>TextLabel</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -40,9 +40,71 @@
      <height>21</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuSource">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionImage_File"/>
+    <addaction name="actionCamera_1"/>
+    <addaction name="actionCamera_2"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <addaction name="menuSource"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionImage_File">
+   <property name="text">
+    <string>Image File</string>
+   </property>
+   <property name="statusTip">
+    <string>Open an image file</string>
+   </property>
+  </action>
+  <action name="actionCamera_1">
+   <property name="text">
+    <string>Camera 1</string>
+   </property>
+   <property name="statusTip">
+    <string>Get video from camera 1</string>
+   </property>
+  </action>
+  <action name="actionCamera_2">
+   <property name="text">
+    <string>Camera 2</string>
+   </property>
+   <property name="statusTip">
+    <string>Get video from camera 2</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+   <property name="statusTip">
+    <string>Exit JS-06</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
+  </action>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>actionExit</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>187</x>
+     <y>228</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
