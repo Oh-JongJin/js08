@@ -18,15 +18,16 @@ class Js06MainWindow(Ui_MainWindow):
     def setupUi(self, MainWindow):
         super().setupUi(MainWindow)
 
+        self.actionImage_File.triggered.connect(self.open_img_file_clicked)
 
-
-    def load_img_file(self):
-        """Load the sample image"""
-        cv_img = cv2.imread('sample-5250731_1920.png')
-        # convert the image to Qt format
-        qt_img = self.convert_cv_qt(cv_img)
-        # display it
-        self.image_label.setPixmap(qt_img)
+    def open_img_file_clicked(self):
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', './')
+        # if fname is not None: 
+        #     cv_img = cv2.imread(fname)
+        #     # convert the image to Qt format
+        #     qt_img = self.convert_cv_qt(cv_img)
+        #     # display it
+        #     self.image_label.setPixmap(qt_img)
 
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
