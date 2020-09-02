@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 #
 # Output the temperature and humidity sensor using SHT 10.
+# This code works on RPi. If you want to execute this script on Jetson,
+# change the import line:
+# import Jetson.GPIO as GPIO
 #
 # This code is based on the following references:
 # https://pypi.org/project/Pi-Sht1x/1.0.8/
@@ -8,6 +11,7 @@
 # required packages: python3-pi-sht1x
 #
 # TODO: For repeated output of sensor values, apply 'while' loop.
+# TODO: Check the module, pi_sht1x for Jetson
 #
 
 from time import sleep
@@ -20,7 +24,7 @@ def main(data_pin: int, clock_pin: int):
     
     :param data_pin: SHT 10 sensor data pin number.
     :param clock_pin: SHT 10 sensor clock pin number.
-    :return:
+    
     """
     with SHT1x(data_pin, clock_pin, gpio_mode=GPIO.BCM) as sensor:
         for i in range(5):
