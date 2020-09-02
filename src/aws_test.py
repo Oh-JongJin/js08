@@ -1,10 +1,10 @@
 #!/usr/bin/env/python3
 #
-# Analyze and output weather sensor values through Serial communications.
+# Saved in database and output weather sensor values through Serial communications.
 #
 # required packages: python3-serial, python3-binascii, python3-struct, python3-influxdb
 #
-# TODO(Jongjin): Exception Error processing necessary.
+# TODO(Jongjin): Weather Sensor value parsing Error processing necessary.
 #
 
 import serial
@@ -12,7 +12,6 @@ import time
 import binascii
 import struct
 import sys
-
 from influxdb import InfluxDBClient
 
 
@@ -20,10 +19,15 @@ def serial_test():
     """The connected weather sensor outputs six values.
 
     Wind direction, Wind Speed, Temperature, Humidity, AirPressure, Pm2.5
+
+    Wind direction is located in fifth and sixth places and is expressed in hexadecimal numbers.
+    The rest of them are all 32 bit float date in this protocol comply to IEEE754 Standard.
     """
-    global wind_speed, i
+    global i
     try:
+        # Send requests for Weather sensors
         write_aws = b'\x01\x03\x00\x00\x00\x29\x84\x14'
+        # BAUD=9600, DATABIT=8, PARITY=EVEN, STOPBIT=1, TIMEOUT=1, PORT=COM9
         ser = serial.Serial(port="COM9", baudrate=9600, parity=serial.PARITY_EVEN,
                             stopbits=serial.STOPBITS_ONE, bytesize=serial.EIGHTBITS,
                             timeout=1)
@@ -31,17 +35,12 @@ def serial_test():
             ser.write(write_aws)
             res = ser.readline()
             wind_direction = int(binascii.hexlify(res[5:7]), 16)
-            print(f"\nWind direction: {wind_direction}°")  # Wind direction
+            print(f"\nWind direction: {wind_direction}°")
 
-            # print("Speed section: ", hex(res[7]), hex(res[8]), hex(res[9]), hex(res[10]))           # Wind speed section
-            # print("Temp section: ", hex(res[11]), hex(res[12]), hex(res[13]), hex(res[14]))          # Temp section
-            # print("Humid section: ", hex(res[15]), hex(res[16]), hex(res[17]), hex(res[18]))          # Humid section
-            # print("Atmospheric Pressure: ", hex(res[19]), hex(res[20]), hex(res[21]), hex(res[22]))    # Press section
-            # print("PM2.5 : ", hex(res[53]), hex(res[54]), hex(res[55]), hex(res[56]))                   # PM2.5 section
-
+            # Weather sensor value parsing, replace processing
             wind_speed_hex = f"{hex(res[8]) + ' ' + hex(res[7]) + ' ' + hex(res[10]) + ' ' + hex(res[9])}".replace(
-                "0x0", "0x00").replace("0x1 ", "0xA0 ").replace("0x2 ", "0xB0 ").replace("0x3 ", "0xC0 ").replace(
-                "0x4 ", "0xD0 ").replace("0x5 ", "0xE0 ").replace("0xc ", "0xc0 ").replace(" 0x0'", " 0x00'")
+                "0x0 ", "0x00 ").replace("0x1 ", "0xA0 ").replace("0x2 ", "0xB0 ").replace("0x3 ", "0xC0 ").replace(
+                "0x4 ", "0xD0 ").replace("0x5 ", "0xE0 ").replace("0xc ", "0xc0 ").replace("0x00 0x00 0x00 0x0", "0x00 0x00 0x00 0x00")
             temp_hex = f"{hex(res[12]) + ' ' + hex(res[11]) + ' ' + hex(res[14]) + ' ' + hex(res[13])}".replace(
                 "0x0 ", "0x00 ").replace("0x1 ", "0xA0 ").replace("0x2 ", "0xB0 ").replace("0x3 ", "0xC0 ").replace(
                 "0x4 ", "0xD0 ").replace("0x5 ", "0xE0 ").replace("0xc ", "0xc0 ").replace(" 0x0'", " 0x00'")
@@ -55,15 +54,13 @@ def serial_test():
                 "0x0 ", "0x00 ").replace("0x1 ", "0xA0 ").replace("0x2 ", "0xB0 ").replace("0x3 ", "0xC0 ").replace(
                 "0x4 ", "0xD0 ").replace("0x5 ", "0xE0 ").replace("0xc ", "0xc0 ").replace("0x00 0x00 0x00 0x0", "0x00 0x00 0x00 0x00")
 
+            # Remove 0x of hexadecimal numbers.
             wind_speed_non = wind_speed_hex.replace("0x", '')
             temp_non = temp_hex.replace("0x", '')
             humid_non = humid_hex.replace("0x", '')
             pressure_non = pressure_hex.replace("0x", '')
             pm25_non = pm25_hex.replace("0x", '')
-            # print(f"\nWind Speed: {wind_speed_non}\nTemp: {temp_non}\nHumid: {humid_non}\nPressure: {pressure_non}"
-            #       f"\nPM2.5: {pm25_non}")
 
-            # data = pressure_non
             if wind_speed_non == '00 00 00 00':
                 wind_speed = (1,)
                 lst_ws = list(wind_speed)
@@ -72,6 +69,7 @@ def serial_test():
             else:
                 wind_speed = struct.unpack('<f', binascii.unhexlify(wind_speed_non.replace(' ', '')))
 
+            # IEEE754 Format Conversion.
             temp = struct.unpack('<f', binascii.unhexlify(temp_non.replace(' ', '')))
             humid = struct.unpack('<f', binascii.unhexlify(humid_non.replace(' ', '')))
             pressure = struct.unpack('<f', binascii.unhexlify(pressure_non.replace(' ', '')))
@@ -101,6 +99,7 @@ def serial_test():
 
     except Exception as e:
         print("Error code: ", e)
+        # if error occurs, variable i is increase.
         i += 1
         print(f"Error count -> {i}")
         pass
