@@ -21,13 +21,13 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionImage_File.triggered.connect(self.open_img_file_clicked)
 
     def open_img_file_clicked(self):
-        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', './')
-        # if fname is not None: 
-        #     cv_img = cv2.imread(fname)
-        #     # convert the image to Qt format
-        #     qt_img = self.convert_cv_qt(cv_img)
-        #     # display it
-        #     self.image_label.setPixmap(qt_img)
+        fname = QtWidgets.QFileDialog.getOpenFileName()[0]
+        if fname != '':
+            cv_img = cv2.imread(fname)
+            # convert the image to Qt format
+            qt_img = self.convert_cv_qt(cv_img)
+            # display it
+            self.image_label.setPixmap(qt_img)
 
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
@@ -35,7 +35,8 @@ class Js06MainWindow(Ui_MainWindow):
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        width, height = (w // 4, h // 4) if w > 1920 else (w, h)
+        # width, height = (w // 4, h // 4) if w > 1920 else (w, h)
+        width, height = w // 4, h // 4
         p = convert_to_Qt_format.scaled(width, height, QtCore.Qt.KeepAspectRatio)
         return QtGui.QPixmap.fromImage(p)
 
