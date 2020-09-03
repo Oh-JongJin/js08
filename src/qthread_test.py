@@ -227,7 +227,7 @@ class pyqt_ipcam(QWidget):
                 self.dis.append(str(text))
                 self.x.append(e.x())
                 self.y.append(e.y())
-                print("영상 목표 위치:", e.x(),", ", e.y())
+                print("영상 목표 위치:", e.x(), ", ", e.y())
                 time.sleep(1)
         elif e.button() == Qt.RightButton:
             if len(self.x) >= 1:
