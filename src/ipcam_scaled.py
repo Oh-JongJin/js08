@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""Window resize test script
+Develop real-time responsive UI that changes according to the user's platform.
+You can change the window size through PyQt's GridLayout.
+When the window is resized, we resize the widgets in it.
+"""
+
 """ 창 크기 변경 테스트 스크립트
 사용자의 플랫폼에 따라 변하는 실시간 반응형 UI를 개발한다.
 PyQt의 GridLayout을 통해 윈도우의 크기를 변경할 수 있다. 
