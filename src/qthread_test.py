@@ -132,7 +132,7 @@ class worker(QThread):
         if len(self.x) >= 0:
             for i in range(len(self.x)):
                 print(self.x[i], ", ", self.y[i], ", ", self.dis[i])
-            col = ["x","y","dis"]
+            col = ["x", "y", "dis"]
             result = pd.DataFrame(columns=col)
             result["x"] = self.x
             result["y"] = self.y
