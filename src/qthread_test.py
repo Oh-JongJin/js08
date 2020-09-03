@@ -65,7 +65,7 @@ class worker(QThread):
             self.cap = cv2.VideoCapture(self.ADD)
             width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-            print("video size", width,", ", height)
+            print(f"video size {width}, {height}")
             # self.label.resize(width, height)
 
         # 초기 사이즈 값을 저장한다.
