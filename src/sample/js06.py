@@ -32,9 +32,10 @@ class VideoThread(QtCore.QThread):
     def run(self):
         cap = cv2.VideoCapture(self.src)
         
-        while True:
+        while self._run_flag:
             ret, cv_img = cap.read()
-            if ret:
+            if ret :
+                print(type(cv_img))
                 self.update_pixmap_signal.emit(cv_img)
         # shut down capture system
         cap.release()
@@ -91,7 +92,7 @@ class Js06MainWindow(Ui_MainWindow):
     def open_cam2_clicked(self):
         """Get video from Hanwha PNM-9030V"""
         if self.video_thread is not None:
-            self.video_thread.stop()
+            self.video_thread.stop()            
 
         # create the video capture thread
         self.video_thread = VideoThread('rtsp://admin:sijung5520@192.168.100.121/profile2/media.smp')
@@ -112,7 +113,8 @@ class Js06MainWindow(Ui_MainWindow):
         # start the thread
         self.video_thread.start()
 
-    @QtCore.pyqtSlot(np.ndarray)
+    # https://stackoverflow.com/questions/62272988/typeerror-connect-failed-between-videothread-change-pixmap-signalnumpy-ndarr
+    # @QtCore.pyqtSlot(np.ndarray)
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""
         qt_img = self.convert_cv_qt(cv_img)
@@ -125,8 +127,8 @@ class Js06MainWindow(Ui_MainWindow):
         bytes_per_line = ch * w
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
         # width, height = (w // 4, h // 4) if w > 1920 else (w, h)
-        display_width, display_height = w // 4, h // 4
-        p = convert_to_Qt_format.scaled(display_width, display_height, QtCore.Qt.KeepAspectRatio)
+        # display_width, display_height = w // 4, h // 4
+        p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
         return QtGui.QPixmap.fromImage(p)
 
 
