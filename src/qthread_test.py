@@ -79,7 +79,7 @@ class worker(QThread):
                 print("이미지를 읽어옵니다.", ret)
                 # TODO(성민): 윈도 크기를 작게 조정하는 기능이 작동하지 않습니다.             
                 # resize의 fx는 비율로 크기를 조절한다.
-                # 레이블의 크기에 따라 영상 크기도 같이 변한다.
+                # 의 크기에 따라 영상 크기도 같이 변한다.
                 # if prewidth <= self.label.width() or preheight <= self.label.height():
                 #     img = cv2.resize(img, dsize=(0, 0), fx=mowidth, fy=moheight, 
                 #                         interpolation=cv2.INTER_LINEAR)
@@ -149,7 +149,7 @@ class pyqt_ipcam(QWidget):
 
     def __init__(self):
         super().__init__()
-        # label의 크기에 따라 Widget의 크기를 변경한다. 위젯은 변하지만 영상의 크기는 고정되어 있기때문에 따로 
+        # 라벨의 크기에 따라 Widget의 크기를 변경한다. 위젯은 변하지만 영상의 크기는 고정되어 있기때문에 따로 
         # 설정해줘야 한다.
         self.grid = QGridLayout()
         self.label = QLabel()       
