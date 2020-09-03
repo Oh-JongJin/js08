@@ -35,7 +35,6 @@ class VideoThread(QtCore.QThread):
         while self._run_flag:
             ret, cv_img = cap.read()
             if ret :
-                print(type(cv_img))
                 self.update_pixmap_signal.emit(cv_img)
         # shut down capture system
         cap.release()
