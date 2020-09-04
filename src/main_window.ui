@@ -6,15 +6,36 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>375</width>
-    <height>458</height>
+    <width>480</width>
+    <height>375</height>
    </rect>
+  </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
   </property>
   <property name="windowTitle">
    <string>JS-06</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="mouseTracking">
+    <bool>false</bool>
+   </property>
    <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <property name="spacing">
+     <number>0</number>
+    </property>
     <item row="0" column="0">
      <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
       <property name="sizeConstraint">
@@ -27,6 +48,9 @@
           <width>1</width>
           <height>1</height>
          </size>
+        </property>
+        <property name="mouseTracking">
+         <bool>false</bool>
         </property>
         <property name="text">
          <string/>
@@ -42,7 +66,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>375</width>
+     <width>480</width>
      <height>21</height>
     </rect>
    </property>
