@@ -87,7 +87,7 @@ class pyqt_ipcam(QWidget):
                                     # 모델에 넣을 이미지 추출
                                     crop_img = img[self.y[i] - 112 : self.y[i] + 112 , self.x[i] - 112 : self.x[i] + 112]
                                     # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
-                                    b, g, r = cv2.split(cropimg)
+                                    b, g, r = cv2.split(crop_img)
                                     # 영상 목표의 각 폴더에 크롭한 이미지 저장
                                     cv2.imwrite(f"target/target{i+1}/{epoch}.png", cv2.merge([r, g, b]))
                             except OSError as e:
@@ -255,8 +255,7 @@ class pyqt_ipcam(QWidget):
     def mouseReleaseEvent(self, e):
         return super().mouseReleaseEvent(e)
     
-def main():
-    a = "arar"    
+def main():  
     app = QApplication(sys.argv)
     ex = pyqt_ipcam()
     ex.show()
