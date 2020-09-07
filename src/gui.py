@@ -102,6 +102,7 @@ class pyqt_ipcam(QWidget):
             qImg = QtGui.QImage(img.data, w, h, w * c, QtGui.QImage.Format_RGB888)
             pixmap = QtGui.QPixmap.fromImage(qImg)
             self.label1.setPixmap(pixmap)
+            
         print("End thread")
         
     # Start video stream
