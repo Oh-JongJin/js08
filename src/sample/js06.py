@@ -43,7 +43,7 @@ class VideoThread(QtCore.QThread):
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
         self._run_flag = False
-        self.wait()
+        self.img_widthait()
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
@@ -132,15 +132,15 @@ class Js06MainWindow(Ui_MainWindow):
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        self.h, self.w, ch = rgb_image.shape
+        self.img_height, self.img_width, ch = rgb_image.shape
         
-        self.l_w = self.image_label.width()
-        self.l_h = self.image_label.height()
+        self.label_width = self.image_label.width()
+        self.label_height = self.image_label.height()
 
         if len(self.x):
             for i in range(len(self.x)):
-                t_x = int((self.x[i] / (self.l_w - (self.l_w - self.w))) * self.w)
-                t_y = int((self.y[i] / (self.l_h - (self.l_h - self.h))) * self.h)
+                t_x = int((self.x[i] / (self.label_width - (self.label_width - self.img_width))) * self.img_width)
+                t_y = int((self.y[i] / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
                 upper_left = t_x - 10, t_y - 10
                 lower_right = t_x + 10, t_y + 10
                 cv2.rectangle(rgb_image, upper_left, lower_right, (0, 255, 0), 1)
@@ -150,8 +150,8 @@ class Js06MainWindow(Ui_MainWindow):
                             1, (255, 0, 0), 1)        
 
         
-        bytes_per_line = ch * self.w
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.w, self.h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        bytes_per_line = ch * self.img_width
+        convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.img_width, self.img_height, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
         
         return QtGui.QPixmap.fromImage(p)
@@ -161,7 +161,7 @@ class Js06MainWindow(Ui_MainWindow):
     def getpos(self, e):
         if self.video_thread is not None :
             # 마우스 왼쪽 버튼을 누르면 영상 목표를 추가
-            if e.buttons() == QtCore.Qt.LeftButton and self.l_w <= self.w and self.l_h <= self.h:
+            if e.buttons() == QtCore.Qt.LeftButton:
                 text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '타겟거리입력', '거리(km)')
 
                 if ok:
