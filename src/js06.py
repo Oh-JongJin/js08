@@ -9,46 +9,28 @@
 # *
 # Reference: https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1
 
+
+import cv2
 import os
 import sys
 import time
-import cv2
+
 import numpy as np
 import pandas as pd
+
 from PyQt5 import QtWidgets, QtGui, QtCore
+
+from video_thread import VideoThread
+from aws_thread import AwsThread
 
 from main_window import Ui_MainWindow
 
-
-class VideoThread(QtCore.QThread):
-    update_pixmap_signal = QtCore.pyqtSignal(np.ndarray)
-
-    def __init__(self, src: str = 0):
-        super().__init__()
-        self._run_flag = True
-        self.src = src
-        self.img_width = 0
-        self.img_height = 0
-
-    def run(self):
-        cap = cv2.VideoCapture(self.src)
-        
-        while self._run_flag:
-            ret, cv_img = cap.read()
-            if ret :
-                self.update_pixmap_signal.emit(cv_img)
-        # shut down capture system
-        cap.release()
-
-    def stop(self):
-        """Sets run flag to False and waits for thread to finish"""
-        self._run_flag = False
-        self.img_widthait()
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.video_thread = None
+        self.aws_thread = AwsThread()
 
     def setupUi(self, MainWindow:QtWidgets.QMainWindow):
         super().setupUi(MainWindow)
@@ -58,6 +40,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionCamera_2.triggered.connect(self.open_cam2_clicked)
         self.actionCamera_3.triggered.connect(self.open_cam3_clicked)
         self.image_label.mousePressEvent = self.getpos  
+        self.actionON.triggered.connect(self.aws_clicked)
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
@@ -149,7 +132,6 @@ class Js06MainWindow(Ui_MainWindow):
                 cv2.putText(rgb_image, str(self.dis[i]) + " km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                             1, (255, 0, 0), 1)        
 
-        
         bytes_per_line = ch * self.img_width
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.img_width, self.img_height, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
@@ -213,7 +195,19 @@ class Js06MainWindow(Ui_MainWindow):
             result.to_csv(f"target/{self.camname}.csv", mode="w", index=False)
             print("영상 목표가 저장되었습니다.")
 
-    # def coordinate(self, w, h):
+    def aws_clicked(self):
+        """Start saving AWS sensor value at InfluxDB"""
+
+        if self.actionON.isChecked():   # True
+            if not self.aws_thread.run_flag:
+                print("AWS Thread Start.")
+                self.aws_thread.run_flag = True
+                self.aws_thread.start()
+
+        elif not self.actionON.isChecked():     # False
+            if self.aws_thread.run_flag:
+                print("AWS Thread Stop")
+                self.aws_thread.run_flag = False
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
