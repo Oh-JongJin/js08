@@ -17,7 +17,6 @@ import time
 import numpy as np
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore
-
 from main_window import Ui_MainWindow
 
 class VideoThread(QtCore.QThread):
