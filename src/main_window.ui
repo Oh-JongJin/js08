@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>480</width>
-    <height>375</height>
+    <width>1920</width>
+    <height>840</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,6 +25,12 @@
     <height>0</height>
    </size>
   </property>
+  <property name="maximumSize">
+   <size>
+    <width>1920</width>
+    <height>840</height>
+   </size>
+  </property>
   <property name="mouseTracking">
    <bool>false</bool>
   </property>
@@ -32,6 +38,12 @@
    <string>JS-06</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="maximumSize">
+    <size>
+     <width>1920</width>
+     <height>840</height>
+    </size>
+   </property>
    <property name="mouseTracking">
     <bool>false</bool>
    </property>
@@ -93,7 +105,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>480</width>
+     <width>1920</width>
      <height>21</height>
     </rect>
    </property>
@@ -107,7 +119,22 @@
     <addaction name="actionCamera_3"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuSensor">
+    <property name="title">
+     <string>Sensor</string>
+    </property>
+    <widget class="QMenu" name="menuAWS">
+     <property name="title">
+      <string>AWS</string>
+     </property>
+     <addaction name="separator"/>
+     <addaction name="actionON"/>
+     <addaction name="actionOFF"/>
+    </widget>
+    <addaction name="menuAWS"/>
+   </widget>
    <addaction name="menuSource"/>
+   <addaction name="menuSensor"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionImage_File">
@@ -151,6 +178,16 @@
    </property>
    <property name="statusTip">
     <string>Get video from Hanwha XNO-8080R</string>
+   </property>
+  </action>
+  <action name="actionON">
+   <property name="text">
+    <string>ON</string>
+   </property>
+  </action>
+  <action name="actionOFF">
+   <property name="text">
+    <string>OFF</string>
    </property>
   </action>
  </widget>

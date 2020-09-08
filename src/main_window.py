@@ -10,12 +10,22 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.setGeometry(0, 0, 1920, 840)
+        MainWindow.setEnabled(True)
+        MainWindow.resize(1920, 840)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
+        MainWindow.setSizePolicy(sizePolicy)
+        MainWindow.setMinimumSize(QtCore.QSize(0, 0))
+        MainWindow.setMaximumSize(QtCore.QSize(1920, 840))
         MainWindow.setMouseTracking(False)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setMaximumSize(QtCore.QSize(1920, 840))
         self.centralwidget.setMouseTracking(False)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -24,6 +34,7 @@ class Ui_MainWindow(object):
         self.gridLayout.setObjectName("gridLayout")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
+        self.verticalLayout.setSpacing(0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.image_label = QtWidgets.QLabel(self.centralwidget)
         self.image_label.setMinimumSize(QtCore.QSize(1, 1))
@@ -36,10 +47,14 @@ class Ui_MainWindow(object):
         self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 480, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 21))
         self.menubar.setObjectName("menubar")
         self.menuSource = QtWidgets.QMenu(self.menubar)
         self.menuSource.setObjectName("menuSource")
+        self.menuSensor = QtWidgets.QMenu(self.menubar)
+        self.menuSensor.setObjectName("menuSensor")
+        self.menuAWS = QtWidgets.QMenu(self.menuSensor)
+        self.menuAWS.setObjectName("menuAWS")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -54,12 +69,21 @@ class Ui_MainWindow(object):
         self.actionExit.setObjectName("actionExit")
         self.actionCamera_3 = QtWidgets.QAction(MainWindow)
         self.actionCamera_3.setObjectName("actionCamera_3")
+        self.actionON = QtWidgets.QAction(MainWindow)
+        self.actionON.setObjectName("actionON")
+        self.actionOFF = QtWidgets.QAction(MainWindow)
+        self.actionOFF.setObjectName("actionOFF")
         self.menuSource.addAction(self.actionImage_File)
         self.menuSource.addAction(self.actionCamera_1)
         self.menuSource.addAction(self.actionCamera_2)
         self.menuSource.addAction(self.actionCamera_3)
         self.menuSource.addAction(self.actionExit)
+        self.menuAWS.addSeparator()
+        self.menuAWS.addAction(self.actionON)
+        self.menuAWS.addAction(self.actionOFF)
+        self.menuSensor.addAction(self.menuAWS.menuAction())
         self.menubar.addAction(self.menuSource.menuAction())
+        self.menubar.addAction(self.menuSensor.menuAction())
 
         self.retranslateUi(MainWindow)
         self.actionExit.triggered.connect(MainWindow.close)
@@ -69,6 +93,8 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "JS-06"))
         self.menuSource.setTitle(_translate("MainWindow", "File"))
+        self.menuSensor.setTitle(_translate("MainWindow", "Sensor"))
+        self.menuAWS.setTitle(_translate("MainWindow", "AWS"))
         self.actionImage_File.setText(_translate("MainWindow", "Image File"))
         self.actionImage_File.setStatusTip(_translate("MainWindow", "Open an image file"))
         self.actionCamera_1.setText(_translate("MainWindow", "Camera 1"))
@@ -80,6 +106,8 @@ class Ui_MainWindow(object):
         self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+W"))
         self.actionCamera_3.setText(_translate("MainWindow", "Camera 3"))
         self.actionCamera_3.setStatusTip(_translate("MainWindow", "Get video from Hanwha XNO-8080R"))
+        self.actionON.setText(_translate("MainWindow", "ON"))
+        self.actionOFF.setText(_translate("MainWindow", "OFF"))
 
 
 if __name__ == "__main__":
