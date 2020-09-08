@@ -10,11 +10,10 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(480, 375)
+        MainWindow.setGeometry(0, 0, 1920, 840)
         MainWindow.setMouseTracking(False)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setMouseTracking(False)
@@ -28,8 +27,10 @@ class Ui_MainWindow(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.image_label = QtWidgets.QLabel(self.centralwidget)
         self.image_label.setMinimumSize(QtCore.QSize(1, 1))
+        self.image_label.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.image_label.setMouseTracking(False)
         self.image_label.setText("")
+        self.image_label.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.image_label.setObjectName("image_label")
         self.verticalLayout.addWidget(self.image_label)
         self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)

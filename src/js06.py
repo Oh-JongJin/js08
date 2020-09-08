@@ -16,7 +16,6 @@ import cv2
 import numpy as np
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore
-
 from main_window import Ui_MainWindow
 
 
@@ -27,8 +26,6 @@ class VideoThread(QtCore.QThread):
         super().__init__()
         self._run_flag = True
         self.src = src
-        self.img_width = 0
-        self.img_height = 0
 
     def run(self):
         cap = cv2.VideoCapture(self.src)
@@ -43,12 +40,16 @@ class VideoThread(QtCore.QThread):
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
         self._run_flag = False
-        self.img_widthait()
+        self.wait()
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        self.video_thread = None
+        self.video_thread = None        
+        self.target_x = []
+        self.target_y = []
+        self.distance = []
+        self.camera_name = ""
 
     def setupUi(self, MainWindow:QtWidgets.QMainWindow):
         super().setupUi(MainWindow)
@@ -57,7 +58,8 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionCamera_1.triggered.connect(self.open_cam1_clicked)
         self.actionCamera_2.triggered.connect(self.open_cam2_clicked)
         self.actionCamera_3.triggered.connect(self.open_cam3_clicked)
-        self.image_label.mousePressEvent = self.getpos  
+        self.image_label.mousePressEvent = self.getpos
+        # self.centralwidget.resizeEvent = self.resizeEvent  
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
@@ -83,7 +85,7 @@ class Js06MainWindow(Ui_MainWindow):
             self.save_target()
             self.video_thread.stop()
 
-        self.camname = "webcam"
+        self.camera_name = "webcam"
         self.get_target()
         # create the video capture thread
         self.video_thread = VideoThread(0)
@@ -98,7 +100,7 @@ class Js06MainWindow(Ui_MainWindow):
             self.save_target()
             self.video_thread.stop()            
 
-        self.camname = "PNM-9030V"
+        self.camera_name = "PNM-9030V"
         self.get_target()
         # create the video capture thread
         self.video_thread = VideoThread('rtsp://admin:sijung5520@192.168.100.121/profile2/media.smp')
@@ -113,7 +115,7 @@ class Js06MainWindow(Ui_MainWindow):
             self.save_target()
             self.video_thread.stop()
 
-        self.camname = "XNO-8080R"
+        self.camera_name = "XNO-8080R"
         self.get_target()
         # create the video capture thread
         self.video_thread = VideoThread('rtsp://admin:G85^mdPzCXr2@192.168.100.115/profile2/media.smp')
@@ -136,84 +138,79 @@ class Js06MainWindow(Ui_MainWindow):
         
         self.label_width = self.image_label.width()
         self.label_height = self.image_label.height()
-
-        if len(self.x):
-            for i in range(len(self.x)):
-                t_x = int((self.x[i] / (self.label_width - (self.label_width - self.img_width))) * self.img_width)
-                t_y = int((self.y[i] / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
-                upper_left = t_x - 10, t_y - 10
-                lower_right = t_x + 10, t_y + 10
-                cv2.rectangle(rgb_image, upper_left, lower_right, (0, 255, 0), 1)
-                pixel = str(i+1)
-                text_loc = t_x + 5, t_y - 15
-                cv2.putText(rgb_image, str(self.dis[i]) + " km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
-                            1, (255, 0, 0), 1)        
-
+        if self.target_x:
+            for x, y, dis in zip(self.target_x, self.target_y, self.distance):
+                image_x = int(x / self.label_width * self.img_width)
+                image_y = int(y / self.label_height * self.img_height)
+                # image_y = int((y / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
+                upper_left = image_x - 20, image_y - 20
+                lower_right = image_x + 20, image_y + 20
+                cv2.rectangle(rgb_image, upper_left, lower_right, (0, 255, 0), 6)
+                text_loc = image_x + 30, image_y - 25
+                cv2.putText(rgb_image, str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
+                            1.5, (255, 0, 0), 2)
         
         bytes_per_line = ch * self.img_width
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.img_width, self.img_height, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
-        
         return QtGui.QPixmap.fromImage(p)
     
     # https://stackoverflow.com/questions/3504522/pyqt-get-pixel-position-and-value-when-mouse-click-on-the-image
     # 마우스 컨트롤
-    def getpos(self, e):
-        if self.video_thread is not None :
-            # 마우스 왼쪽 버튼을 누르면 영상 목표를 추가
-            if e.buttons() == QtCore.Qt.LeftButton:
-                text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '타겟거리입력', '거리(km)')
+    def getpos(self, event):
+        if self.video_thread is None:
+            return
 
-                if ok:
-                    self.dis.append(str(text))
-                    # Label의 크기와 카메라 원본 이미지 해상도의 차이를 고려해 계산한다. 약 3.175배
-                    self.x.append(e.pos().x())
-                    self.y.append(e.pos().y())
-                    print("영상 목표위치:", e.pos().x(),", ", e.pos().y())
+        # 마우스 왼쪽 버튼을 누르면 영상 목표를 추가
+        if event.buttons() == QtCore.Qt.LeftButton:
+            text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '타겟거리입력', '거리(km)')
 
-            # 오른쪽 버튼을 누르면 최근에 추가된 영상 목표를 제거.
-            elif e.buttons() == QtCore.Qt.RightButton:
-                if len(self.x) >= 1:
-                    del self.x[-1]
-                    del self.y[-1]
-                    del self.dis[-1]            
-                    print("영상 목표를 제거했습니다.")
-                else:
-                    print("제거할 영상 목표가 없습니다.")
-        else:
-            pass
+            if ok:
+                self.distance.append(str(text))
+                # Label의 크기와 카메라 원본 이미지 해상도의 차이를 고려해 계산한다. 약 3.175배
+                self.target_x.append(event.pos().x())
+                self.target_y.append(event.pos().y())
+                print("영상 목표위치:", event.pos().x(),", ", event.pos().y())
+
+        # 오른쪽 버튼을 누르면 최근에 추가된 영상 목표를 제거.
+        elif event.buttons() == QtCore.Qt.RightButton:
+            if len(self.target_x) >= 1:
+                del self.target_x[-1]
+                del self.target_y[-1]
+                del self.distance[-1]            
+                print("영상 목표를 제거했습니다.")
+            else:
+                print("제거할 영상 목표가 없습니다.")
 
     # 영상 목표를 불러오기
     def get_target(self):
-        self.x = []
-        self.y = []
-        self.dis = []
+        self.target_x = []
+        self.target_y = []
+        self.distance = []
         if not os.path.isdir("target") == True:
             os.mkdir("target")
         else:
             pass
 
-        if os.path.isfile(f"target/{self.camname}.csv") == True:
-            result = pd.read_csv(f"target/{self.camname}.csv")
-            self.x = result.x.tolist()
-            self.y = result.y.tolist()
-            self.dis = result.dis.tolist()
+        if os.path.isfile(f"target/{self.camera_name}.csv") == True:
+            result = pd.read_csv(f"target/{self.camera_name}.csv")
+            self.target_x = result.target_x.tolist()
+            self.target_y = result.target_y.tolist()
+            self.distance = result.distance.tolist()
             print("영상 목표를 불러옵니다.")
     
     def save_target(self):
         # 종료될 때 영상 목표 정보를 실행된 카메라에 맞춰서 저장
-        if len(self.x) >= 0:
+        if len(self.target_x) >= 0:
             for i in range(len(self.x)):
-                print(self.x[i], ", ", self.y[i], ", ", self.dis[i])
-            col = ["x","y","dis"]
+                print(self.target_x[i], ", ", self.target_y[i], ", ", self.distance[i])
+            col = ["x","y","distance"]
             result = pd.DataFrame(columns=col)
-            result["x"] = self.x
-            result["y"] = self.y
-            result["dis"] = self.dis
-            result.to_csv(f"target/{self.camname}.csv", mode="w", index=False)
+            result["target_x"] = self.target_x
+            result["target_y"] = self.target_y
+            result["distance"] = self.distance
+            result.to_csv(f"target/{self.camera_name}.csv", mode="w", index=False)
             print("영상 목표가 저장되었습니다.")
-
-    # def coordinate(self, w, h):
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
