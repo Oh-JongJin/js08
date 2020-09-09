@@ -10,6 +10,7 @@
 # Reference: https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1
 
 import cv2
+import inference_tflite
 import os
 import sys
 import time
@@ -17,30 +18,11 @@ import time
 import numpy as np
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore
+
+from video_thread import VideoThread
+from aws_thread import AwsThread
+
 from main_window import Ui_MainWindow
-
-class VideoThread(QtCore.QThread):
-    update_pixmap_signal = QtCore.pyqtSignal(np.ndarray)
-
-    def __init__(self, src: str = 0):
-        super().__init__()
-        self._run_flag = True
-        self.src = src
-
-    def run(self):
-        cap = cv2.VideoCapture(self.src)
-        
-        while self._run_flag:
-            ret, cv_img = cap.read()
-            if ret :
-                self.update_pixmap_signal.emit(cv_img)
-        # shut down capture system
-        cap.release()
-
-    def stop(self):
-        """Sets run flag to False and waits for thread to finish"""
-        self._run_flag = False
-        self.wait()
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
@@ -50,6 +32,9 @@ class Js06MainWindow(Ui_MainWindow):
         self.target_y = []
         self.distance = []
         self.camera_name = ""
+        self.video_thread = None
+        self.crop_imagelist = []
+        self.aws_thread = AwsThread()
 
     def setupUi(self, MainWindow:QtWidgets.QMainWindow):
         super().setupUi(MainWindow)
@@ -138,15 +123,22 @@ class Js06MainWindow(Ui_MainWindow):
         
         self.label_width = self.image_label.width()
         self.label_height = self.image_label.height()
+
+        # 시간 저장
+        epoch = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+
+        if epoch[-3:] == "500" or epoch[-3:] == "100":
+            self.save_image(rgb_image, epoch)
+
         if self.target_x:
             for x, y, dis in zip(self.target_x, self.target_y, self.distance):
-                image_x = int(x / self.label_width * self.img_width)
-                image_y = int(y / self.label_height * self.img_height)
+                center_x = int(x)
+                center_y = int(y)                
                 # image_y = int((y / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
                 upper_left = image_x - 20, image_y - 20
                 lower_right = image_x + 20, image_y + 20
                 cv2.rectangle(rgb_image, upper_left, lower_right, (0, 255, 0), 6)
-                text_loc = image_x + 30, image_y - 25
+                text_loc = center_x + 30, center_y - 25                
                 cv2.putText(rgb_image, str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                             1.5, (255, 0, 0), 2)
         
@@ -202,15 +194,58 @@ class Js06MainWindow(Ui_MainWindow):
     def save_target(self):
         # 종료될 때 영상 목표 정보를 실행된 카메라에 맞춰서 저장
         if len(self.target_x) >= 0:
-            for i in range(len(self.x)):
-                print(self.target_x[i], ", ", self.target_y[i], ", ", self.distance[i])
-            col = ["x","y","distance"]
-            result = pd.DataFrame(columns=col)
-            result["target_x"] = self.target_x
-            result["target_y"] = self.target_y
-            result["distance"] = self.distance
-            result.to_csv(f"target/{self.camera_name}.csv", mode="w", index=False)
-            print("영상 목표가 저장되었습니다.")
+            for i in range(len(self.target_x)):
+                col = ["x","y","distance"]
+                result = pd.DataFrame(columns=col)
+                result["target_x"] = self.target_x
+                result["target_y"] = self.target_y
+                result["distance"] = self.distance
+                result.to_csv(f"target/{self.camera_name}.csv", mode="w", index=False)
+    
+    def save_image(self, image: np.ndarray, epoch: str):
+        """ 목표 영상들을 각 폴더에 저장한다."""
+        self.crop_imagelist = []
+        for i in range(len(self.target_x)):        
+            try:            
+                if not(os.path.isdir(f"target/image/target{i+1}")):
+                    os.makedirs(os.path.join(f"target/image/target{i+1}"))
+                if not(os.path.isfile(f"target/image/target{i+1}/{epoch}.png")):
+                    # 모델에 넣을 이미지 추출
+                    crop_img = image[self.target_y[i] - 112 : self.target_y[i] + 112 , self.target_x[i] - 112 : self.target_x[i] + 112]
+                    self.crop_imagelist.append(crop_img)
+                    # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
+                    b, g, r = cv2.split(crop_img)
+                    # 영상 목표의 각 폴더에 크롭한 이미지 저장
+                    cv2.imwrite(f"target/image/target{i+1}/{epoch}.png", cv2.merge([r, g, b]))
+            except OSError as e:
+                if e.errno != errno.EEXIST:    
+                    pass
+        self.get_visiblity()
+
+    def get_visiblity(self):
+        """ 크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 거리가 가장 먼 거리를 출력한다."""
+        oxlist = []
+        for image in self.crop_imagelist:
+            oxlist.append(inference_tflite.inference(image))
+        
+        res = [self.distance[x] for x, y in enumerate(oxlist)if y == 1]
+        visivlity = str(max(res)) + " km"
+        print(visivlity)
+        time.sleep(1)
+
+    def aws_clicked(self):
+        """Start saving AWS sensor value at InfluxDB"""
+
+        if self.actionON.isChecked():   # True
+            if not self.aws_thread.run_flag:
+                print("AWS Thread Start.")
+                self.aws_thread.run_flag = True
+                self.aws_thread.start()
+
+        elif not self.actionON.isChecked():     # False
+            if self.aws_thread.run_flag:
+                print("AWS Thread Stop")
+                self.aws_thread.run_flag = False
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
