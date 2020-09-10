@@ -27,6 +27,7 @@ __pycache__/
 # Ignore model files
 *.pb
 *.h5
+*.tflite
 
 # C extensions
 *.so
