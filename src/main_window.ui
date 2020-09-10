@@ -133,8 +133,16 @@
     </widget>
     <addaction name="menuAWS"/>
    </widget>
+   <widget class="QMenu" name="menuMode">
+    <property name="title">
+     <string>Mode</string>
+    </property>
+    <addaction name="actionTarget_ON"/>
+    <addaction name="actionTarget_OFF"/>
+   </widget>
    <addaction name="menuSource"/>
    <addaction name="menuSensor"/>
+   <addaction name="menuMode"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionImage_File">
@@ -188,6 +196,16 @@
   <action name="actionOFF">
    <property name="text">
     <string>OFF</string>
+   </property>
+  </action>
+  <action name="actionTarget_ON">
+   <property name="text">
+    <string>Target_ON</string>
+   </property>
+  </action>
+  <action name="actionTarget_OFF">
+   <property name="text">
+    <string>Target_OFF</string>
    </property>
   </action>
  </widget>
