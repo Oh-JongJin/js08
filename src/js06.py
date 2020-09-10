@@ -36,11 +36,6 @@ class Js06MainWindow(Ui_MainWindow):
         self.crop_imagelist100 = []
         self.aws_thread = AwsThread()
         self.target_process = False
-        self.filepath = os.path.join(os.getcwd(), "target")
-        try:
-            os.makedirs(self.filepath)
-        except OSError:
-            pass
 
     def setupUi(self, MainWindow:QtWidgets.QMainWindow):
         super().setupUi(MainWindow)
