@@ -125,6 +125,10 @@ class Js06MainWindow(Ui_MainWindow):
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         self.img_height, self.img_width, ch = rgb_image.shape
+
+        
+        self.coordinator()
+        self.restoration()
         
         self.coordinator()
         self.restoration()
@@ -184,8 +188,8 @@ class Js06MainWindow(Ui_MainWindow):
             text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리', '거리(km)')
 
             if ok:
-                
                 self.distance.append(float(text))
+                # Label의 크기와 카메라 원본 이미지 해상도의 차이를 고려해 계산한다. 약 3.175배
                 self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
                 self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
                 self.target_name.append("target_" + str(len(self.target_x)))
@@ -221,51 +225,49 @@ class Js06MainWindow(Ui_MainWindow):
             print("영상 목표를 불러옵니다.")
     
     def save_target(self):
-        """영상목표 정보를 실행된 카메라에 맞춰서 저장한다."""
+        """영상 목표 정보를 실행된 카메라에 맞춰서 저장한다."""
         if self.target_x:
-            col = ["target_name", "target_x", "target_y", "distance", "predict"]
+            col = ["target_x","target_y","distance"]
             self.result = pd.DataFrame(columns=col)
-            self.result["target_name"] = self.target_name
             self.result["target_x"] = self.target_x
             self.result["target_y"] = self.target_y
             self.result["distance"] = self.distance
-            self.result['predict'] = self.oxlist
             self.result.to_csv(f"target/{self.camera_name}.csv", mode="w", index=False)
             self.coordinator()
             self.restoration()            
 
     def coordinator(self):
-        """영상목표의 좌표값을 -1~1 값으로 정규화한다."""
+        """ 영상 목표의 좌표값을 -1~1 값으로 정규화한다."""
         self.prime_y = [ y / self.img_height for y in self.target_y]
         self.prime_x = [2 * x / self.img_width - 1 for x in self.target_x]
     
     def restoration(self):
-        """정규화한 값을 다시 복구한다."""
-        self.res_x = [self.f2i((x + 1) * self.img_width / 2) for x in self.prime_x]
-        self.res_y = [self.f2i(y * self.img_height) for y in self.prime_y]
+        """ 정규화한 값을 다시 복구한다."""
+        self.res_x = [self.to_int((x + 1) * self.img_width / 2) for x in self.prime_x]
+        self.res_y = [self.to_int(y * self.img_height) for y in self.prime_y]
     
-    def f2i(self, num: float):
-        """float형 숫자를 0.5를 더하고 정수형으로 바꿔준다."""
+    def to_int(self, num: float):
+        """ float형 숫자를 0.5를 더하고 정수형으로 바꿔준다."""
         return int(num + 0.5)      
         
     def save_image(self, image: np.ndarray, epoch: str):
         """ 영상 목표들을 각 폴더에 저장한다."""
-        self.crop_imagelist100 = []
-        for i in range(len(self.target_x)):
-            
-            if not(os.path.isdir(f"target/image/100x100/target{i+1}")):
-                os.makedirs(os.path.join(f"target/image/100x100/target{i+1}"))
+        self.crop_imagelist = []
+        for i in range(len(self.target_x)):        
+      
+            if not(os.path.isdir(f"target/image/target{i+1}")):
+                os.makedirs(os.path.join(f"target/image/target{i+1}"))
             else:
                 pass
-        
-            if not(os.path.isfile(f"target/image/100x100/target{i+1}/target_{i+1}_{epoch}.jpg")):
+
+            if not(os.path.isfile(f"target/image/target{i+1}/{epoch}.png")):
                 # 모델에 넣을 이미지 추출
-                crop_img = image[self.target_y[i] - 50 : self.target_y[i] + 50 , self.target_x[i] - 50 : self.target_x[i] + 50]
-                self.crop_imagelist100.append(crop_img)
+                crop_img = image[self.target_y[i] - 112 : self.target_y[i] + 112 , self.target_x[i] - 112 : self.target_x[i] + 112]
+                self.crop_imagelist.append(crop_img)
                 # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
                 b, g, r = cv2.split(crop_img)
                 # 영상 목표의 각 폴더에 크롭한 이미지 저장
-                cv2.imwrite(f"target/image/100x100/target{i+1}/target_{i+1}_{epoch}.jpg", cv2.merge([r, g, b]))
+                cv2.imwrite(f"target/image/target{i+1}/{epoch}.png", cv2.merge([r, g, b]))
             else:
                 pass
 
@@ -274,20 +276,19 @@ class Js06MainWindow(Ui_MainWindow):
     def get_visiblity(self):
         """ 크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 가장 먼 거리를 출력한다."""
         self.oxlist = []
-        for image in self.crop_imagelist100:
-            image = cv2.resize(image, dsize = (224, 224), interpolation = cv2.INTER_LINEAR)
+        for image in self.crop_imagelist:
             self.oxlist.append(inference_tflite.inference(image))
 
         res = [self.distance[x] for x, y in enumerate(self.oxlist) if y == 1]
         visivlity = str(max(res)) + " km"
-        print(visivlity)        
-        self.save_target()
+        print(visivlity)
         self.to_jongjin()
         time.sleep(1)
 
     def to_jongjin(self):
-        """ polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""        
-        result_dict = {key:[p_x, distance, ox_value] for key, p_x, distance, ox_value in zip(self.target_name, self.prime_x, self.distance, self.oxlist)}
+        """ polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""
+        target_name = [f"target_{i+1}" for i in range(len(self.prime_x))]
+        result_dict = {key:[p_x, distance, ox_value] for key, p_x, distance, ox_value in zip(target_name, self.prime_x, self.distance, self.oxlist)}
         print(result_dict)
 
     def aws_clicked(self):
