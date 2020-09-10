@@ -35,6 +35,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.video_thread = None
         self.crop_imagelist = []
         self.aws_thread = AwsThread()
+        self.target_process = False
 
     def setupUi(self, MainWindow:QtWidgets.QMainWindow):
         super().setupUi(MainWindow)
@@ -43,8 +44,10 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionCamera_1.triggered.connect(self.open_cam1_clicked)
         self.actionCamera_2.triggered.connect(self.open_cam2_clicked)
         self.actionCamera_3.triggered.connect(self.open_cam3_clicked)
-        self.image_label.mousePressEvent = self.getpos
-        # self.centralwidget.resizeEvent = self.resizeEvent  
+        self.image_label.mousePressEvent = self.getpos  
+        self.actionON.triggered.connect(self.aws_clicked)
+        self.actionTarget_ON.triggered.connect(self.target_ModeOn)
+        self.actionTarget_OFF.triggered.connect(self.target_ModeOff)
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
@@ -61,6 +64,8 @@ class Js06MainWindow(Ui_MainWindow):
             cv_img = cv2.imread(fname)
             # convert the image to Qt format
             qt_img = self.convert_cv_qt(cv_img)
+            self.camera_name = "file_image"
+            self.get_target()
             # display it
             self.image_label.setPixmap(qt_img)
 
@@ -151,11 +156,26 @@ class Js06MainWindow(Ui_MainWindow):
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.img_width, self.img_height, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
         return QtGui.QPixmap.fromImage(p)
+
+    def target_ModeOn(self):
+        
+        self.target_process = True
+
+        return self.target_process
+    
+    def target_ModeOff(self):
+        
+        self.target_process = False
+
+        return self.target_process
     
     # https://stackoverflow.com/questions/3504522/pyqt-get-pixel-position-and-value-when-mouse-click-on-the-image
     # 마우스 컨트롤
     def getpos(self, event):
         if self.video_thread is None:
+            return
+
+        if self.target_process is False:
             return
 
         # 마우스 왼쪽 버튼을 누르면 영상 목표를 추가
