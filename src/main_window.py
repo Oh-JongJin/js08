@@ -55,6 +55,8 @@ class Ui_MainWindow(object):
         self.menuSensor.setObjectName("menuSensor")
         self.menuAWS = QtWidgets.QMenu(self.menuSensor)
         self.menuAWS.setObjectName("menuAWS")
+        self.menuMode = QtWidgets.QMenu(self.menubar)
+        self.menuMode.setObjectName("menuMode")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -73,6 +75,10 @@ class Ui_MainWindow(object):
         self.actionON.setObjectName("actionON")
         self.actionOFF = QtWidgets.QAction(MainWindow)
         self.actionOFF.setObjectName("actionOFF")
+        self.actionTarget_ON = QtWidgets.QAction(MainWindow)
+        self.actionTarget_ON.setObjectName("actionTarget_ON")
+        self.actionTarget_OFF = QtWidgets.QAction(MainWindow)
+        self.actionTarget_OFF.setObjectName("actionTarget_OFF")
         self.menuSource.addAction(self.actionImage_File)
         self.menuSource.addAction(self.actionCamera_1)
         self.menuSource.addAction(self.actionCamera_2)
@@ -82,8 +88,11 @@ class Ui_MainWindow(object):
         self.menuAWS.addAction(self.actionON)
         self.menuAWS.addAction(self.actionOFF)
         self.menuSensor.addAction(self.menuAWS.menuAction())
+        self.menuMode.addAction(self.actionTarget_ON)
+        self.menuMode.addAction(self.actionTarget_OFF)
         self.menubar.addAction(self.menuSource.menuAction())
         self.menubar.addAction(self.menuSensor.menuAction())
+        self.menubar.addAction(self.menuMode.menuAction())
 
         self.retranslateUi(MainWindow)
         self.actionExit.triggered.connect(MainWindow.close)
@@ -95,6 +104,7 @@ class Ui_MainWindow(object):
         self.menuSource.setTitle(_translate("MainWindow", "File"))
         self.menuSensor.setTitle(_translate("MainWindow", "Sensor"))
         self.menuAWS.setTitle(_translate("MainWindow", "AWS"))
+        self.menuMode.setTitle(_translate("MainWindow", "Mode"))
         self.actionImage_File.setText(_translate("MainWindow", "Image File"))
         self.actionImage_File.setStatusTip(_translate("MainWindow", "Open an image file"))
         self.actionCamera_1.setText(_translate("MainWindow", "Camera 1"))
@@ -108,6 +118,8 @@ class Ui_MainWindow(object):
         self.actionCamera_3.setStatusTip(_translate("MainWindow", "Get video from Hanwha XNO-8080R"))
         self.actionON.setText(_translate("MainWindow", "ON"))
         self.actionOFF.setText(_translate("MainWindow", "OFF"))
+        self.actionTarget_ON.setText(_translate("MainWindow", "Target_ON"))
+        self.actionTarget_OFF.setText(_translate("MainWindow", "Target_OFF"))
 
 
 if __name__ == "__main__":
