@@ -9,6 +9,7 @@ from influxdb import InfluxDBClient
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
+
 class AwsThread(QtCore.QThread):
     def __init__(self):
         super().__init__()
@@ -96,7 +97,7 @@ class AwsThread(QtCore.QThread):
                     # Inserts Database's tags and field values.
                     points = [
                         {"measurement": "test1",
-                         "tags": {"name": "OJJ"},
+                         "tags": {"name": "sijung"},
                          "fields": {"wind_direction": float(int(binascii.hexlify(res[5:7]), 16)),
                                     "wind_speed": float(wind_speed[0]), "temp": round(temp[0], 2),
                                     "humid": round(humid[0], 2), "pressure": round(pressure[0], 2),
