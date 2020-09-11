@@ -84,7 +84,6 @@ class Ui_MainWindow(object):
         self.menuSensor.addAction(self.menuAWS.menuAction())
         self.menubar.addAction(self.menuSource.menuAction())
         self.menubar.addAction(self.menuSensor.menuAction())
-
         self.retranslateUi(MainWindow)
         self.actionExit.triggered.connect(MainWindow.close)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
