@@ -44,7 +44,7 @@ def classify_image(interpreter, image):
 
 def readmodel():
     "tflite 모델을 읽어온다."
-    interpreter = tflite.Interpreter("test20200910_01.tflite")
+    interpreter = tflite.Interpreter("andrew_20200910.tflite")
     return interpreter
 
 def inference(image: np.ndarray):
