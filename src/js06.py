@@ -9,7 +9,6 @@
 # *
 # Reference: https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1
 
-
 import cv2
 import os
 import sys
@@ -43,6 +42,7 @@ class VideoThread(QtCore.QThread):
         self._run_flag = False
         self.wait()
 
+
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
         super().__init__()
@@ -51,6 +51,8 @@ class Js06MainWindow(Ui_MainWindow):
         self.target_y = []
         self.distance = []
         self.camera_name = ""
+        self.video_thread = None
+        self.aws_thread = AwsThread()
 
     def setupUi(self, MainWindow:QtWidgets.QMainWindow):
         super().setupUi(MainWindow)
@@ -59,8 +61,8 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionCamera_1.triggered.connect(self.open_cam1_clicked)
         self.actionCamera_2.triggered.connect(self.open_cam2_clicked)
         self.actionCamera_3.triggered.connect(self.open_cam3_clicked)
-        self.image_label.mousePressEvent = self.getpos
-        # self.centralwidget.resizeEvent = self.resizeEvent  
+        self.image_label.mousePressEvent = self.getpos  
+        self.actionON.triggered.connect(self.aws_clicked)
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
@@ -139,15 +141,23 @@ class Js06MainWindow(Ui_MainWindow):
         
         self.label_width = self.image_label.width()
         self.label_height = self.image_label.height()
+
+        # 시간 저장
+        epoch = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+
+        if epoch[-3:] == "500" or epoch[-3:] == "000":
+            self.save_image(rgb_image, epoch)
+
         if self.target_x:
             for x, y, dis in zip(self.target_x, self.target_y, self.distance):
-                image_x = int(x / self.label_width * self.img_width)
-                image_y = int(y / self.label_height * self.img_height)
+                center_x = int(x)
+                center_y = int(y)
+                
                 # image_y = int((y / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
-                upper_left = image_x - 20, image_y - 20
-                lower_right = image_x + 20, image_y + 20
+                upper_left = center_x - 20, center_y - 20
+                lower_right = center_x + 20, center_y + 20
                 cv2.rectangle(rgb_image, upper_left, lower_right, (0, 255, 0), 6)
-                text_loc = image_x + 30, image_y - 25
+                text_loc = center_x + 30, center_y - 25
                 cv2.putText(rgb_image, str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                             1.5, (255, 0, 0), 2)
         
@@ -169,9 +179,10 @@ class Js06MainWindow(Ui_MainWindow):
             if ok:
                 self.distance.append(str(text))
                 # Label의 크기와 카메라 원본 이미지 해상도의 차이를 고려해 계산한다. 약 3.175배
-                self.target_x.append(event.pos().x())
-                self.target_y.append(event.pos().y())
-                print("영상 목표위치:", event.pos().x(),", ", event.pos().y())
+                self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
+                self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
+                print("영상 목표위치:", self.target_x[-1],", ", self.target_y[-1])
+                self.save_target()
 
         # 오른쪽 버튼을 누르면 최근에 추가된 영상 목표를 제거.
         elif event.buttons() == QtCore.Qt.RightButton:
@@ -180,6 +191,7 @@ class Js06MainWindow(Ui_MainWindow):
                 del self.target_y[-1]
                 del self.distance[-1]            
                 print("영상 목표를 제거했습니다.")
+                self.save_target()
             else:
                 print("제거할 영상 목표가 없습니다.")
 
@@ -203,15 +215,45 @@ class Js06MainWindow(Ui_MainWindow):
     def save_target(self):
         # 종료될 때 영상 목표 정보를 실행된 카메라에 맞춰서 저장
         if len(self.target_x) >= 0:
-            for i in range(len(self.x)):
-                print(self.target_x[i], ", ", self.target_y[i], ", ", self.distance[i])
-            col = ["x","y","distance"]
-            result = pd.DataFrame(columns=col)
-            result["target_x"] = self.target_x
-            result["target_y"] = self.target_y
-            result["distance"] = self.distance
-            result.to_csv(f"target/{self.camera_name}.csv", mode="w", index=False)
-            print("영상 목표가 저장되었습니다.")
+            for i in range(len(self.target_x)):
+                col = ["x","y","distance"]
+                result = pd.DataFrame(columns=col)
+                result["target_x"] = self.target_x
+                result["target_y"] = self.target_y
+                result["distance"] = self.distance
+                result.to_csv(f"target/{self.camera_name}.csv", mode="w", index=False)
+    
+    def save_image(self, image: np.ndarray, epoch: str):
+        """ 목표 영상들을 각 폴더에 저장한다."""
+
+        for i in range(len(self.target_x)):        
+            try:            
+                if not(os.path.isdir(f"target/image/target{i+1}")):
+                    os.makedirs(os.path.join(f"target/image/target{i+1}"))
+                if not(os.path.isfile(f"target/image/target{i+1}/{epoch}.png")):
+                    # 모델에 넣을 이미지 추출
+                    crop_img = image[self.target_y[i] - 112 : self.target_y[i] + 112 , self.target_x[i] - 112 : self.target_x[i] + 112]
+                    # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
+                    b, g, r = cv2.split(crop_img)
+                    # 영상 목표의 각 폴더에 크롭한 이미지 저장
+                    cv2.imwrite(f"target/image/target{i+1}/{epoch}.png", cv2.merge([r, g, b]))
+            except OSError as e:
+                if e.errno != errno.EEXIST:    
+                    pass
+
+    def aws_clicked(self):
+        """Start saving AWS sensor value at InfluxDB"""
+
+        if self.actionON.isChecked():   # True
+            if not self.aws_thread.run_flag:
+                print("AWS Thread Start.")
+                self.aws_thread.run_flag = True
+                self.aws_thread.start()
+
+        elif not self.actionON.isChecked():     # False
+            if self.aws_thread.run_flag:
+                print("AWS Thread Stop")
+                self.aws_thread.run_flag = False
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
