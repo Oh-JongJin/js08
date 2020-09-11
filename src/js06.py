@@ -10,6 +10,7 @@
 # Reference: https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1
 
 import cv2
+import inference_tflite
 import os
 import sys
 import time
@@ -17,34 +18,11 @@ import time
 import numpy as np
 import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore
-from main_window import Ui_MainWindow
-
-class VideoThread(QtCore.QThread):
-    update_pixmap_signal = QtCore.pyqtSignal(np.ndarray)
-
-    def __init__(self, src: str = 0):
-        super().__init__()
-        self._run_flag = True
-        self.src = src
-
-    def run(self):
-        cap = cv2.VideoCapture(self.src)
-        
-        while self._run_flag:
-            ret, cv_img = cap.read()
-            if ret :
-                self.update_pixmap_signal.emit(cv_img)
-        # shut down capture system
-        cap.release()
-
-    def stop(self):
-        """Sets run flag to False and waits for thread to finish"""
-        self._run_flag = False
-        self.wait()
 
 from video_thread import VideoThread
 from aws_thread import AwsThread
-import inference_tflite
+
+from main_window import Ui_MainWindow
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
@@ -65,8 +43,8 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionCamera_1.triggered.connect(self.open_cam1_clicked)
         self.actionCamera_2.triggered.connect(self.open_cam2_clicked)
         self.actionCamera_3.triggered.connect(self.open_cam3_clicked)
-        self.image_label.mousePressEvent = self.getpos  
-        self.actionON.triggered.connect(self.aws_clicked)
+        self.image_label.mousePressEvent = self.getpos
+        # self.centralwidget.resizeEvent = self.resizeEvent  
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
@@ -157,8 +135,8 @@ class Js06MainWindow(Ui_MainWindow):
                 center_x = int(x)
                 center_y = int(y)                
                 # image_y = int((y / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
-                upper_left = center_x - 20, center_y - 20
-                lower_right = center_x + 20, center_y + 20
+                upper_left = image_x - 20, image_y - 20
+                lower_right = image_x + 20, image_y + 20
                 cv2.rectangle(rgb_image, upper_left, lower_right, (0, 255, 0), 6)
                 text_loc = center_x + 30, center_y - 25                
                 cv2.putText(rgb_image, str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
@@ -182,10 +160,9 @@ class Js06MainWindow(Ui_MainWindow):
             if ok:
                 self.distance.append(str(text))
                 # Label의 크기와 카메라 원본 이미지 해상도의 차이를 고려해 계산한다. 약 3.175배
-                self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
-                self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
-                print("영상 목표위치:", self.target_x[-1],", ", self.target_y[-1])
-                self.save_target()
+                self.target_x.append(event.pos().x())
+                self.target_y.append(event.pos().y())
+                print("영상 목표위치:", event.pos().x(),", ", event.pos().y())
 
         # 오른쪽 버튼을 누르면 최근에 추가된 영상 목표를 제거.
         elif event.buttons() == QtCore.Qt.RightButton:
@@ -194,7 +171,6 @@ class Js06MainWindow(Ui_MainWindow):
                 del self.target_y[-1]
                 del self.distance[-1]            
                 print("영상 목표를 제거했습니다.")
-                self.save_target()
             else:
                 print("제거할 영상 목표가 없습니다.")
 
