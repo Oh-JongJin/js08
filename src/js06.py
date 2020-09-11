@@ -19,10 +19,29 @@ import pandas as pd
 from PyQt5 import QtWidgets, QtGui, QtCore
 from main_window import Ui_MainWindow
 
-from PyQt5 import QtWidgets, QtGui, QtCore
+class VideoThread(QtCore.QThread):
+    update_pixmap_signal = QtCore.pyqtSignal(np.ndarray)
 
-from video_thread import VideoThread
-from aws_thread import AwsThread
+    def __init__(self, src: str = 0):
+        super().__init__()
+        self._run_flag = True
+        self.src = src
+
+    def run(self):
+        cap = cv2.VideoCapture(self.src)
+        
+        while self._run_flag:
+            ret, cv_img = cap.read()
+            if ret :
+                self.update_pixmap_signal.emit(cv_img)
+        # shut down capture system
+        cap.release()
+
+    def stop(self):
+        """Sets run flag to False and waits for thread to finish"""
+        self._run_flag = False
+        self.wait()
+
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
