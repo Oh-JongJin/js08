@@ -34,7 +34,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.distance = []
         self.camera_name = ""
         self.video_thread = None
-        self.crop_imagelist = []
+        self.crop_imagelist100 = []
         self.aws_thread = AwsThread()
         self.target_process = False
 
@@ -127,7 +127,6 @@ class Js06MainWindow(Ui_MainWindow):
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         self.img_height, self.img_width, ch = rgb_image.shape
-
         
         self.coordinator()
         self.restoration()
@@ -141,16 +140,15 @@ class Js06MainWindow(Ui_MainWindow):
         if epoch[-2:] == "00":
             self.save_image(rgb_image, epoch)
 
-        if self.target_x:
-            for x, y, dis in zip(self.target_x, self.target_y, self.distance):
-                center_x = int(x)
-                center_y = int(y)                
+        if self.target_x:           
+
+            for name, x, y, dis in zip(self.target_name, self.target_x, self.target_y, self.distance):         
                 # image_y = int((y / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
-                upper_left = center_x - 20, center_y - 20
-                lower_right = center_x + 20, center_y + 20
+                upper_left = x - 25, y - 25
+                lower_right = x + 25, y + 25
                 cv2.rectangle(rgb_image, upper_left, lower_right, (0, 255, 0), 6)
-                text_loc = center_x + 30, center_y - 25                
-                cv2.putText(rgb_image, str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
+                text_loc = x + 30, y - 35                
+                cv2.putText(rgb_image, name[7:]+ ": " + str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                             1.5, (255, 0, 0), 2)
         
         bytes_per_line = ch * self.img_width
@@ -161,13 +159,11 @@ class Js06MainWindow(Ui_MainWindow):
     def target_ModeOn(self):
         
         self.target_process = True
-
         return self.target_process
     
     def target_ModeOff(self):
         
         self.target_process = False
-
         return self.target_process
     
     # https://stackoverflow.com/questions/3504522/pyqt-get-pixel-position-and-value-when-mouse-click-on-the-image
@@ -184,16 +180,18 @@ class Js06MainWindow(Ui_MainWindow):
             text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '타겟거리입력', '거리(km)')
 
             if ok:
+                
                 self.distance.append(float(text))
-                # Label의 크기와 카메라 원본 이미지 해상도의 차이를 고려해 계산한다. 약 3.175배
                 self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
                 self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
+                self.target_name.append("target_" + str(len(self.target_x)))
                 print("영상 목표위치:", self.target_x[-1],", ", self.target_y[-1])
                 self.save_target()
 
         # 오른쪽 버튼을 누르면 최근에 추가된 영상 목표를 제거.
         elif event.buttons() == QtCore.Qt.RightButton:
             if len(self.target_x) >= 1:
+                del self.target_name[-1]
                 del self.target_x[-1]
                 del self.target_y[-1]
                 del self.distance[-1]            
@@ -204,6 +202,7 @@ class Js06MainWindow(Ui_MainWindow):
 
     # 영상 목표를 불러오기
     def get_target(self):
+        self.target_name = []
         self.target_x = []
         self.target_y = []
         self.distance = []
@@ -214,19 +213,23 @@ class Js06MainWindow(Ui_MainWindow):
 
         if os.path.isfile(f"target/{self.camera_name}.csv") == True:
             result = pd.read_csv(f"target/{self.camera_name}.csv")
+            self.target_name = result.target_name.tolist()
             self.target_x = result.target_x.tolist()
             self.target_y = result.target_y.tolist()
             self.distance = result.distance.tolist()
+            self.oxlist = [0 for i in range(len(self.target_x))]
             print("영상 목표를 불러옵니다.")
     
     def save_target(self):
         """영상 목표 정보를 실행된 카메라에 맞춰서 저장한다."""
         if self.target_x:
-            col = ["target_x","target_y","distance"]
+            col = ["target_name", "target_x", "target_y", "distance", "predict"]
             self.result = pd.DataFrame(columns=col)
+            self.result["target_name"] = self.target_name
             self.result["target_x"] = self.target_x
             self.result["target_y"] = self.target_y
             self.result["distance"] = self.distance
+            self.result['predict'] = self.oxlist
             self.result.to_csv(f"target/{self.camera_name}.csv", mode="w", index=False)
             self.coordinator()
             self.restoration()            
@@ -247,22 +250,22 @@ class Js06MainWindow(Ui_MainWindow):
         
     def save_image(self, image: np.ndarray, epoch: str):
         """ 영상 목표들을 각 폴더에 저장한다."""
-        self.crop_imagelist = []
-        for i in range(len(self.target_x)):        
-      
-            if not(os.path.isdir(f"target/image/target{i+1}")):
-                os.makedirs(os.path.join(f"target/image/target{i+1}"))
+        self.crop_imagelist100 = []
+        for i in range(len(self.target_x)):
+            
+            if not(os.path.isdir(f"target/image/100x100/target{i+1}")):
+                os.makedirs(os.path.join(f"target/image/100x100/target{i+1}"))
             else:
                 pass
-
-            if not(os.path.isfile(f"target/image/target{i+1}/{epoch}.png")):
+        
+            if not(os.path.isfile(f"target/image/100x100/target{i+1}/target_{i+1}_{epoch}.jpg")):
                 # 모델에 넣을 이미지 추출
-                crop_img = image[self.target_y[i] - 112 : self.target_y[i] + 112 , self.target_x[i] - 112 : self.target_x[i] + 112]
-                self.crop_imagelist.append(crop_img)
+                crop_img = image[self.target_y[i] - 50 : self.target_y[i] + 50 , self.target_x[i] - 50 : self.target_x[i] + 50]
+                self.crop_imagelist100.append(crop_img)
                 # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
                 b, g, r = cv2.split(crop_img)
                 # 영상 목표의 각 폴더에 크롭한 이미지 저장
-                cv2.imwrite(f"target/image/target{i+1}/{epoch}.png", cv2.merge([r, g, b]))
+                cv2.imwrite(f"target/image/100x100/target{i+1}/target_{i+1}_{epoch}.jpg", cv2.merge([r, g, b]))
             else:
                 pass
 
@@ -271,19 +274,20 @@ class Js06MainWindow(Ui_MainWindow):
     def get_visiblity(self):
         """ 크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 가장 먼 거리를 출력한다."""
         self.oxlist = []
-        for image in self.crop_imagelist:
+        for image in self.crop_imagelist100:
+            image = cv2.resize(image, dsize = (224, 224), interpolation = cv2.INTER_LINEAR)
             self.oxlist.append(inference_tflite.inference(image))
 
         res = [self.distance[x] for x, y in enumerate(self.oxlist) if y == 1]
         visivlity = str(max(res)) + " km"
-        print(visivlity)
+        print(visivlity)        
+        self.save_target()
         self.to_jongjin()
         time.sleep(1)
 
     def to_jongjin(self):
-        """ polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""
-        target_name = [f"target_{i+1}" for i in range(len(self.prime_x))]
-        result_dict = {key:[p_x, distance, ox_value] for key, p_x, distance, ox_value in zip(target_name, self.prime_x, self.distance, self.oxlist)}
+        """ polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""        
+        result_dict = {key:[p_x, distance, ox_value] for key, p_x, distance, ox_value in zip(self.target_name, self.prime_x, self.distance, self.oxlist)}
         print(result_dict)
 
     def aws_clicked(self):
