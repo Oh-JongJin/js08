@@ -129,9 +129,6 @@ class Js06MainWindow(Ui_MainWindow):
         self.coordinator()
         self.restoration()
         
-        self.coordinator()
-        self.restoration()
-        
         self.label_width = self.image_label.width()
         self.label_height = self.image_label.height()
 
@@ -186,8 +183,7 @@ class Js06MainWindow(Ui_MainWindow):
                 self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
                 self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
                 self.target_name.append("target_" + str(len(self.target_x)))
-                self.oxlist.append(0)
-                print(f"영상목표 위치: {event.pos().x()}, {event.pos().y()}")
+                print("영상 목표위치:", self.target_x[-1],", ", self.target_y[-1])
                 self.save_target()
 
         # 오른쪽 버튼을 누르면 최근에 추가된 영상 목표를 제거.
@@ -216,7 +212,7 @@ class Js06MainWindow(Ui_MainWindow):
             self.target_y = result.target_y.tolist()
             self.distance = result.distance.tolist()
             self.oxlist = [0 for i in range(len(self.target_x))]
-            print("영상목표를 불러옵니다.")
+            print("영상 목표를 불러옵니다.")
     
     def save_target(self):
         """영상목표 정보를 실행된 카메라에 맞춰서 저장한다."""
@@ -227,9 +223,8 @@ class Js06MainWindow(Ui_MainWindow):
             self.result["target_x"] = self.target_x
             self.result["target_y"] = self.target_y
             self.result["distance"] = self.distance
-            self.result['predict'] = self.oxlist            
-            
-            self.result.to_csv(f"{self.filepath}/{self.camera_name}.csv", mode="w", index=False)
+            self.result['predict'] = self.oxlist
+            self.result.to_csv(f"target/{self.camera_name}.csv", mode="w", index=False)
             self.coordinator()
             self.restoration()            
 
@@ -248,23 +243,25 @@ class Js06MainWindow(Ui_MainWindow):
         return int(num + 0.5)      
         
     def save_image(self, image: np.ndarray, epoch: str):
-        """영상목표들을 각 폴더에 저장한다."""
+        """ 영상 목표들을 각 폴더에 저장한다."""
         self.crop_imagelist100 = []
-
         for i in range(len(self.target_x)):
-            imagepath = os.path.join(self.filepath, "image", "100x100", f"target{i+1}")
-
-            if not(os.path.isdir(imagepath)):
-                os.makedirs(imagepath)
+            
+            if not(os.path.isdir(f"target/image/100x100/target{i+1}")):
+                os.makedirs(os.path.join(f"target/image/100x100/target{i+1}"))
+            else:
+                pass
         
-            if not(os.path.isfile(f"{imagepath}/target_{i+1}_{epoch}.jpg")):
+            if not(os.path.isfile(f"target/image/100x100/target{i+1}/target_{i+1}_{epoch}.jpg")):
                 # 모델에 넣을 이미지 추출
                 crop_img = image[self.target_y[i] - 50 : self.target_y[i] + 50 , self.target_x[i] - 50 : self.target_x[i] + 50]
                 self.crop_imagelist100.append(crop_img)
                 # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
                 b, g, r = cv2.split(crop_img)
                 # 영상 목표의 각 폴더에 크롭한 이미지 저장
-                cv2.imwrite(f"{imagepath}/target_{i+1}_{epoch}.jpg", cv2.merge([r, g, b]))
+                cv2.imwrite(f"target/image/100x100/target{i+1}/target_{i+1}_{epoch}.jpg", cv2.merge([r, g, b]))
+            else:
+                pass
 
         self.get_visiblity()
 
@@ -284,7 +281,7 @@ class Js06MainWindow(Ui_MainWindow):
 
     def to_jongjin(self):
         """ polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""        
-        result_dict = {key:[x, y, distance, ox_value] for key, x, y, distance, ox_value in zip(self.target_name, self.prime_x, self.prime_y, self.distance, self.oxlist)}
+        result_dict = {key:[p_x, distance, ox_value] for key, p_x, distance, ox_value in zip(self.target_name, self.prime_x, self.distance, self.oxlist)}
         print(result_dict)
 
     def aws_clicked(self):
