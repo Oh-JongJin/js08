@@ -48,7 +48,7 @@ def readmodel():
     return interpreter
 
 def inference(image: np.ndarray):
-    """이미지를 읽어와 모델에 돌려 결과값을 반환한다."""
+    'ndarray에 저장된 영상에대해 영상 식별을 수행한다.'
     interpreter = readmodel()
     interpreter.allocate_tensors()
     _, height, width, _ = interpreter.get_input_details()[0]['shape']
