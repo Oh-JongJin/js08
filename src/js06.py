@@ -178,7 +178,7 @@ class Js06MainWindow(Ui_MainWindow):
         if self.target_process is False:
             return
 
-        # 마우스 왼쪽 버튼을 누르면 영상 목표를 추가
+        # 마우스 왼쪽 버튼을 누르면 영상목표를 추가
         if event.buttons() == QtCore.Qt.LeftButton:
             text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리', '거리(km)')
 
@@ -188,10 +188,11 @@ class Js06MainWindow(Ui_MainWindow):
                 self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
                 self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
                 self.target_name.append("target_" + str(len(self.target_x)))
-                print(f"영상 목표 위치: {e.pos().x()}, {e.pos().y()}")
+                self.oxlist.append(0)
+                print(f"영상목표 위치: {e.pos().x()}, {e.pos().y()}")
                 self.save_target()
 
-        # 오른쪽 버튼을 누르면 최근에 추가된 영상 목표를 제거.
+        # 오른쪽 버튼을 누르면 최근에 추가된 영상목표를 제거.
         elif event.buttons() == QtCore.Qt.RightButton:
             if len(self.target_x) >= 1:
                 del self.target_name[-1]
@@ -203,7 +204,7 @@ class Js06MainWindow(Ui_MainWindow):
             else:
                 print("제거할 영상목표가 없습니다.")
 
-    # 영상 목표를 불러오기
+    # 영상목표를 불러오기
     def get_target(self):
         self.target_name = []
         self.target_x = []
@@ -229,7 +230,6 @@ class Js06MainWindow(Ui_MainWindow):
             self.result["target_y"] = self.target_y
             self.result["distance"] = self.distance
             self.result['predict'] = self.oxlist            
-            
             self.result.to_csv(f"{self.filepath}/{self.camera_name}.csv", mode="w", index=False)
             self.coordinator()
             self.restoration()            
@@ -264,7 +264,7 @@ class Js06MainWindow(Ui_MainWindow):
                 self.crop_imagelist100.append(crop_img)
                 # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
                 b, g, r = cv2.split(crop_img)
-                # 영상 목표의 각 폴더에 크롭한 이미지 저장
+                # 영상목표의 각 폴더에 크롭한 이미지 저장
                 cv2.imwrite(f"{imagepath}/target_{i+1}_{epoch}.jpg", cv2.merge([r, g, b]))
 
         self.get_visiblity()
