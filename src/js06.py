@@ -36,6 +36,11 @@ class Js06MainWindow(Ui_MainWindow):
         self.crop_imagelist100 = []
         self.aws_thread = AwsThread()
         self.target_process = False
+        self.filepath = os.path.join(os.getcwd(), "target")
+        try:
+            os.makedirs(self.filepath)
+        except OSError:
+            pass
 
     def setupUi(self, MainWindow:QtWidgets.QMainWindow):
         super().setupUi(MainWindow)
@@ -129,12 +134,6 @@ class Js06MainWindow(Ui_MainWindow):
         self.coordinator()
         self.restoration()
         
-        self.coordinator()
-        self.restoration()
-        
-        self.coordinator()
-        self.restoration()
-        
         self.label_width = self.image_label.width()
         self.label_height = self.image_label.height()
 
@@ -219,7 +218,7 @@ class Js06MainWindow(Ui_MainWindow):
             self.target_y = result.target_y.tolist()
             self.distance = result.distance.tolist()
             self.oxlist = [0 for i in range(len(self.target_x))]
-            print("영상 목표를 불러옵니다.")
+            print("영상목표를 불러옵니다.")
     
     def save_target(self):
         """영상목표 정보를 실행된 카메라에 맞춰서 저장한다."""
@@ -250,16 +249,16 @@ class Js06MainWindow(Ui_MainWindow):
         return int(num + 0.5)      
         
     def save_image(self, image: np.ndarray, epoch: str):
-        """ 영상 목표들을 각 폴더에 저장한다."""
+        """영상목표들을 각 폴더에 저장한다."""
         self.crop_imagelist100 = []
+
         for i in range(len(self.target_x)):
-            
-            if not(os.path.isdir(f"target/image/100x100/target{i+1}")):
-                os.makedirs(os.path.join(f"target/image/100x100/target{i+1}"))
-            else:
-                pass
+            imagepath = os.path.join(self.filepath, "image", "100x100", f"target{i+1}")
+
+            if not(os.path.isdir(imagepath)):
+                os.makedirs(imagepath)
         
-            if not(os.path.isfile(f"target/image/100x100/target{i+1}/target_{i+1}_{epoch}.jpg")):
+            if not(os.path.isfile(f"{imagepath}/target_{i+1}_{epoch}.jpg")):
                 # 모델에 넣을 이미지 추출
                 crop_img = image[self.target_y[i] - 50 : self.target_y[i] + 50 , self.target_x[i] - 50 : self.target_x[i] + 50]
                 self.crop_imagelist100.append(crop_img)
@@ -286,7 +285,7 @@ class Js06MainWindow(Ui_MainWindow):
 
     def to_jongjin(self):
         """ polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""        
-        result_dict = {key:[p_x, distance, ox_value] for key, p_x, distance, ox_value in zip(self.target_name, self.prime_x, self.distance, self.oxlist)}
+        result_dict = {key:[x, y, distance, ox_value] for key, x, y, distance, ox_value in zip(self.target_name, self.prime_x, self.prime_y, self.distance, self.oxlist)}
         print(result_dict)
 
     def aws_clicked(self):
