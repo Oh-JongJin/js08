@@ -190,7 +190,7 @@ class Js06MainWindow(Ui_MainWindow):
                 self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
                 self.target_name.append("target_" + str(len(self.target_x)))
                 self.oxlist.append(0)
-                print(f"영상목표 위치: {e.pos().x()}, {e.pos().y()}")
+                print(f"영상목표 위치: {event.pos().x()}, {event.pos().y()}")
                 self.save_target()
 
         # 오른쪽 버튼을 누르면 최근에 추가된 영상목표를 제거.
