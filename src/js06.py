@@ -184,6 +184,7 @@ class Js06MainWindow(Ui_MainWindow):
                 self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
                 self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
                 self.target_name.append("target_" + str(len(self.target_x)))
+                self.oxlist.append(0)
                 print("영상 목표위치:", self.target_x[-1],", ", self.target_y[-1])
                 self.save_target()
 
@@ -193,7 +194,8 @@ class Js06MainWindow(Ui_MainWindow):
                 del self.target_name[-1]
                 del self.target_x[-1]
                 del self.target_y[-1]
-                del self.distance[-1]            
+                del self.distance[-1]
+                del self.oxlist[-1]            
                 print("영상 목표를 제거했습니다.")
             else:
                 print("제거할 영상 목표가 없습니다.")
