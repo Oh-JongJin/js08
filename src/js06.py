@@ -37,6 +37,8 @@ class Js06MainWindow(Ui_MainWindow):
         self.aws_thread = AwsThread()
         self.target_process = False
         self.filepath = os.path.join(os.getcwd(), "target")
+
+        # TODO(Kyungwon): Set adequate action for the exception.
         try:
             os.makedirs(self.filepath)
         except OSError:
@@ -115,10 +117,10 @@ class Js06MainWindow(Ui_MainWindow):
         self.video_thread = VideoThread('rtsp://admin:G85^mdPzCXr2@192.168.100.115/profile2/media.smp')
         # connect its signal to the update_image slot
         self.video_thread.update_pixmap_signal.connect(self.update_image)
-        # start the thread
-        self.video_thread.start()        
+        self.video_thread.start()
         self.get_target()
 
+    # The function decorator for pyqtSlot does not work properly.
     # https://stackoverflow.com/questions/62272988/typeerror-connect-failed-between-videothread-change-pixmap-signalnumpy-ndarr
     # @QtCore.pyqtSlot(np.ndarray)
     def update_image(self, cv_img):
@@ -137,14 +139,13 @@ class Js06MainWindow(Ui_MainWindow):
         self.label_width = self.image_label.width()
         self.label_height = self.image_label.height()
 
-        # 시간 저장
+        # Record the current time
         epoch = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
 
         if epoch[-2:] == "00":
             self.save_image(rgb_image, epoch)
 
-        if self.target_x:           
-
+        if self.target_x:
             for name, x, y, dis in zip(self.target_name, self.target_x, self.target_y, self.distance):         
                 # image_y = int((y / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
                 upper_left = x - 25, y - 25
@@ -160,17 +161,15 @@ class Js06MainWindow(Ui_MainWindow):
         return QtGui.QPixmap.fromImage(p)
 
     def target_ModeOn(self):
-        
         self.target_process = True
         return self.target_process
-    
+
     def target_ModeOff(self):
-        
         self.target_process = False
         return self.target_process
-    
+
     # https://stackoverflow.com/questions/3504522/pyqt-get-pixel-position-and-value-when-mouse-click-on-the-image
-    # 마우스 컨트롤
+    # Define mouse response
     def getpos(self, event):
         if self.video_thread is None:
             return
@@ -178,12 +177,11 @@ class Js06MainWindow(Ui_MainWindow):
         if self.target_process is False:
             return
 
-        # 마우스 왼쪽 버튼을 누르면 영상목표를 추가
+        # Add a target when the left mouse button clicked.
         if event.buttons() == QtCore.Qt.LeftButton:
-            text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리', '거리(km)')
+            text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리 입력', '거리(km)')
 
             if ok:
-                
                 self.distance.append(float(text))
                 self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
                 self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
@@ -192,7 +190,7 @@ class Js06MainWindow(Ui_MainWindow):
                 print(f"영상목표 위치: {event.pos().x()}, {event.pos().y()}")
                 self.save_target()
 
-        # 오른쪽 버튼을 누르면 최근에 추가된 영상목표를 제거.
+        # Delete the recently added target when the right mouse button clicked.
         elif event.buttons() == QtCore.Qt.RightButton:
             if len(self.target_x) >= 1:
                 del self.target_name[-1]
@@ -204,7 +202,7 @@ class Js06MainWindow(Ui_MainWindow):
             else:
                 print("제거할 영상목표가 없습니다.")
 
-    # 영상목표를 불러오기
+    # Read target information from a file
     def get_target(self):
         self.target_name = []
         self.target_x = []
@@ -221,7 +219,7 @@ class Js06MainWindow(Ui_MainWindow):
             print("영상목표를 불러옵니다.")
     
     def save_target(self):
-        """영상목표 정보를 실행된 카메라에 맞춰서 저장한다."""
+        """Save the target information for each camera."""
         if self.target_x:
             col = ["target_name", "target_x", "target_y", "distance", "predict"]
             self.result = pd.DataFrame(columns=col)
@@ -234,11 +232,13 @@ class Js06MainWindow(Ui_MainWindow):
             self.coordinator()
             self.restoration()            
 
+    # TODO(Kyungwon): Receive the pixel coordinates as parameters and return the canonical coordinates.
     def coordinator(self):
         """영상목표의 좌표값을 -1~1 값으로 정규화한다."""
         self.prime_y = [ y / self.img_height for y in self.target_y]
         self.prime_x = [2 * x / self.img_width - 1 for x in self.target_x]
     
+    # TODO(Kyungwon): Receive the canonical coordinates as parameters and return the pixel coordinates.
     def restoration(self):
         """정규화한 값을 다시 복구한다."""
         self.res_x = [self.f2i((x + 1) * self.img_width / 2) for x in self.prime_x]
@@ -270,7 +270,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.get_visiblity()
 
     def get_visiblity(self):
-        """ 크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 가장 먼 거리를 출력한다."""
+        """크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 가장 먼 거리를 출력한다."""
         self.oxlist = []
         for image in self.crop_imagelist100:
             image = cv2.resize(image, dsize = (224, 224), interpolation = cv2.INTER_LINEAR)
@@ -278,13 +278,13 @@ class Js06MainWindow(Ui_MainWindow):
 
         res = [self.distance[x] for x, y in enumerate(self.oxlist) if y == 1]
         visivlity = str(max(res)) + " km"
-        print(visivlity)        
+        print(visivlity)
         self.save_target()
         self.to_jongjin()
         time.sleep(1)
 
     def to_jongjin(self):
-        """ polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""        
+        """polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""        
         result_dict = {key:[x, y, distance, ox_value] for key, x, y, distance, ox_value in zip(self.target_name, self.prime_x, self.prime_y, self.distance, self.oxlist)}
         print(result_dict)
 
