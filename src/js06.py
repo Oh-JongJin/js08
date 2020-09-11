@@ -187,7 +187,7 @@ class Js06MainWindow(Ui_MainWindow):
                 self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
                 self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
                 self.target_name.append("target_" + str(len(self.target_x)))
-                print("영상 목표위치:", self.target_x[-1],", ", self.target_y[-1])
+                print(f"영상 목표 위치: {e.pos().x()}, {e.pos().y()}")
                 self.save_target()
 
         # 오른쪽 버튼을 누르면 최근에 추가된 영상 목표를 제거.
