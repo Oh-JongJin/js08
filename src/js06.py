@@ -23,6 +23,7 @@ from video_thread import VideoThread
 from aws_thread import AwsThread
 
 from main_window import Ui_MainWindow
+import inference_tflite
 
 
 class Js06MainWindow(Ui_MainWindow):
