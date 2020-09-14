@@ -33,6 +33,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.target_x = []
         self.target_y = []
         self.distance = []
+        self.oxlist = []
         self.camera_name = ""
         self.video_thread = None
         self.crop_imagelist100 = []
