@@ -19,7 +19,6 @@ import io
 import time
 
 import numpy as np
-
 import tflite_runtime.interpreter as tflite
 
 
