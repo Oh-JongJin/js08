@@ -33,6 +33,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.target_x = []
         self.target_y = []
         self.distance = []
+        self.oxlist = []
         self.camera_name = ""
         self.video_thread = None
         self.crop_imagelist100 = []
@@ -57,6 +58,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionON.triggered.connect(self.aws_clicked)
         self.actionTarget_ON.triggered.connect(self.target_ModeOn)
         self.actionTarget_OFF.triggered.connect(self.target_ModeOff)
+        self.actionPolar.triggered.connect(self.polar_plot)
 
     def polar_plot(self):
         self.polar = polar()
