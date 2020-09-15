@@ -21,13 +21,13 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 from video_thread import VideoThread
 from aws_thread import AwsThread
+from tflite_thread import TfliteThread
 
 from main_window import Ui_MainWindow
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
-        super().__init__()
-        self.video_thread = None        
+        super().__init__()       
         self.target_x = []
         self.target_y = []
         self.distance = []
@@ -37,14 +37,16 @@ class Js06MainWindow(Ui_MainWindow):
         self.aws_thread = AwsThread()
         self.target_process = False
         self.filepath = os.path.join(os.getcwd(), "target")
+        self.tflite_thread = None
+
         try:
             os.makedirs(self.filepath)
+
         except OSError:
             pass
 
     def setupUi(self, MainWindow:QtWidgets.QMainWindow):
         super().setupUi(MainWindow)
-
         self.actionImage_File.triggered.connect(self.open_img_file_clicked)
         self.actionCamera_1.triggered.connect(self.open_cam1_clicked)
         self.actionCamera_2.triggered.connect(self.open_cam2_clicked)
@@ -53,11 +55,13 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionON.triggered.connect(self.aws_clicked)
         self.actionTarget_ON.triggered.connect(self.target_ModeOn)
         self.actionTarget_OFF.triggered.connect(self.target_ModeOff)
+        self.actionTarget_Inference.triggered.connect(self.inference_clicked)
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
         if self.video_thread is not None:
             self.video_thread.stop()
+
         event.accept()
 
     def open_img_file_clicked(self):
@@ -140,16 +144,22 @@ class Js06MainWindow(Ui_MainWindow):
         # 시간 저장
         epoch = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
 
-        if epoch[-2:] == "00":
-            self.save_image(rgb_image, epoch)
+        # if epoch[-2:] == "00":
+        #     self.save_image(rgb_image, epoch)
 
         if self.target_x:           
-
+            self.crop_image(rgb_image)
             for name, x, y, dis in zip(self.target_name, self.target_x, self.target_y, self.distance):         
                 # image_y = int((y / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
                 upper_left = x - 25, y - 25
                 lower_right = x + 25, y + 25
-                cv2.rectangle(rgb_image, upper_left, lower_right, (0, 255, 0), 6)
+
+                if self.oxlist[self.target_x.index(x)] == 0:
+                    rec_color = (255, 0, 0)
+
+                else:
+                    rec_color = (0, 255, 0)
+                cv2.rectangle(rgb_image, upper_left, lower_right, rec_color, 6)
                 text_loc = x + 30, y - 35                
                 cv2.putText(rgb_image, name[7:]+ ": " + str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                             1.5, (255, 0, 0), 2)
@@ -160,18 +170,19 @@ class Js06MainWindow(Ui_MainWindow):
         return QtGui.QPixmap.fromImage(p)
 
     def target_ModeOn(self):
-        
+        "목표 영상 설정 모드를 활성화한다."        
         self.target_process = True
         return self.target_process
     
     def target_ModeOff(self):
-        
+        "영상목표 설정 모드를 비활성화한다."
         self.target_process = False
         return self.target_process
     
     # https://stackoverflow.com/questions/3504522/pyqt-get-pixel-position-and-value-when-mouse-click-on-the-image
     # 마우스 컨트롤
     def getpos(self, event):
+        "Label에 마우스가 눌렸을 경우 실행하며, 왼쪽클릭시 영상목표를 추가하고, 우클릭시 최근에 추가된 영상목표를 제거한다."
         if self.video_thread is None:
             return
 
@@ -182,8 +193,7 @@ class Js06MainWindow(Ui_MainWindow):
         if event.buttons() == QtCore.Qt.LeftButton:
             text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리', '거리(km)')
 
-            if ok:
-                
+            if ok:                
                 self.distance.append(float(text))
                 self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
                 self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
@@ -201,16 +211,20 @@ class Js06MainWindow(Ui_MainWindow):
                 del self.distance[-1]
                 del self.oxlist[-1]            
                 print("영상목표를 제거했습니다.")
+
             else:
                 print("제거할 영상목표가 없습니다.")
 
     # 영상목표를 불러오기
     def get_target(self):
+        "영상목표들을 초기화하고 카메라 버전별로 저장된 영상목표들을 불러온다."
         self.target_name = []
         self.target_x = []
         self.target_y = []
-        self.distance = []        
+        self.distance = []
+        self.oxlist = []       
 
+        # 저장했던 영상목표를 불러온다.
         if os.path.isfile(f"target/{self.camera_name}.csv") == True:
             result = pd.read_csv(f"target/{self.camera_name}.csv")
             self.target_name = result.target_name.tolist()
@@ -266,25 +280,48 @@ class Js06MainWindow(Ui_MainWindow):
                 b, g, r = cv2.split(crop_img)
                 # 영상목표의 각 폴더에 크롭한 이미지 저장
                 cv2.imwrite(f"{imagepath}/target_{i+1}_{epoch}.jpg", cv2.merge([r, g, b]))
+    
+    def crop_image(self, image:np.ndarray):
+        """영상목표를 100x100으로 잘라내 리스트로 저장하고, 리스트를 tflite_thread에 업데이트 한다."""                
+        new_crop_image = []
+        
+        # 영상목표를 100x100으로 잘라 리스트에 저장한다.
+        for i in range(len(self.target_x)):
+            crop_img = image[self.target_y[i] - 50 : self.target_y[i] + 50 , self.target_x[i] - 50 : self.target_x[i] + 50]
+            new_crop_image.append(crop_img)
 
-        self.get_visiblity()
+        self.crop_imagelist100 = new_crop_image
 
-    def get_visiblity(self):
-        """ 크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 가장 먼 거리를 출력한다."""
-        self.oxlist = []
-        for image in self.crop_imagelist100:
-            image = cv2.resize(image, dsize = (224, 224), interpolation = cv2.INTER_LINEAR)
-            self.oxlist.append(inference_tflite.inference(image))
+        # tflite_thread가 작동시 tflite_thread에 영상목표 리스트를 업데이트한다.
+        if self.actionTarget_Inference.isChecked():
+            self.tflite_thread.crop_imagelist100 = new_crop_image
 
-        res = [self.distance[x] for x, y in enumerate(self.oxlist) if y == 1]
+    def inference_clicked(self):
+        """모델 쓰레드를 제어한다."""
+        if self.actionTarget_Inference.isChecked():
+            if self.tflite_thread is None:                
+                self.tflite_thread = TfliteThread(self.crop_imagelist100)
+                print("모델적용을 시작합니다.")
+                self.tflite_thread.run_flag = True           
+                self.tflite_thread.update_oxlist_signal.connect(self.get_visiblity)
+                self.tflite_thread.start()
+        else:
+            if self.tflite_thread.run_flag:
+                print("모델적용을 중지합니다.")
+                self.tflite_thread.stop()
+                self.tflite_thread = None
+
+    def get_visiblity(self, oxlist):
+        """크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 가장 먼 거리를 출력한다."""
+        res = [self.distance[x] for x, y in enumerate(oxlist) if y == 1]
+        print(oxlist)
         visivlity = str(max(res)) + " km"
-        print(visivlity)        
-        self.save_target()
-        self.to_jongjin()
-        time.sleep(1)
+        print(visivlity)
+        self.oxlist = oxlist
+        return self.oxlist
 
     def to_jongjin(self):
-        """ polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""        
+        """polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""        
         result_dict = {key:[x, y, distance, ox_value] for key, x, y, distance, ox_value in zip(self.target_name, self.prime_x, self.prime_y, self.distance, self.oxlist)}
         print(result_dict)
 

@@ -79,6 +79,9 @@ class Ui_MainWindow(object):
         self.actionTarget_ON.setObjectName("actionTarget_ON")
         self.actionTarget_OFF = QtWidgets.QAction(MainWindow)
         self.actionTarget_OFF.setObjectName("actionTarget_OFF")
+        self.actionTarget_Inference = QtWidgets.QAction(MainWindow)
+        self.actionTarget_Inference.setCheckable(True)
+        self.actionTarget_Inference.setObjectName("actionTarget_Inference")
         self.menuSource.addAction(self.actionImage_File)
         self.menuSource.addAction(self.actionCamera_1)
         self.menuSource.addAction(self.actionCamera_2)
@@ -90,6 +93,7 @@ class Ui_MainWindow(object):
         self.menuSensor.addAction(self.menuAWS.menuAction())
         self.menuMode.addAction(self.actionTarget_ON)
         self.menuMode.addAction(self.actionTarget_OFF)
+        self.menuMode.addAction(self.actionTarget_Inference)
         self.menubar.addAction(self.menuSource.menuAction())
         self.menubar.addAction(self.menuSensor.menuAction())
         self.menubar.addAction(self.menuMode.menuAction())
@@ -120,6 +124,7 @@ class Ui_MainWindow(object):
         self.actionOFF.setText(_translate("MainWindow", "OFF"))
         self.actionTarget_ON.setText(_translate("MainWindow", "Target_ON"))
         self.actionTarget_OFF.setText(_translate("MainWindow", "Target_OFF"))
+        self.actionTarget_Inference.setText(_translate("MainWindow", "Target_Inference"))
 
 
 if __name__ == "__main__":

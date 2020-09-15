@@ -139,6 +139,7 @@
     </property>
     <addaction name="actionTarget_ON"/>
     <addaction name="actionTarget_OFF"/>
+    <addaction name="actionTarget_Inference"/>
    </widget>
    <addaction name="menuSource"/>
    <addaction name="menuSensor"/>
@@ -206,6 +207,14 @@
   <action name="actionTarget_OFF">
    <property name="text">
     <string>Target_OFF</string>
+   </property>
+  </action>
+  <action name="actionTarget_Inference">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Target_Inference</string>
    </property>
   </action>
  </widget>
