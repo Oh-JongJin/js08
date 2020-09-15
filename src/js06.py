@@ -161,7 +161,7 @@ class Js06MainWindow(Ui_MainWindow):
                     rec_color = (0, 255, 0)
                 cv2.rectangle(rgb_image, upper_left, lower_right, rec_color, 6)
                 text_loc = x + 30, y - 35                
-                cv2.putText(rgb_image, name[7:]+ ": " + str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
+                cv2.putText(rgb_image, name[7:]+ ": " + str(dis) + "mile", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                             1.5, (255, 0, 0), 2)
         
         bytes_per_line = ch * self.img_width
@@ -191,7 +191,7 @@ class Js06MainWindow(Ui_MainWindow):
 
         # 마우스 왼쪽 버튼을 누르면 영상목표를 추가
         if event.buttons() == QtCore.Qt.LeftButton:
-            text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리', '거리(km)')
+            text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리', '거리(mile)')
 
             if ok:                
                 self.distance.append(float(text))
@@ -306,16 +306,16 @@ class Js06MainWindow(Ui_MainWindow):
                 self.tflite_thread.update_oxlist_signal.connect(self.get_visiblity)
                 self.tflite_thread.start()
         else:
-            if self.tflite_thread.run_flag:
-                print("모델적용을 중지합니다.")
+            if self.tflite_thread.run_flag:                
                 self.tflite_thread.stop()
                 self.tflite_thread = None
+                print("모델적용을 중지합니다.")
 
     def get_visiblity(self, oxlist):
         """크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 가장 먼 거리를 출력한다."""
         res = [self.distance[x] for x, y in enumerate(oxlist) if y == 1]
         print(oxlist)
-        visivlity = str(max(res)) + " km"
+        visivlity = str(max(res)) + " mile"
         print(visivlity)
         self.oxlist = oxlist
         return self.oxlist
