@@ -133,6 +133,7 @@ class Js06MainWindow(Ui_MainWindow):
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+        rgb_image_cp = rgb_image.copy()
         self.img_height, self.img_width, ch = rgb_image.shape
         
         self.coordinator()
@@ -141,14 +142,15 @@ class Js06MainWindow(Ui_MainWindow):
         self.label_width = self.image_label.width()
         self.label_height = self.image_label.height()
 
+        self.crop_image(rgb_image)
         # 시간 저장
         epoch = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
 
-        # if epoch[-2:] == "00":
-        #     self.save_image(rgb_image, epoch)
+        if epoch[-2:] == "00":
+            self.save_image(rgb_image, epoch)
 
-        if self.target_x:           
-            self.crop_image(rgb_image)
+        if self.target_x:
+            
             for name, x, y, dis in zip(self.target_name, self.target_x, self.target_y, self.distance):         
                 # image_y = int((y / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
                 upper_left = x - 25, y - 25
@@ -159,13 +161,13 @@ class Js06MainWindow(Ui_MainWindow):
 
                 else:
                     rec_color = (0, 255, 0)
-                cv2.rectangle(rgb_image, upper_left, lower_right, rec_color, 6)
+                cv2.rectangle(rgb_image_cp, upper_left, lower_right, rec_color, 6)
                 text_loc = x + 30, y - 35                
-                cv2.putText(rgb_image, name[7:]+ ": " + str(dis) + "mile", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
+                cv2.putText(rgb_image_cp, name[7:]+ ": " + str(dis) + "mile", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                             1.5, (255, 0, 0), 2)
         
         bytes_per_line = ch * self.img_width
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.img_width, self.img_height, bytes_per_line, QtGui.QImage.Format_RGB888)
+        convert_to_Qt_format = QtGui.QImage(rgb_image_cp.data, self.img_width, self.img_height, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
         return QtGui.QPixmap.fromImage(p)
 
@@ -264,7 +266,6 @@ class Js06MainWindow(Ui_MainWindow):
         
     def save_image(self, image: np.ndarray, epoch: str):
         """영상목표들을 각 폴더에 저장한다."""
-        self.crop_imagelist100 = []
 
         for i in range(len(self.target_x)):
             imagepath = os.path.join(self.filepath, "image", "100x100", f"target{i+1}")
@@ -274,17 +275,15 @@ class Js06MainWindow(Ui_MainWindow):
         
             if not(os.path.isfile(f"{imagepath}/target_{i+1}_{epoch}.jpg")):
                 # 모델에 넣을 이미지 추출
-                crop_img = image[self.target_y[i] - 50 : self.target_y[i] + 50 , self.target_x[i] - 50 : self.target_x[i] + 50]
-                self.crop_imagelist100.append(crop_img)
+                
                 # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
-                b, g, r = cv2.split(crop_img)
+                b, g, r = cv2.split(self.crop_imagelist100[i])
                 # 영상목표의 각 폴더에 크롭한 이미지 저장
                 cv2.imwrite(f"{imagepath}/target_{i+1}_{epoch}.jpg", cv2.merge([r, g, b]))
     
     def crop_image(self, image:np.ndarray):
-        """영상목표를 100x100으로 잘라내 리스트로 저장하고, 리스트를 tflite_thread에 업데이트 한다."""                
-        new_crop_image = []
-        
+        """영상목표를 100x100으로 잘라내 리스트로 저장하고, 리스트를 tflite_thread에 업데이트 한다."""
+        new_crop_image = []     
         # 영상목표를 100x100으로 잘라 리스트에 저장한다.
         for i in range(len(self.target_x)):
             crop_img = image[self.target_y[i] - 50 : self.target_y[i] + 50 , self.target_x[i] - 50 : self.target_x[i] + 50]

@@ -56,8 +56,9 @@ class TfliteThread(QtCore.QThread):
     def run(self):
         """영상목표를 모델에 넣어 결과를 전송한다."""        
         while self.run_flag == True:
+            epoch = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
             if self.crop_imagelist100:                
-                for image in self.crop_imagelist100:                    
+                for index, image in enumerate(self.crop_imagelist100): 
                     image = cv2.resize(image, dsize = (224, 224), interpolation = cv2.INTER_LINEAR)                    
                     _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
                     label_id, prob = self.classify_image(self.interpreter, image)
