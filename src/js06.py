@@ -18,11 +18,12 @@ import pandas as pd
 
 import inference
 from PyQt5 import QtWidgets, QtGui, QtCore
+
 from video_thread import VideoThread
 from aws_thread import AwsThread
-from polar_window import polar
-from main_window import Ui_MainWindow
+from polar_window import TargetPlotWindow
 
+from main_window import Ui_MainWindow
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
@@ -52,15 +53,19 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionCamera_1.triggered.connect(self.open_cam1_clicked)
         self.actionCamera_2.triggered.connect(self.open_cam2_clicked)
         self.actionCamera_3.triggered.connect(self.open_cam3_clicked)
-        self.image_label.mousePressEvent = self.getpos
         self.actionON.triggered.connect(self.aws_clicked)
         self.actionTarget_ON.triggered.connect(self.target_ModeOn)
         self.actionTarget_OFF.triggered.connect(self.target_ModeOff)
         self.actionPolar_Plot.triggered.connect(self.polar_plot)
 
+        self.image_label.mousePressEvent = self.getpos
+
     def polar_plot(self):
-        self.polar = polar()
-        self.polar.run()
+        TargetPlot = QtWidgets.QDialog()
+        ui = TargetPlotWindow()
+        ui.setupUi(TargetPlot)
+        TargetPlot.show()
+        TargetPlot.exec_()
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
