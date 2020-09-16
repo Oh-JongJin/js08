@@ -10,20 +10,18 @@
 # Reference: https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1
 
 import cv2
-import inference_tflite
 import os
 import sys
 import time
-
 import numpy as np
 import pandas as pd
-from PyQt5 import QtWidgets, QtGui, QtCore
 
+import inference
+from PyQt5 import QtWidgets, QtGui, QtCore
 from video_thread import VideoThread
 from aws_thread import AwsThread
-
+from polar_window import polar
 from main_window import Ui_MainWindow
-import inference_tflite
 
 
 class Js06MainWindow(Ui_MainWindow):
@@ -58,7 +56,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionON.triggered.connect(self.aws_clicked)
         self.actionTarget_ON.triggered.connect(self.target_ModeOn)
         self.actionTarget_OFF.triggered.connect(self.target_ModeOff)
-        self.actionPolar.triggered.connect(self.polar_plot)
+        self.actionPolar_Plot.triggered.connect(self.polar_plot)
 
     def polar_plot(self):
         self.polar = polar()
