@@ -76,6 +76,7 @@ class polar(QtWidgets.QWidget):
         self.canvas.show()
 
     # Press 'F5' key, refresh Polar Plot Window.
+    # TODO(Jongjin): Refreshing on Full Screen and reducing size of Screen will leave a lingering image.
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_F5:
             plt.close()
