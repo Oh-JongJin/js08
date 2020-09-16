@@ -27,10 +27,14 @@ from main_window import Ui_MainWindow
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
-        super().__init__()       
+        super().__init__()
+        self.target = []
+        self.prime_x = []
+        self.prime_y = []
         self.target_x = []
         self.target_y = []
         self.distance = []
+        self.oxlist = []
         self.camera_name = ""
         self.video_thread = None
         self.crop_imagelist100 = []
@@ -87,13 +91,13 @@ class Js06MainWindow(Ui_MainWindow):
             self.video_thread.stop()
 
         self.camera_name = "webcam"
-        self.get_target()
         # create the video capture thread
         self.video_thread = VideoThread(0)
         # connect its signal to the update_image slot
         self.video_thread.update_pixmap_signal.connect(self.update_image)
         # start the thread
-        self.video_thread.start()        
+        self.video_thread.start()
+        self.get_target()
 
     def open_cam2_clicked(self):
         """Get video from Hanwha PNM-9030V"""
@@ -102,15 +106,13 @@ class Js06MainWindow(Ui_MainWindow):
             self.video_thread.stop()            
 
         self.camera_name = "PNM-9030V"
-        self.get_target()
         # create the video capture thread
         self.video_thread = VideoThread('rtsp://admin:sijung5520@192.168.100.121/profile2/media.smp')
         # connect its signal to the update_image slot
         self.video_thread.update_pixmap_signal.connect(self.update_image)
         # start the thread
         self.video_thread.start()
-
-        
+        self.get_target()
 
     def open_cam3_clicked(self):
         """Get video from Hanwha XNO-8080R"""
@@ -138,11 +140,10 @@ class Js06MainWindow(Ui_MainWindow):
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         rgb_image_cp = rgb_image.copy()
-        self.img_height, self.img_width, ch = rgb_image.shape
+        self.img_height, self.img_width, ch = rgb_image.shape        
         
-        self.coordinator()
         self.restoration()
-        
+
         self.label_width = self.image_label.width()
         self.label_height = self.image_label.height()
 
@@ -155,7 +156,7 @@ class Js06MainWindow(Ui_MainWindow):
 
         if self.target_x:
             
-            for name, x, y, dis in zip(self.target_name, self.target_x, self.target_y, self.distance):         
+            for name, x, y, dis in zip(self.target, self.target_x, self.target_y, self.distance):         
                 # image_y = int((y / (self.label_height - (self.label_height - self.img_height))) * self.img_height)
                 upper_left = x - 25, y - 25
                 lower_right = x + 25, y + 25
@@ -167,7 +168,7 @@ class Js06MainWindow(Ui_MainWindow):
                     rec_color = (0, 255, 0)
                 cv2.rectangle(rgb_image_cp, upper_left, lower_right, rec_color, 6)
                 text_loc = x + 30, y - 35                
-                cv2.putText(rgb_image_cp, name[7:]+ ": " + str(dis) + "mile", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
+                cv2.putText(rgb_image_cp, str(name) + ": " + str(dis) + " mi", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                             1.5, (255, 0, 0), 2)
         
         bytes_per_line = ch * self.img_width
@@ -177,7 +178,7 @@ class Js06MainWindow(Ui_MainWindow):
 
     def target_Mode(self):
         """목표 영상 수정 모드를 설정한다."""
-        if self.target_process:            
+        if self.target_process:
             self.target_process = False
             return self.target_process
         
@@ -187,12 +188,13 @@ class Js06MainWindow(Ui_MainWindow):
             self.tflite_thread.stop()
             self.tflite_thread = None
             print("모델적용을 중지합니다.")
+            self.save_target()
             return self.target_process
     
     # https://stackoverflow.com/questions/3504522/pyqt-get-pixel-position-and-value-when-mouse-click-on-the-image
     # 마우스 컨트롤
     def getpos(self, event):
-        "Label에 마우스가 눌렸을 경우 실행하며, 왼쪽클릭시 영상목표를 추가하고, 우클릭시 최근에 추가된 영상목표를 제거한다."        
+        """Label에 마우스가 눌렸을 경우 실행하며, 왼쪽클릭시 영상목표를 추가하고, 우클릭시 최근에 추가된 영상목표를 제거한다."""
         if self.video_thread is None:
             return
 
@@ -201,25 +203,27 @@ class Js06MainWindow(Ui_MainWindow):
 
         # 마우스 왼쪽 버튼을 누르면 영상목표를 추가
         if event.buttons() == QtCore.Qt.LeftButton:
-            text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리', '거리(mile)')
+            text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리', '거리(mi)')
 
             if ok:                
-                self.distance.append(float(text))
+                self.target.append(str(len(self.target_x)))
                 self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
-                self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
-                self.target_name.append("target_" + str(len(self.target_x)))
+                self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))                
+                self.distance.append(float(text))
                 self.oxlist.append(0)
-                print(f"영상목표 위치: {event.pos().x()}, {event.pos().y()}")
+                print(f"영상목표 위치: {self.target_x[-1]}, {self.target_y[-1]}")
+                self.coordinator()
                 self.save_target()
 
         # 오른쪽 버튼을 누르면 최근에 추가된 영상목표를 제거.
         elif event.buttons() == QtCore.Qt.RightButton:
-            if len(self.target_x) >= 1:
-                del self.target_name[-1]
-                del self.target_x[-1]
-                del self.target_y[-1]
+            if len(self.prime_x) >= 1:
+                del self.target[-1]
+                del self.prime_x[-1]
+                del self.prime_y[-1]
                 del self.distance[-1]
-                del self.oxlist[-1]            
+                del self.oxlist[-1]                
+                self.save_target()            
                 print("영상목표를 제거했습니다.")
 
             else:
@@ -227,46 +231,38 @@ class Js06MainWindow(Ui_MainWindow):
 
     # 영상목표를 불러오기
     def get_target(self):
-        "영상목표들을 초기화하고 카메라 버전별로 저장된 영상목표들을 불러온다."
-        self.target_name = []
-        self.target_x = []
-        self.target_y = []
-        self.distance = []
-        self.oxlist = []       
-
+        """영상목표들을 초기화하고 카메라 버전별로 저장된 영상목표들을 불러온다."""
         # 저장했던 영상목표를 불러온다.
         if os.path.isfile(f"target/{self.camera_name}.csv") == True:
             result = pd.read_csv(f"target/{self.camera_name}.csv")
-            self.target_name = result.target_name.tolist()
-            self.target_x = result.target_x.tolist()
-            self.target_y = result.target_y.tolist()
+            self.target = result.target.tolist()
+            self.prime_x = result.x.tolist()
+            self.prime_y = result.y.tolist()
             self.distance = result.distance.tolist()
-            self.oxlist = [0 for i in range(len(self.target_x))]
+            self.oxlist = [0 for i in range(len(self.prime_x))]
             print("영상목표를 불러옵니다.")
     
     def save_target(self):
         """영상목표 정보를 실행된 카메라에 맞춰서 저장한다."""
-        if self.target_x:
-            col = ["target_name", "target_x", "target_y", "distance", "predict"]
+        if self.prime_x:
+            col = ["target", "x", "y", "distance", "discernment"]
             self.result = pd.DataFrame(columns=col)
-            self.result["target_name"] = self.target_name
-            self.result["target_x"] = self.target_x
-            self.result["target_y"] = self.target_y
+            self.result["target"] = self.target
+            self.result["x"] = self.prime_x
+            self.result["y"] = self.prime_y
             self.result["distance"] = self.distance
-            self.result['predict'] = self.oxlist            
+            self.result['discernment'] = self.oxlist            
             self.result.to_csv(f"{self.filepath}/{self.camera_name}.csv", mode="w", index=False)
-            self.coordinator()
-            self.restoration()            
-
+                        
     def coordinator(self):
-        """영상목표의 좌표값을 -1~1 값으로 정규화한다."""
+        """영상목표의 좌표값을 -1~1 값으로 정규화한다."""        
         self.prime_y = [ y / self.img_height for y in self.target_y]
         self.prime_x = [2 * x / self.img_width - 1 for x in self.target_x]
     
     def restoration(self):
         """정규화한 값을 다시 복구한다."""
-        self.res_x = [self.f2i((x + 1) * self.img_width / 2) for x in self.prime_x]
-        self.res_y = [self.f2i(y * self.img_height) for y in self.prime_y]
+        self.target_x = [self.f2i((x + 1) * self.img_width / 2) for x in self.prime_x]
+        self.target_y = [self.f2i(y * self.img_height) for y in self.prime_y]
     
     def f2i(self, num: float):
         """float형 숫자를 0.5를 더하고 정수형으로 바꿔준다."""
@@ -274,7 +270,6 @@ class Js06MainWindow(Ui_MainWindow):
         
     def save_image(self, image: np.ndarray, epoch: str):
         """영상목표들을 각 폴더에 저장한다."""
-
         for i in range(len(self.target_x)):
             imagepath = os.path.join(self.filepath, "image", "100x100", f"target{i+1}")
 
@@ -308,7 +303,7 @@ class Js06MainWindow(Ui_MainWindow):
         if self.actionInference.isChecked():
             self.actionEdit_Target.setChecked(False)
             self.target_process = False
-            
+
             if self.tflite_thread is None:                
                 self.tflite_thread = TfliteThread(self.crop_imagelist100)
                 print("모델적용을 시작합니다.")
@@ -325,19 +320,18 @@ class Js06MainWindow(Ui_MainWindow):
         """크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 가장 먼 거리를 출력한다."""
         res = [self.distance[x] for x, y in enumerate(oxlist) if y == 1]
         print(oxlist)
-        visivlity = str(max(res)) + " mile"
+        visivlity = str(max(res)) + " mi"
         print(visivlity)
         self.oxlist = oxlist
         return self.oxlist
 
     def to_jongjin(self):
         """polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""        
-        result_dict = {key:[x, y, distance, ox_value] for key, x, y, distance, ox_value in zip(self.target_name, self.prime_x, self.prime_y, self.distance, self.oxlist)}
+        result_dict = {key:[x, y, distance, ox_value] for key, x, y, distance, ox_value in zip(self.target, self.prime_x, self.prime_y, self.distance, self.oxlist)}
         print(result_dict)
 
     def aws_clicked(self):
         """Start saving AWS sensor value at InfluxDB"""
-
         if self.actionON.isChecked():   # True
             if not self.aws_thread.run_flag:
                 print("AWS Thread Start.")
