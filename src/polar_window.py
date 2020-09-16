@@ -42,7 +42,7 @@ class polar(QMainWindow):
         self.ax.set_theta_zero_location("N")
         self.ax.set_theta_direction(-1)
 
-        rlab = plt.ylabel("(km)")
+        rlab = plt.ylabel("(mi)")
         rlab.set_position((2, 0.2))
         rlab.set_rotation(45)
 
@@ -53,8 +53,4 @@ class polar(QMainWindow):
         self.lay = QHBoxLayout()
         self.setLayout(self.lay)
         self.lay.addWidget(self.canvas)
-
-        self.cb = QComboBox()
-        self.cb.addItem("Hi")
-        self.lay.addWidget(self.cb)
         self.canvas.show()
