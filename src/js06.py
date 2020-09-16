@@ -27,7 +27,6 @@ from main_window import Ui_MainWindow
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
         super().__init__()
-        self.video_thread = None
         self.target_x = []
         self.target_y = []
         self.distance = []
@@ -35,7 +34,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.camera_name = ""
         self.video_thread = None
         self.crop_imagelist100 = []
-        self.aws_thread = AwsThread()
+        self.aws_thread = None
         self.target_process = False
         self.filepath = os.path.join(os.getcwd(), "target")
 
@@ -60,7 +59,7 @@ class Js06MainWindow(Ui_MainWindow):
 
     def polar_plot(self):
         self.polar = polar()
-        self.polar.run()
+        self.polar.show()
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
@@ -284,7 +283,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.oxlist = []
         for image in self.crop_imagelist100:
             image = cv2.resize(image, dsize=(224, 224), interpolation=cv2.INTER_LINEAR)
-            self.oxlist.append(inference_tflite.inference(image))
+            self.oxlist.append(inference.inference(image))
 
         res = [self.distance[x] for x, y in enumerate(self.oxlist) if y == 1]
         visivlity = str(max(res)) + " km"
@@ -301,7 +300,7 @@ class Js06MainWindow(Ui_MainWindow):
 
     def aws_clicked(self):
         """Start saving AWS sensor value at InfluxDB"""
-
+        self.aws_thread = AwsThread()
         if self.actionON.isChecked():  # True
             if not self.aws_thread.run_flag:
                 print("AWS Thread Start.")
