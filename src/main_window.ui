@@ -123,23 +123,14 @@
     <property name="title">
      <string>Sensor</string>
     </property>
-    <widget class="QMenu" name="menuAWS">
-     <property name="title">
-      <string>AWS</string>
-     </property>
-     <addaction name="separator"/>
-     <addaction name="actionON"/>
-     <addaction name="actionOFF"/>
-    </widget>
-    <addaction name="menuAWS"/>
+    <addaction name="actionAWS"/>
    </widget>
    <widget class="QMenu" name="menuMode">
     <property name="title">
      <string>Mode</string>
     </property>
-    <addaction name="actionTarget_ON"/>
-    <addaction name="actionTarget_OFF"/>
-    <addaction name="actionTarget_Inference"/>
+    <addaction name="actionEdit_Target"/>
+    <addaction name="actionInference"/>
    </widget>
    <addaction name="menuSource"/>
    <addaction name="menuSensor"/>
@@ -148,7 +139,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionImage_File">
    <property name="text">
-    <string>Image File</string>
+    <string>Image</string>
    </property>
    <property name="statusTip">
     <string>Open an image file</string>
@@ -156,7 +147,7 @@
   </action>
   <action name="actionCamera_1">
    <property name="text">
-    <string>Camera 1</string>
+    <string>webcam</string>
    </property>
    <property name="statusTip">
     <string>Get video from webcam</string>
@@ -164,7 +155,7 @@
   </action>
   <action name="actionCamera_2">
    <property name="text">
-    <string>Camera 2</string>
+    <string>Hanwha PNM-9030V</string>
    </property>
    <property name="statusTip">
     <string>Get video from Hanwha PNM-9030V</string>
@@ -183,7 +174,7 @@
   </action>
   <action name="actionCamera_3">
    <property name="text">
-    <string>Camera 3</string>
+    <string>Hanwha XNO-8080R</string>
    </property>
    <property name="statusTip">
     <string>Get video from Hanwha XNO-8080R</string>
@@ -199,9 +190,15 @@
     <string>OFF</string>
    </property>
   </action>
-  <action name="actionTarget_ON">
+  <action name="actionEdit_Target">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Target_ON</string>
+    <string>Edit Target</string>
+   </property>
+   <property name="statusTip">
+    <string>Add and delete targets</string>
    </property>
   </action>
   <action name="actionTarget_OFF">
@@ -209,12 +206,31 @@
     <string>Target_OFF</string>
    </property>
   </action>
-  <action name="actionTarget_Inference">
+  <action name="actionInference">
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Target_Inference</string>
+    <string>Inference</string>
+   </property>
+   <property name="statusTip">
+    <string>Infer targets using models</string>
+   </property>
+  </action>
+  <action name="actionAWS">
+   <property name="text">
+    <string>AWS</string>
+   </property>
+   <property name="statusTip">
+    <string>Get value from AWS</string>
+   </property>
+  </action>
+  <action name="actionTEST">
+   <property name="text">
+    <string>TEST</string>
    </property>
   </action>
  </widget>

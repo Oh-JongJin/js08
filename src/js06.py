@@ -52,10 +52,12 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionCamera_2.triggered.connect(self.open_cam2_clicked)
         self.actionCamera_3.triggered.connect(self.open_cam3_clicked)
         self.image_label.mousePressEvent = self.getpos  
-        self.actionON.triggered.connect(self.aws_clicked)
-        self.actionTarget_ON.triggered.connect(self.target_ModeOn)
-        self.actionTarget_OFF.triggered.connect(self.target_ModeOff)
-        self.actionTarget_Inference.triggered.connect(self.inference_clicked)
+        self.actionAWS.triggered.connect(self.aws_clicked)
+        self.actionEdit_Target.triggered.connect(self.target_Mode)
+        self.actionInference.triggered.connect(self.inference_clicked)
+        if self.actionInference.isChecked(): 
+            self.inference_clicked()
+        
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
@@ -107,6 +109,8 @@ class Js06MainWindow(Ui_MainWindow):
         self.video_thread.update_pixmap_signal.connect(self.update_image)
         # start the thread
         self.video_thread.start()
+
+        
 
     def open_cam3_clicked(self):
         """Get video from Hanwha XNO-8080R"""
@@ -171,20 +175,24 @@ class Js06MainWindow(Ui_MainWindow):
         p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
         return QtGui.QPixmap.fromImage(p)
 
-    def target_ModeOn(self):
-        "목표 영상 설정 모드를 활성화한다."        
-        self.target_process = True
-        return self.target_process
-    
-    def target_ModeOff(self):
-        "영상목표 설정 모드를 비활성화한다."
-        self.target_process = False
-        return self.target_process
+    def target_Mode(self):
+        """목표 영상 수정 모드를 설정한다."""
+        if self.target_process:            
+            self.target_process = False
+            return self.target_process
+        
+        else:
+            self.target_process = True
+            self.actionInference.setChecked(False)
+            self.tflite_thread.stop()
+            self.tflite_thread = None
+            print("모델적용을 중지합니다.")
+            return self.target_process
     
     # https://stackoverflow.com/questions/3504522/pyqt-get-pixel-position-and-value-when-mouse-click-on-the-image
     # 마우스 컨트롤
     def getpos(self, event):
-        "Label에 마우스가 눌렸을 경우 실행하며, 왼쪽클릭시 영상목표를 추가하고, 우클릭시 최근에 추가된 영상목표를 제거한다."
+        "Label에 마우스가 눌렸을 경우 실행하며, 왼쪽클릭시 영상목표를 추가하고, 우클릭시 최근에 추가된 영상목표를 제거한다."        
         if self.video_thread is None:
             return
 
@@ -292,12 +300,15 @@ class Js06MainWindow(Ui_MainWindow):
         self.crop_imagelist100 = new_crop_image
 
         # tflite_thread가 작동시 tflite_thread에 영상목표 리스트를 업데이트한다.
-        if self.actionTarget_Inference.isChecked():
+        if self.actionInference.isChecked() and self.tflite_thread is not None:
             self.tflite_thread.crop_imagelist100 = new_crop_image
 
     def inference_clicked(self):
         """모델 쓰레드를 제어한다."""
-        if self.actionTarget_Inference.isChecked():
+        if self.actionInference.isChecked():
+            self.actionEdit_Target.setChecked(False)
+            self.target_process = False
+            
             if self.tflite_thread is None:                
                 self.tflite_thread = TfliteThread(self.crop_imagelist100)
                 print("모델적용을 시작합니다.")
@@ -305,7 +316,7 @@ class Js06MainWindow(Ui_MainWindow):
                 self.tflite_thread.update_oxlist_signal.connect(self.get_visiblity)
                 self.tflite_thread.start()
         else:
-            if self.tflite_thread.run_flag:                
+            if self.tflite_thread.run_flag:
                 self.tflite_thread.stop()
                 self.tflite_thread = None
                 print("모델적용을 중지합니다.")
