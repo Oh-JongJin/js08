@@ -6,6 +6,7 @@ import struct
 import time
 
 from influxdb import InfluxDBClient
+from PyQt5 import QtWidgets, QtGui, QtCore
 
 
 class AwsThread(QtCore.QThread):
