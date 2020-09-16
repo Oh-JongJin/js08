@@ -289,7 +289,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.oxlist = []
         for image in self.crop_imagelist100:
             image = cv2.resize(image, dsize=(224, 224), interpolation=cv2.INTER_LINEAR)
-            self.oxlist.append(inference_tflite.inference(image))
+            self.oxlist.append(inference.inference(image))
 
         res = [self.distance[x] for x, y in enumerate(self.oxlist) if y == 1]
         visivlity = str(max(res)) + " km"

@@ -24,15 +24,37 @@ class MplCanvas(FigureCanvasQTAgg):
 
 
 class TargetPlotWindow(Ui_TargetPlot):
-    # def __init__(self):
-    #     super().__init__()
+    def __init__(self):
+        super().__init__()
+
+        # angle and distance of targets
+        self.angle = None
+        self.distance = None
+
+        # FigureCanvasQTAgg to plot the target
+        self.canvas = None
+
+        # a timer to trigger the redraw
+        self.timer = None
+        
+        # Reference to the plotted targets
+        self._plot_ref = None
 
     def setupUi(self, TargetPlot: QtWidgets.QDialog):
         super().setupUi(TargetPlot)
 
-        pi = np.pi
+        pi = np.pi # pylint: disable=invalid-name,locally-disabled
         
         self.canvas = MplCanvas(TargetPlot, width=5, height=4, dpi=100)
+        self.read_target()
+
+        self.canvas.axes.set_facecolor('skyblue')
+        self.canvas.axes.set_thetamin(-90)
+        self.canvas.axes.set_thetamax(90)
+        self.canvas.axes.set_xticks([-pi / 2, -pi / 6, -pi / 3, 0, pi / 6, pi / 3, pi / 2])
+        self.canvas.axes.set_theta_zero_location("N")
+        self.canvas.axes.set_theta_direction(-1)
+
         self.update_plot()
         
         # plot.show()
@@ -40,7 +62,7 @@ class TargetPlotWindow(Ui_TargetPlot):
         # rlab.set_position((2, 0.2))
         # rlab.set_rotation(45)
 
-        layout = QtWidgets.QVBoxLayout() 
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.canvas)
         TargetPlot.setLayout(layout)
 
@@ -56,36 +78,32 @@ class TargetPlotWindow(Ui_TargetPlot):
         self.timer.timeout.connect(self.update_plot)
         self.timer.start()
 
+    def read_target(self):
+        pi = np.pi # pylint: disable=invalid-name,locally-disabled
+
+        csv = pd.read_csv('target/PNM-9030V.csv',
+                          header=0, dtype={'target_x': float, 'target_y': float})
+
+        self.angle = csv.target_x.values
+        self.angle[:] = self.angle[:] * 1920 / 6096
+        self.angle[:] = self.angle[:] * 180 / 1920
+        self.angle[:] = pi * self.angle[:] / 180 - pi / 2
+
+        self.distance = csv.distance.values
+
     def update_plot(self):
-        pi = np.pi
+        pi = np.pi # pylint: disable=invalid-name,locally-disabled
 
-        csv = pd.read_csv('target/PNM-9030V.csv', names=['target_name', 'target_x', 'target_y', 'distance', 'predict'])
+        self.read_target()
 
-        angle = csv['target_x']
-        angle_list = angle.values.tolist()
-        angle_list.pop(0)
+        if self._plot_ref is None:
+            self.canvas.axes.scatter(self.angle, self.distance, s=20, cmap='hsv', alpha=0.75)
+            for i, xy in enumerate(zip(self.angle, self.distance), start=1):
+                self.canvas.axes.annotate(i, xy)
+        else:
+            self._plot_ref.set_xdata(self.angle)
+            self._plot_ref.set_ydata(self.distance)
+            for i, xy in enumerate(zip(self.angle, self.distance), start=1):
+                self.canvas.axes.annotate(i, xy)
 
-        dist = csv['distance']
-        dist_list = dist.values.tolist()
-        dist_list.pop(0)
-
-        self.canvas.axes.cla()  # Clear the canvas.
-        self.canvas.axes.set_facecolor('skyblue')
-        self.canvas.axes.set_thetamin(-90)
-        self.canvas.axes.set_thetamax(90)
-        for i in range(len(dist_list)):
-            angle_list[i] = float((float(angle_list[i]) * 1920) / 6096)
-            angle_list[i] = round((float(angle_list[i]) * 180) / 1920, 3)
-            self.canvas.axes.scatter((pi * angle_list[i] / 180) + (-pi / 2), float(dist_list[i]), s=20, cmap='hsv', alpha=0.75)
-            self.canvas.axes.text((pi * angle_list[i] / 180) + (-pi / 2), float(dist_list[i]), str(i+1))
-
-        # Drop off the first y element, append a new one.
-        self.canvas.axes.scatter((pi * angle_list[i] / 180) + (-pi / 2), float(dist_list[i]), s=20, cmap='hsv', alpha=0.75)
-        self.canvas.axes.text((pi * angle_list[i] / 180) + (-pi / 2), float(dist_list[i]), str(i+1))
-
-        self.canvas.axes.set_xticks([-pi / 2, -pi / 6, -pi / 3, 0, pi / 6, pi / 3, pi / 2])
-        self.canvas.axes.set_theta_zero_location("N")
-        self.canvas.axes.set_theta_direction(-1)
-        
-        # Trigger the canvas to update and redraw.
         self.canvas.draw()
