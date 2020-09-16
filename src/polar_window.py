@@ -6,11 +6,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMainWindow, QHBoxLayout
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 
-class polar(QMainWindow):
+class polar(QtWidgets.QtWidgets):
     def run(self):
         pi = np.pi
 
@@ -50,7 +49,7 @@ class polar(QMainWindow):
 
         self.canvas = FigureCanvas(fig)
         self.canvas.draw_idle()
-        self.lay = QHBoxLayout()
+        self.lay = QtWidgets.QHBoxLayout()
         self.setLayout(self.lay)
         self.lay.addWidget(self.canvas)
         self.canvas.show()
