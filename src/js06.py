@@ -19,6 +19,8 @@ import pandas as pd
 import inference
 from PyQt5 import QtWidgets, QtGui, QtCore
 
+import inference
+from PyQt5 import QtWidgets, QtGui, QtCore
 from video_thread import VideoThread
 from aws_thread import AwsThread
 from polar_window import TargetPlotWindow
