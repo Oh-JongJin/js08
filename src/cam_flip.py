@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+#
+# Reflect left and right inverted camera image.
+# Execution Example: Execute file, if press 'T' key, camera image print as the thread
+#
 
 import cv2
 import threading
@@ -27,6 +31,8 @@ class pyqt_ipcam(QWidget):
 
         while running:
             ret, img = cap.read()
+            # Rotate the camera image from side to side.
+            # Reversal Up and down if 0 and left and right if 1
             img = cv2.flip(img, 1)
             if ret:
                 mowidth = self.label.width() / width
