@@ -111,7 +111,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.camera_name = "PNM-9030V"
         self.get_target()
         # create the video capture thread
-        self.video_thread = VideoThread('rtsp://admin:sijung5520@192.168.100.121/profile2/media.smp')
+        self.video_thread = VideoThread('rtsp://admin:sijung5520@192.168.100.100/profile2/media.smp')
         # connect its signal to the update_image slot
         self.video_thread.update_pixmap_signal.connect(self.update_image)
         # start the thread
