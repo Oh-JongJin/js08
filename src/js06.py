@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# 
+#
 # A sample implementation of a main window for JS-06
-# 
+#
 # This example illustrates the following techniques:
 # * Layout design using Qt Designer
 # * Open an image file
@@ -10,52 +10,61 @@
 # Reference: https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1
 
 import cv2
-import inference_tflite
 import os
 import sys
 import time
-
 import numpy as np
 import pandas as pd
+
+import inference
 from PyQt5 import QtWidgets, QtGui, QtCore
 
+import inference
+from PyQt5 import QtWidgets, QtGui, QtCore
 from video_thread import VideoThread
 from aws_thread import AwsThread
 from tflite_thread import TfliteThread
+from polar_window import TargetPlotWindow
 
 from main_window import Ui_MainWindow
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
-        super().__init__()       
+        super().__init__()
         self.target_x = []
         self.target_y = []
         self.distance = []
+        self.oxlist = []
         self.camera_name = ""
         self.video_thread = None
         self.crop_imagelist100 = []
-        self.aws_thread = AwsThread()
+        self.aws_thread = None
         self.target_process = False
         self.filepath = os.path.join(os.getcwd(), "target")
         self.tflite_thread = None
-
-        try:
+        if not os.path.isdir(self.filepath):
             os.makedirs(self.filepath)
 
-        except OSError:
-            pass
-
-    def setupUi(self, MainWindow:QtWidgets.QMainWindow):
+    def setupUi(self, MainWindow: QtWidgets.QMainWindow):
         super().setupUi(MainWindow)
         self.actionImage_File.triggered.connect(self.open_img_file_clicked)
         self.actionCamera_1.triggered.connect(self.open_cam1_clicked)
         self.actionCamera_2.triggered.connect(self.open_cam2_clicked)
         self.actionCamera_3.triggered.connect(self.open_cam3_clicked)
-        self.image_label.mousePressEvent = self.getpos  
         self.actionON.triggered.connect(self.aws_clicked)
         self.actionTarget_ON.triggered.connect(self.target_ModeOn)
         self.actionTarget_OFF.triggered.connect(self.target_ModeOff)
         self.actionTarget_Inference.triggered.connect(self.inference_clicked)
+        self.actionPolar_Plot.triggered.connect(self.polar_plot)
+
+        self.image_label.mousePressEvent = self.getpos
+
+    def polar_plot(self):
+        TargetPlot = QtWidgets.QDialog()
+        ui = TargetPlotWindow()
+        ui.setupUi(TargetPlot)
+        TargetPlot.show()
+        TargetPlot.exec_()
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
@@ -91,13 +100,13 @@ class Js06MainWindow(Ui_MainWindow):
         # connect its signal to the update_image slot
         self.video_thread.update_pixmap_signal.connect(self.update_image)
         # start the thread
-        self.video_thread.start()        
+        self.video_thread.start()
 
     def open_cam2_clicked(self):
         """Get video from Hanwha PNM-9030V"""
         if self.video_thread is not None:
             self.save_target()
-            self.video_thread.stop()            
+            self.video_thread.stop()
 
         self.camera_name = "PNM-9030V"
         self.get_target()
@@ -119,10 +128,10 @@ class Js06MainWindow(Ui_MainWindow):
         self.video_thread = VideoThread('rtsp://admin:G85^mdPzCXr2@192.168.100.115/profile2/media.smp')
         # connect its signal to the update_image slot
         self.video_thread.update_pixmap_signal.connect(self.update_image)
-        # start the thread
-        self.video_thread.start()        
+        self.video_thread.start()
         self.get_target()
 
+    # The function decorator for pyqtSlot does not work properly.
     # https://stackoverflow.com/questions/62272988/typeerror-connect-failed-between-videothread-change-pixmap-signalnumpy-ndarr
     # @QtCore.pyqtSlot(np.ndarray)
     def update_image(self, cv_img):
@@ -134,14 +143,14 @@ class Js06MainWindow(Ui_MainWindow):
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         self.img_height, self.img_width, ch = rgb_image.shape
-        
+
         self.coordinator()
         self.restoration()
-        
+
         self.label_width = self.image_label.width()
         self.label_height = self.image_label.height()
 
-        # 시간 저장
+        # Record the current time
         epoch = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
 
         # if epoch[-2:] == "00":
@@ -163,24 +172,26 @@ class Js06MainWindow(Ui_MainWindow):
                 text_loc = x + 30, y - 35                
                 cv2.putText(rgb_image, name[7:]+ ": " + str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX, 
                             1.5, (255, 0, 0), 2)
-        
+
         bytes_per_line = ch * self.img_width
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.img_width, self.img_height, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+        convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.img_width, self.img_height, bytes_per_line,
+                                            QtGui.QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio,
+                                        QtCore.Qt.SmoothTransformation)
         return QtGui.QPixmap.fromImage(p)
 
     def target_ModeOn(self):
-        "목표 영상 설정 모드를 활성화한다."        
+        """목표 영상 설정 모드를 활성화한다."""
         self.target_process = True
         return self.target_process
-    
+
     def target_ModeOff(self):
-        "영상목표 설정 모드를 비활성화한다."
+        """영상목표 설정 모드를 비활성화한다."""
         self.target_process = False
         return self.target_process
-    
+
     # https://stackoverflow.com/questions/3504522/pyqt-get-pixel-position-and-value-when-mouse-click-on-the-image
-    # 마우스 컨트롤
+    # Define mouse response
     def getpos(self, event):
         "Label에 마우스가 눌렸을 경우 실행하며, 왼쪽클릭시 영상목표를 추가하고, 우클릭시 최근에 추가된 영상목표를 제거한다."
         if self.video_thread is None:
@@ -189,11 +200,11 @@ class Js06MainWindow(Ui_MainWindow):
         if self.target_process is False:
             return
 
-        # 마우스 왼쪽 버튼을 누르면 영상목표를 추가
+        # Add a target when the left mouse button clicked.
         if event.buttons() == QtCore.Qt.LeftButton:
-            text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리', '거리(km)')
+            text, ok = QtWidgets.QInputDialog.getText(self.centralwidget, '거리 입력', '거리(km)')
 
-            if ok:                
+            if ok:
                 self.distance.append(float(text))
                 self.target_x.append(int(event.pos().x() / self.label_width * self.img_width))
                 self.target_y.append(int(event.pos().y() / self.label_height * self.img_height))
@@ -202,27 +213,27 @@ class Js06MainWindow(Ui_MainWindow):
                 print(f"영상목표 위치: {event.pos().x()}, {event.pos().y()}")
                 self.save_target()
 
-        # 오른쪽 버튼을 누르면 최근에 추가된 영상목표를 제거.
+        # Delete the recently added target when the right mouse button clicked.
         elif event.buttons() == QtCore.Qt.RightButton:
             if len(self.target_x) >= 1:
                 del self.target_name[-1]
                 del self.target_x[-1]
                 del self.target_y[-1]
                 del self.distance[-1]
-                del self.oxlist[-1]            
+                del self.oxlist[-1]
                 print("영상목표를 제거했습니다.")
 
             else:
                 print("제거할 영상목표가 없습니다.")
 
-    # 영상목표를 불러오기
+    # Read target information from a file
     def get_target(self):
         "영상목표들을 초기화하고 카메라 버전별로 저장된 영상목표들을 불러온다."
         self.target_name = []
         self.target_x = []
         self.target_y = []
         self.distance = []
-        self.oxlist = []       
+        self.oxlist = []
 
         # 저장했던 영상목표를 불러온다.
         if os.path.isfile(f"target/{self.camera_name}.csv") == True:
@@ -233,9 +244,9 @@ class Js06MainWindow(Ui_MainWindow):
             self.distance = result.distance.tolist()
             self.oxlist = [0 for i in range(len(self.target_x))]
             print("영상목표를 불러옵니다.")
-    
+
     def save_target(self):
-        """영상목표 정보를 실행된 카메라에 맞춰서 저장한다."""
+        """Save the target information for each camera."""
         if self.target_x:
             col = ["target_name", "target_x", "target_y", "distance", "predict"]
             self.result = pd.DataFrame(columns=col)
@@ -243,38 +254,42 @@ class Js06MainWindow(Ui_MainWindow):
             self.result["target_x"] = self.target_x
             self.result["target_y"] = self.target_y
             self.result["distance"] = self.distance
-            self.result['predict'] = self.oxlist            
+            self.result['predict'] = self.oxlist
             self.result.to_csv(f"{self.filepath}/{self.camera_name}.csv", mode="w", index=False)
             self.coordinator()
-            self.restoration()            
+            self.restoration()
+
+            # TODO(Kyungwon): Receive the pixel coordinates as parameters and return the canonical coordinates.
 
     def coordinator(self):
         """영상목표의 좌표값을 -1~1 값으로 정규화한다."""
-        self.prime_y = [ y / self.img_height for y in self.target_y]
+        self.prime_y = [y / self.img_height for y in self.target_y]
         self.prime_x = [2 * x / self.img_width - 1 for x in self.target_x]
-    
+
+    # TODO(Kyungwon): Receive the canonical coordinates as parameters and return the pixel coordinates.
     def restoration(self):
         """정규화한 값을 다시 복구한다."""
         self.res_x = [self.f2i((x + 1) * self.img_width / 2) for x in self.prime_x]
         self.res_y = [self.f2i(y * self.img_height) for y in self.prime_y]
-    
+
     def f2i(self, num: float):
         """float형 숫자를 0.5를 더하고 정수형으로 바꿔준다."""
-        return int(num + 0.5)      
-        
+        return int(num + 0.5)
+
     def save_image(self, image: np.ndarray, epoch: str):
         """영상목표들을 각 폴더에 저장한다."""
         self.crop_imagelist100 = []
 
         for i in range(len(self.target_x)):
-            imagepath = os.path.join(self.filepath, "image", "100x100", f"target{i+1}")
+            imagepath = os.path.join(self.filepath, "image", "100x100", f"target{i + 1}")
 
-            if not(os.path.isdir(imagepath)):
+            if not (os.path.isdir(imagepath)):
                 os.makedirs(imagepath)
-        
-            if not(os.path.isfile(f"{imagepath}/target_{i+1}_{epoch}.jpg")):
+
+            if not (os.path.isfile(f"{imagepath}/target_{i + 1}_{epoch}.jpg")):
                 # 모델에 넣을 이미지 추출
-                crop_img = image[self.target_y[i] - 50 : self.target_y[i] + 50 , self.target_x[i] - 50 : self.target_x[i] + 50]
+                crop_img = image[self.target_y[i] - 50: self.target_y[i] + 50,
+                           self.target_x[i] - 50: self.target_x[i] + 50]
                 self.crop_imagelist100.append(crop_img)
                 # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
                 b, g, r = cv2.split(crop_img)
@@ -327,17 +342,18 @@ class Js06MainWindow(Ui_MainWindow):
 
     def aws_clicked(self):
         """Start saving AWS sensor value at InfluxDB"""
-
-        if self.actionON.isChecked():   # True
+        self.aws_thread = AwsThread()
+        if self.actionON.isChecked():  # True
             if not self.aws_thread.run_flag:
                 print("AWS Thread Start.")
                 self.aws_thread.run_flag = True
                 self.aws_thread.start()
 
-        elif not self.actionON.isChecked():     # False
+        elif not self.actionON.isChecked():  # False
             if self.aws_thread.run_flag:
                 print("AWS Thread Stop")
                 self.aws_thread.run_flag = False
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

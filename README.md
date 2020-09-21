@@ -1,5 +1,4 @@
 # js06-iot
-
 The successor of JS-02. The goal of JS-06 is improved surveillance, sensor integration with integrated user experience compared to JS-02. This code is for an IoT platform, i.e., NVIDIA Jetson, Raspberry Pi, etc.
 
 ## Key Features
@@ -18,4 +17,22 @@ JS-06 is being developed on the following target platforms.
 - [Pi Camera Module V2.1](https://www.raspberrypi.org/products/camera-module-v2/)
 - [Pi NoIR Camera Module V2.1](https://www.raspberrypi.org/products/pi-noir-camera-v2/)
 - IP cameras
-- Web cams
+  - [Hanwha PNM-9030V](https://www.hanwha-security.com/en/products/camera/network/multi-sensor/PNM-9030V/overview/)
+  - [Hanwha XNO-8080R](https://www.hanwha-security.com/en/products/camera/network/bullet/XNO-8080R/overview/)
+- Webcams
+
+## Development Environment
+- Visual Studio Code with theend of line sequence to **LF**.
+- Anaconda Python 3.7 64-bit or less
+- Required Python packages that can be installed using `conda`:
+  - binascii
+  - os
+  - serial
+  - struct
+  - sys
+  - OpenCV
+  - NumPy
+  - Pandas
+  - PyQt5
+- Required Python packages that can be installed using `pip`:
+  - TensorFlow Lite interpreter: https://www.tensorflow.org/lite/guide/python
