@@ -6,8 +6,8 @@ import struct
 import time
 
 from influxdb import InfluxDBClient
-from PyQt5 import QtWidgets, QtGui, QtCore
 
+from PyQt5 import QtWidgets, QtGui, QtCore
 
 class AwsThread(QtCore.QThread):
     def __init__(self):
@@ -24,6 +24,8 @@ class AwsThread(QtCore.QThread):
                 if self.ser.readable():
                     self.ser.write(write_aws)
                     res = self.ser.readline()
+                    # wind_direction = int(binascii.hexlify(res[5:7]), 16)
+                    # print(f"\nWind direction: {wind_direction}°")
 
                     # Weather sensor value parsing, replace processing
                     wind_speed_hex = f"{hex(res[8]) + ' ' + hex(res[7]) + ' ' + hex(res[10]) + ' ' + hex(res[9])}".replace(
@@ -83,6 +85,9 @@ class AwsThread(QtCore.QThread):
                     humid = struct.unpack('<f', binascii.unhexlify(humid_non.replace(' ', '')))
                     pressure = struct.unpack('<f', binascii.unhexlify(pressure_non.replace(' ', '')))
                     pm25 = struct.unpack('<f', binascii.unhexlify(pm25_non.replace(' ', '')))
+                    # print(f"Wind Speed: {round(wind_speed[0], 2)} m/s \nTemperature: {round(temp[0], 2)} °C"
+                    #       f"\nAtmospheric Pressure: {round(pressure[0], 2)} hPa \nHumidity: {round(humid[0], 2)} %"
+                    #       f"\nPM2.5: {round(pm25[0], 2)} ug/m3")
 
                     # Access Virtual-Machine Ubuntu IP and PORT.
                     client = InfluxDBClient("192.168.85.129", 8086)
@@ -99,9 +104,13 @@ class AwsThread(QtCore.QThread):
                          "time": time.time_ns()}
                     ]
                     client.write_points(points=points, protocol="json")
+                    # print("- Save complete at InfluxDB")
                     time.sleep(1)
                     self.ser.close()
 
+            # except (TypeError, IndexError, binascii.Error) as e:
+            #     self.ser.close()
+            #     pass
             except Exception as e:
                 self.ser.close()
                 pass

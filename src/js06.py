@@ -17,27 +17,25 @@ import numpy as np
 import pandas as pd
 
 import inference
-from PyQt5 import QtWidgets, QtGui, QtCore
-
-import inference
+import target_plot
 from PyQt5 import QtWidgets, QtGui, QtCore
 from video_thread import VideoThread
 from aws_thread import AwsThread
-from polar_window import TargetPlotWindow
-
+from target_plot import TargetPlotWindow
 from main_window import Ui_MainWindow
+
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
         super().__init__()
+        self.video_thread = None
         self.target_x = []
         self.target_y = []
         self.distance = []
-        self.oxlist = []
         self.camera_name = ""
         self.video_thread = None
         self.crop_imagelist100 = []
-        self.aws_thread = None
+        self.aws_thread = AwsThread()
         self.target_process = False
         self.filepath = os.path.join(os.getcwd(), "target")
 
@@ -47,26 +45,17 @@ class Js06MainWindow(Ui_MainWindow):
         except OSError:
             pass
 
-    def setupUi(self, MainWindow: QtWidgets.QMainWindow):
+    def setupUi(self, MainWindow:QtWidgets.QMainWindow):
         super().setupUi(MainWindow)
 
         self.actionImage_File.triggered.connect(self.open_img_file_clicked)
         self.actionCamera_1.triggered.connect(self.open_cam1_clicked)
         self.actionCamera_2.triggered.connect(self.open_cam2_clicked)
         self.actionCamera_3.triggered.connect(self.open_cam3_clicked)
+        self.image_label.mousePressEvent = self.getpos
         self.actionON.triggered.connect(self.aws_clicked)
         self.actionTarget_ON.triggered.connect(self.target_ModeOn)
         self.actionTarget_OFF.triggered.connect(self.target_ModeOff)
-        self.actionPolar_Plot.triggered.connect(self.polar_plot)
-
-        self.image_label.mousePressEvent = self.getpos
-
-    def polar_plot(self):
-        TargetPlot = QtWidgets.QDialog()
-        ui = TargetPlotWindow()
-        ui.setupUi(TargetPlot)
-        TargetPlot.show()
-        TargetPlot.exec_()
 
     def closeEvent(self, event):
         print("DEBUG: ", type(event))
@@ -164,14 +153,12 @@ class Js06MainWindow(Ui_MainWindow):
                 lower_right = x + 25, y + 25
                 cv2.rectangle(rgb_image, upper_left, lower_right, (0, 255, 0), 6)
                 text_loc = x + 30, y - 35
-                cv2.putText(rgb_image, name[7:] + ": " + str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX,
+                cv2.putText(rgb_image, name[7:]+ ": " + str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX,
                             1.5, (255, 0, 0), 2)
 
         bytes_per_line = ch * self.img_width
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.img_width, self.img_height, bytes_per_line,
-                                            QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio,
-                                        QtCore.Qt.SmoothTransformation)
+        convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.img_width, self.img_height, bytes_per_line, QtGui.QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height(), QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
         return QtGui.QPixmap.fromImage(p)
 
     def target_ModeOn(self):
@@ -246,11 +233,10 @@ class Js06MainWindow(Ui_MainWindow):
             self.coordinator()
             self.restoration()
 
-            # TODO(Kyungwon): Receive the pixel coordinates as parameters and return the canonical coordinates.
-
+    # TODO(Kyungwon): Receive the pixel coordinates as parameters and return the canonical coordinates.
     def coordinator(self):
         """영상목표의 좌표값을 -1~1 값으로 정규화한다."""
-        self.prime_y = [y / self.img_height for y in self.target_y]
+        self.prime_y = [ y / self.img_height for y in self.target_y]
         self.prime_x = [2 * x / self.img_width - 1 for x in self.target_x]
 
     # TODO(Kyungwon): Receive the canonical coordinates as parameters and return the pixel coordinates.
@@ -268,20 +254,19 @@ class Js06MainWindow(Ui_MainWindow):
         self.crop_imagelist100 = []
 
         for i in range(len(self.target_x)):
-            imagepath = os.path.join(self.filepath, "image", "100x100", f"target{i + 1}")
+            imagepath = os.path.join(self.filepath, "image", "100x100", f"target{i+1}")
 
-            if not (os.path.isdir(imagepath)):
+            if not(os.path.isdir(imagepath)):
                 os.makedirs(imagepath)
 
-            if not (os.path.isfile(f"{imagepath}/target_{i + 1}_{epoch}.jpg")):
+            if not(os.path.isfile(f"{imagepath}/target_{i+1}_{epoch}.jpg")):
                 # 모델에 넣을 이미지 추출
-                crop_img = image[self.target_y[i] - 50: self.target_y[i] + 50,
-                           self.target_x[i] - 50: self.target_x[i] + 50]
+                crop_img = image[self.target_y[i] - 50 : self.target_y[i] + 50 , self.target_x[i] - 50 : self.target_x[i] + 50]
                 self.crop_imagelist100.append(crop_img)
                 # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
                 b, g, r = cv2.split(crop_img)
                 # 영상목표의 각 폴더에 크롭한 이미지 저장
-                cv2.imwrite(f"{imagepath}/target_{i + 1}_{epoch}.jpg", cv2.merge([r, g, b]))
+                cv2.imwrite(f"{imagepath}/target_{i+1}_{epoch}.jpg", cv2.merge([r, g, b]))
 
         self.get_visiblity()
 
@@ -289,8 +274,8 @@ class Js06MainWindow(Ui_MainWindow):
         """크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 가장 먼 거리를 출력한다."""
         self.oxlist = []
         for image in self.crop_imagelist100:
-            image = cv2.resize(image, dsize=(224, 224), interpolation=cv2.INTER_LINEAR)
-            self.oxlist.append(inference.inference(image))
+            image = cv2.resize(image, dsize = (224, 224), interpolation = cv2.INTER_LINEAR)
+            self.oxlist.append(inference_tflite.inference(image))
 
         res = [self.distance[x] for x, y in enumerate(self.oxlist) if y == 1]
         visivlity = str(max(res)) + " km"
@@ -301,24 +286,22 @@ class Js06MainWindow(Ui_MainWindow):
 
     def to_jongjin(self):
         """polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""
-        result_dict = {key: [x, y, distance, ox_value] for key, x, y, distance, ox_value in
-                       zip(self.target_name, self.prime_x, self.prime_y, self.distance, self.oxlist)}
+        result_dict = {key:[x, y, distance, ox_value] for key, x, y, distance, ox_value in zip(self.target_name, self.prime_x, self.prime_y, self.distance, self.oxlist)}
         print(result_dict)
 
     def aws_clicked(self):
         """Start saving AWS sensor value at InfluxDB"""
-        self.aws_thread = AwsThread()
-        if self.actionON.isChecked():  # True
+
+        if self.actionON.isChecked():   # True
             if not self.aws_thread.run_flag:
                 print("AWS Thread Start.")
                 self.aws_thread.run_flag = True
                 self.aws_thread.start()
 
-        elif not self.actionON.isChecked():  # False
+        elif not self.actionON.isChecked():     # False
             if self.aws_thread.run_flag:
                 print("AWS Thread Stop")
                 self.aws_thread.run_flag = False
-
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
