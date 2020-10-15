@@ -17,13 +17,15 @@ import numpy as np
 import pandas as pd
 
 import inference
-import target_plot
+from PyQt5 import QtWidgets, QtGui, QtCore
+
+import inference
 from PyQt5 import QtWidgets, QtGui, QtCore
 from video_thread import VideoThread
 from aws_thread import AwsThread
-from target_plot import TargetPlotWindow
-from main_window import Ui_MainWindow
+from polar_window import TargetPlotWindow
 
+from main_window import Ui_MainWindow
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):
@@ -36,7 +38,6 @@ class Js06MainWindow(Ui_MainWindow):
         self.video_thread = None
         self.crop_imagelist100 = []
         self.aws_thread = None
-        self.polar_window = None
         self.target_process = False
         self.filepath = os.path.join(os.getcwd(), "target")
 
@@ -57,50 +58,13 @@ class Js06MainWindow(Ui_MainWindow):
         self.actionTarget_ON.triggered.connect(self.target_ModeOn)
         self.actionTarget_OFF.triggered.connect(self.target_ModeOff)
         self.actionPolar_Plot.triggered.connect(self.polar_plot)
-        self.menuSelect_notation_unit.triggered.connect(self.notation_unit)
-        self.actionkm.triggered.connect(self.notation_unit_km)
-        self.actionmi.triggered.connect(self.notation_unit_mi)
 
         self.image_label.mousePressEvent = self.getpos
-
-    def notation_unit(self):
-        """
-        If km and mi are not checked, output to the default value km.
-
-        Function that occur when both 'km' and 'mi' menu are checked in the 'Select notation unit' menu.
-        """
-        self.polar_window = target_plot
-        if self.actionkm.isChecked() is False and self.actionmi.isChecked() is False:
-            self.actionkm.setChecked(True)
-            self.actionmi.setChecked(False)
-            self.polar_window.distance_label = "(km)"
-
-    def notation_unit_km(self):
-        """
-        Change notation units 'kilometer'.
-        """
-        self.polar_window = target_plot
-        if self.actionkm.isChecked() is True:
-            self.polar_window.distance_label = "(km)"
-            self.actionmi.setChecked(False)
-        elif self.actionkm.isChecked() is False:
-            self.actionkm.setChecked(False)
-
-    def notation_unit_mi(self):
-        """
-        Change notation units 'mile'.
-        """
-        self.polar_window = target_plot
-        if self.actionmi.isChecked() is True:
-            self.polar_window.distance_label = "(mi)"
-            self.actionkm.setChecked(False)
-        elif self.actionmi.isChecked() is False:
-            self.actionmi.setChecked(False)
 
     def polar_plot(self):
         TargetPlot = QtWidgets.QDialog()
         ui = TargetPlotWindow()
-        ui.setupUi(TargetPlot, 1000)
+        ui.setupUi(TargetPlot)
         TargetPlot.show()
         TargetPlot.exec_()
 
@@ -148,7 +112,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.camera_name = "PNM-9030V"
         self.get_target()
         # create the video capture thread
-        self.video_thread = VideoThread('rtsp://admin:sijung5520@192.168.100.100/profile2/media.smp')
+        self.video_thread = VideoThread('rtsp://admin:sijung5520@192.168.100.121/profile2/media.smp')
         # connect its signal to the update_image slot
         self.video_thread.update_pixmap_signal.connect(self.update_image)
         # start the thread
@@ -200,13 +164,8 @@ class Js06MainWindow(Ui_MainWindow):
                 lower_right = x + 25, y + 25
                 cv2.rectangle(rgb_image, upper_left, lower_right, (0, 255, 0), 6)
                 text_loc = x + 30, y - 35
-
-                if self.actionmi.isChecked():
-                    cv2.putText(rgb_image, name[7:] + ": " + str(round(dis * 0.621371, 1)) + "mi", text_loc,
-                                cv2.FONT_HERSHEY_COMPLEX, 1.5, (255, 0, 0), 2)
-                else:
-                    cv2.putText(rgb_image, name[7:] + ": " + str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX,
-                                1.5, (255, 0, 0), 2)
+                cv2.putText(rgb_image, name[7:] + ": " + str(dis) + "km", text_loc, cv2.FONT_HERSHEY_COMPLEX,
+                            1.5, (255, 0, 0), 2)
 
         bytes_per_line = ch * self.img_width
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, self.img_width, self.img_height, bytes_per_line,
@@ -287,7 +246,8 @@ class Js06MainWindow(Ui_MainWindow):
             self.coordinator()
             self.restoration()
 
-    # TODO(Kyungwon): Receive the pixel coordinates as parameters and return the canonical coordinates.
+            # TODO(Kyungwon): Receive the pixel coordinates as parameters and return the canonical coordinates.
+
     def coordinator(self):
         """영상목표의 좌표값을 -1~1 값으로 정규화한다."""
         self.prime_y = [y / self.img_height for y in self.target_y]
@@ -316,7 +276,7 @@ class Js06MainWindow(Ui_MainWindow):
             if not (os.path.isfile(f"{imagepath}/target_{i + 1}_{epoch}.jpg")):
                 # 모델에 넣을 이미지 추출
                 crop_img = image[self.target_y[i] - 50: self.target_y[i] + 50,
-                                 self.target_x[i] - 50: self.target_x[i] + 50]
+                           self.target_x[i] - 50: self.target_x[i] + 50]
                 self.crop_imagelist100.append(crop_img)
                 # cv로 저장할 때는 bgr 순서로 되어 있기 때문에 rgb로 바꿔줌.
                 b, g, r = cv2.split(crop_img)
@@ -333,23 +293,17 @@ class Js06MainWindow(Ui_MainWindow):
             self.oxlist.append(inference.inference(image))
 
         res = [self.distance[x] for x, y in enumerate(self.oxlist) if y == 1]
-
-        if self.actionmi.isChecked() is True:
-            visivlity = str(round(max(res) * 0.621371, 1)) + " mi"
-            print(visivlity)
-        elif self.actionkm.isChecked() is True:
-            visivlity = str(max(res)) + " km"
-            print(visivlity)
-
+        visivlity = str(max(res)) + " km"
+        print(visivlity)
         self.save_target()
         self.to_jongjin()
         time.sleep(1)
 
-    # def to_jongjin(self):
-    #     """polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""
-    #     result_dict = {key: [x, y, distance, ox_value] for key, x, y, distance, ox_value in
-    #                    zip(self.target_name, self.prime_x, self.prime_y, self.distance, self.oxlist)}
-    #     # print(result_dict)
+    def to_jongjin(self):
+        """polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""
+        result_dict = {key: [x, y, distance, ox_value] for key, x, y, distance, ox_value in
+                       zip(self.target_name, self.prime_x, self.prime_y, self.distance, self.oxlist)}
+        print(result_dict)
 
     def aws_clicked(self):
         """Start saving AWS sensor value at InfluxDB"""
