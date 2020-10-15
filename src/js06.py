@@ -10,19 +10,20 @@
 # Reference: https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1
 
 import cv2
-import inference_tflite
 import os
 import sys
 import time
-
 import numpy as np
 import pandas as pd
-from PyQt5 import QtWidgets, QtGui, QtCore
 
+import inference
+import target_plot
+from PyQt5 import QtWidgets, QtGui, QtCore
 from video_thread import VideoThread
 from aws_thread import AwsThread
-
+from target_plot import TargetPlotWindow
 from main_window import Ui_MainWindow
+
 
 class Js06MainWindow(Ui_MainWindow):
     def __init__(self):

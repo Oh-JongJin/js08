@@ -123,23 +123,46 @@
     <property name="title">
      <string>Sensor</string>
     </property>
-    <addaction name="actionAWS"/>
+    <widget class="QMenu" name="menuAWS">
+     <property name="title">
+      <string>AWS</string>
+     </property>
+     <addaction name="separator"/>
+     <addaction name="actionON"/>
+    </widget>
+    <addaction name="menuAWS"/>
    </widget>
    <widget class="QMenu" name="menuMode">
     <property name="title">
      <string>Mode</string>
     </property>
-    <addaction name="actionEdit_Target"/>
-    <addaction name="actionInference"/>
+    <addaction name="actionTarget_ON"/>
+    <addaction name="actionTarget_OFF"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <widget class="QMenu" name="menuDistance_convert">
+     <property name="title">
+      <string>Select notation unit</string>
+     </property>
+     <addaction name="actionkm"/>
+     <addaction name="actionmi"/>
+    </widget>
+    <addaction name="actionPolar_Plot"/>
+    <addaction name="separator"/>
+    <addaction name="menuDistance_convert"/>
    </widget>
    <addaction name="menuSource"/>
    <addaction name="menuSensor"/>
    <addaction name="menuMode"/>
+   <addaction name="menuView"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionImage_File">
    <property name="text">
-    <string>Image</string>
+    <string>Image File</string>
    </property>
    <property name="statusTip">
     <string>Open an image file</string>
@@ -147,7 +170,7 @@
   </action>
   <action name="actionCamera_1">
    <property name="text">
-    <string>webcam</string>
+    <string>Camera 1</string>
    </property>
    <property name="statusTip">
     <string>Get video from webcam</string>
@@ -155,7 +178,7 @@
   </action>
   <action name="actionCamera_2">
    <property name="text">
-    <string>Hanwha PNM-9030V</string>
+    <string>Camera 2</string>
    </property>
    <property name="statusTip">
     <string>Get video from Hanwha PNM-9030V</string>
@@ -174,13 +197,16 @@
   </action>
   <action name="actionCamera_3">
    <property name="text">
-    <string>Hanwha XNO-8080R</string>
+    <string>Camera 3</string>
    </property>
    <property name="statusTip">
     <string>Get video from Hanwha XNO-8080R</string>
    </property>
   </action>
   <action name="actionON">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>ON</string>
    </property>
@@ -190,15 +216,9 @@
     <string>OFF</string>
    </property>
   </action>
-  <action name="actionEdit_Target">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
+  <action name="actionTarget_ON">
    <property name="text">
-    <string>Edit Target</string>
-   </property>
-   <property name="statusTip">
-    <string>Add and delete targets</string>
+    <string>Target_ON</string>
    </property>
   </action>
   <action name="actionTarget_OFF">
@@ -206,31 +226,36 @@
     <string>Target_OFF</string>
    </property>
   </action>
-  <action name="actionInference">
+  <action name="actionPolar_Plot">
+   <property name="text">
+    <string>Polar Plot</string>
+   </property>
+  </action>
+  <action name="actionsd">
+   <property name="text">
+    <string>sd</string>
+   </property>
+  </action>
+  <action name="actionkm">
    <property name="checkable">
     <bool>true</bool>
    </property>
-   <property name="checked">
+   <property name="enabled">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Inference</string>
-   </property>
-   <property name="statusTip">
-    <string>Infer targets using models</string>
+    <string>km</string>
    </property>
   </action>
-  <action name="actionAWS">
-   <property name="text">
-    <string>AWS</string>
+  <action name="actionmi">
+   <property name="checkable">
+    <bool>true</bool>
    </property>
-   <property name="statusTip">
-    <string>Get value from AWS</string>
+   <property name="enabled">
+    <bool>true</bool>
    </property>
-  </action>
-  <action name="actionTEST">
    <property name="text">
-    <string>TEST</string>
+    <string>mi</string>
    </property>
   </action>
  </widget>
