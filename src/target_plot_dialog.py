@@ -8,10 +8,11 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+
 class Ui_TargetPlot(object):
-    def setupUi(self, TargetPlot):
+    def setupUi(self, TargetPlot, x: int, y: int):
         TargetPlot.setObjectName("TargetPlot")
-        TargetPlot.resize(400, 300)
+        TargetPlot.resize(x, y)
 
         self.retranslateUi(TargetPlot)
         QtCore.QMetaObject.connectSlotsByName(TargetPlot)
@@ -23,6 +24,7 @@ class Ui_TargetPlot(object):
 
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     TargetPlot = QtWidgets.QDialog()
     ui = Ui_TargetPlot()
