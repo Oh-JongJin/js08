@@ -281,7 +281,7 @@ class Js06MainWindow(Ui_MainWindow):
         print(visivlity)
         self.save_target()
         self.to_jongjin()
-        time.sleep(1) 
+        time.sleep(1)
 
     def to_jongjin(self):
         """polar plot에 필요한 값들을 사전형으로 만들어 출력한다."""
