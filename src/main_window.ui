@@ -129,7 +129,6 @@
      </property>
      <addaction name="separator"/>
      <addaction name="actionON"/>
-     <addaction name="actionOFF"/>
     </widget>
     <addaction name="menuAWS"/>
    </widget>
@@ -139,11 +138,26 @@
     </property>
     <addaction name="actionTarget_ON"/>
     <addaction name="actionTarget_OFF"/>
-    <addaction name="actionTarget_Inference"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <widget class="QMenu" name="menuDistance_convert">
+     <property name="title">
+      <string>Select notation unit</string>
+     </property>
+     <addaction name="actionkm"/>
+     <addaction name="actionmi"/>
+    </widget>
+    <addaction name="actionPolar_Plot"/>
+    <addaction name="separator"/>
+    <addaction name="menuDistance_convert"/>
    </widget>
    <addaction name="menuSource"/>
    <addaction name="menuSensor"/>
    <addaction name="menuMode"/>
+   <addaction name="menuView"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionImage_File">
@@ -190,6 +204,9 @@
    </property>
   </action>
   <action name="actionON">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>ON</string>
    </property>
@@ -209,12 +226,36 @@
     <string>Target_OFF</string>
    </property>
   </action>
-  <action name="actionTarget_Inference">
+  <action name="actionPolar_Plot">
+   <property name="text">
+    <string>Polar Plot</string>
+   </property>
+  </action>
+  <action name="actionsd">
+   <property name="text">
+    <string>sd</string>
+   </property>
+  </action>
+  <action name="actionkm">
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Target_Inference</string>
+    <string>km</string>
+   </property>
+  </action>
+  <action name="actionmi">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>mi</string>
    </property>
   </action>
  </widget>

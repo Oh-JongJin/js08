@@ -36,6 +36,9 @@ class TfliteThread(QtCore.QThread):
         self.interpreter = tflite.Interpreter("andrew_20200910.tflite")
         self.interpreter.allocate_tensors()
     
+    def __del__(self):
+        self.wait()
+    
     def set_input_tensor(self, interpreter, image):
         """Feed input to the model"""
 
@@ -69,4 +72,4 @@ class TfliteThread(QtCore.QThread):
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
         self.run_flag = False        
-        self.wait()
+        self.terminate()
