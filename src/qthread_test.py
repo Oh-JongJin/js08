@@ -38,7 +38,7 @@ class worker(QThread):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.camname = ""
-    # 저장된 타겟들을 불러온다 없으면 빈 리스트만 선언
+    # 저장된 영상 목표들을 불러온다 없으면 빈 리스트만 선언
     def get_target(self):
         self.x = []
         self.y = []
@@ -53,7 +53,7 @@ class worker(QThread):
     
     def run(self):
         global img
-        # 타겟들을 불러오기  
+        # 영상 목표들을 불러오기  
         self.get_target()
         print(self.camname)
         print(self.ADD)
@@ -65,7 +65,7 @@ class worker(QThread):
             self.cap = cv2.VideoCapture(self.ADD)
             width = self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
             height = self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-            print("video size", width,", ", height)
+            print(f"video size {width}, {height}")
             # self.label.resize(width, height)
 
         # 초기 사이즈 값을 저장한다.
@@ -79,7 +79,7 @@ class worker(QThread):
                 print("이미지를 읽어옵니다.", ret)
                 # TODO(성민): 윈도 크기를 작게 조정하는 기능이 작동하지 않습니다.             
                 # resize의 fx는 비율로 크기를 조절한다.
-                # 레이블의 크기에 따라 영상 크기도 같이 변한다.
+                # 의 크기에 따라 영상 크기도 같이 변한다.
                 # if prewidth <= self.label.width() or preheight <= self.label.height():
                 #     img = cv2.resize(img, dsize=(0, 0), fx=mowidth, fy=moheight, 
                 #                         interpolation=cv2.INTER_LINEAR)
@@ -97,7 +97,7 @@ class worker(QThread):
 
             # 이미지를 읽어오면 실행
             if ret:
-                # 타겟들을 사각형으로 호출 get_target
+                # 영상 목표들을 사각형으로 호출 get_target
                 if len(self.x) >= 0:
                     try:
                         for i in range(len(self.x)):
@@ -127,12 +127,12 @@ class worker(QThread):
                 print("Cannot read frame.")
                 break
             self.cap.release()
-            # 타겟 정보 저장.
+            # 영상 목표 정보 저장.
 
         if len(self.x) >= 0:
             for i in range(len(self.x)):
                 print(self.x[i], ", ", self.y[i], ", ", self.dis[i])
-            col = ["x","y","dis"]
+            col = ["x", "y", "dis"]
             result = pd.DataFrame(columns=col)
             result["x"] = self.x
             result["y"] = self.y
@@ -149,7 +149,7 @@ class pyqt_ipcam(QWidget):
 
     def __init__(self):
         super().__init__()
-        # label의 크기에 따라 Widget의 크기를 변경한다. 위젯은 변하지만 영상의 크기는 고정되어 있기때문에 따로 
+        # 라벨의 크기에 따라 Widget의 크기를 변경한다. 위젯은 변하지만 영상의 크기는 고정되어 있기때문에 따로 
         # 설정해줘야 한다.
         self.grid = QGridLayout()
         self.label = QLabel()       
@@ -219,26 +219,26 @@ class pyqt_ipcam(QWidget):
             self.start()
         
 
-    # 마우스 왼쪽 버튼을 누르면 타겟을 추가, 오른쪽 버튼은 최근에 추가된 타겟을 제거.
+    # 마우스 왼쪽 버튼을 누르면 영상 목표를 추가, 오른쪽 버튼은 최근에 추가된 영상 목표를 제거.
     def mousePressEvent(self, e):        
         if e.button() == Qt.LeftButton:
-            text, ok = QInputDialog.getText(self, '타겟거리입력', '거리(km)')
+            text, ok = QInputDialog.getText(self, '영상 목표 거리입력', '거리(km)')
             if ok:
                 self.dis.append(str(text))
                 self.x.append(e.x())
                 self.y.append(e.y())
-                print("타겟위치:", e.x(),", ", e.y())
+                print("영상 목표 위치:", e.x(), ", ", e.y())
                 time.sleep(1)
         elif e.button() == Qt.RightButton:
             if len(self.x) >= 1:
                 del self.x[-1]
                 del self.y[-1]
                 del self.dis[-1]            
-                print("타겟을 제거했습니다.")       
+                print("영상 목표를 제거했습니다.")       
                 time.sleep(1)
             else:
                 pass
-                print("제거할 타겟이 없습니다.")
+                print("제거할 영상 목표가 없습니다.")
     def mouseReleaseEvent(self, e):
         return super().mouseReleaseEvent(e)
     
