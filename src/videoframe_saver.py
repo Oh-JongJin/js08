@@ -7,6 +7,7 @@ from PyQt5.QtGui import QImage
 from PyQt5.QtCore import Qt, QObject, QRect, QPoint, pyqtSignal, QThread
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtMultimedia import QAbstractVideoSurface, QVideoSurfaceFormat, QAbstractVideoBuffer, QVideoFrame
+import qimage2ndarray
 
 
 # class VideoSaveFrame(QThread):
@@ -35,37 +36,28 @@ class VideoSaveFrame(QAbstractVideoSurface):
 
     def isFormatSupported(self, format):
         imageFormat = QVideoFrame.imageFormatFromPixelFormat(format.pixelFormat())
+        # img_array = QVideoFrame.buffer()
         size = format.frameSize()
 
         return imageFormat != QImage.Format_Invalid and not size.isEmpty() and \
                format.handleType() == QAbstractVideoBuffer.NoHandle
 
     def start(self, format: QVideoSurfaceFormat):
-        print(1)
         imageFormat = QVideoFrame.imageFormatFromPixelFormat(format.pixelFormat())
-        print(2)
         size = format.frameSize()
-        print(3)
 
         if imageFormat != QImage.Format_Invalid and not size.isEmpty():
-            print(4)
             self.imageFormat = imageFormat
-            print(5)
             self.imageSize = size
-            print(6)
             self.sourceRect = format.viewport()
-            print(7)
 
             # super().start(format)
 
             self.widget.updateGeometry()
-            print(8)
             self.updateVideoRect()
-            print(9)
 
             return True
         else:
-            print(10)
             return False
 
     def stop(self):
@@ -78,7 +70,6 @@ class VideoSaveFrame(QAbstractVideoSurface):
         VideoSaveFrame.stop(self)
 
     def present(self, frame):
-        print("present")
         if frame.isValid():
             cloneFrame = QVideoFrame(frame)
             cloneFrame.map(QAbstractVideoBuffer.ReadOnly)
@@ -120,9 +111,15 @@ class VideoSaveFrame(QAbstractVideoSurface):
 
         image = QImage(self.currentFrame.bits(), self.currentFrame.width(), self.currentFrame.height(),
                        self.currentFrame.bytesPerLine(), self.imageFormat)
+        numpy_arr = qimage2ndarray.recarray_view(image)
+        print(numpy_arr)
 
         self.painter.drawImage(self.targetRect, image, self.sourceRect)
 
         self.painter.setTransform(oldTransform)
 
         self.currentFrame.unmap()
+
+
+if __name__ == "__main__":
+    video1 = VideoSaveFrame()

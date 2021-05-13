@@ -42,7 +42,7 @@ class TfliteThread(QtCore.QThread):
     def __del__(self):
         self.wait()
 
-    def set_inputa_tensor(self, interpreter, image):
+    def set_input_tensor(self, interpreter, image):
         """Feed input to the model"""
 
         tensor_index = interpreter.get_input_details()[0]['index']
