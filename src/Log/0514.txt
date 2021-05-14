@@ -1,0 +1,7 @@
+[2021.05.14/09:26:50] - Traceback (most recent call last):
+  File "js06.py", line 394, in get_target
+    self.label_x = result.label_x.tolist()
+  File "C:\Users\user\AppData\Local\Programs\Python\Python37\lib\site-packages\pandas\core\generic.py", line 5139, in __getattr__
+    return object.__getattribute__(self, name)
+AttributeError: 'DataFrame' object has no attribute 'label_x'
+

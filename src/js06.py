@@ -39,7 +39,6 @@ from cv2 import VideoCapture, imwrite, destroyAllWindows
 from video_thread import VideoThread
 from main_window import Ui_MainWindow
 from tflite_thread import TfliteThread
-from videoframe_saver import VideoSaveFrame
 
 
 def ErrorLog(error: str):
