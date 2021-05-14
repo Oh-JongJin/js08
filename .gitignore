@@ -99,6 +99,7 @@ docs/_build/
 
 # PyBuilder
 target/
+Log/
 andrew-1583797361/
 
 # Jupyter Notebook
