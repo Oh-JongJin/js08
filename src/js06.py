@@ -33,9 +33,9 @@ from PyQt5.QtMultimedia import QMediaContent
 from PyQt5.QtWidgets import QMainWindow, QApplication, QInputDialog, QTableWidget, QTableWidgetItem, QMessageBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from cv2 import VideoCapture, imwrite, destroyAllWindows
+from cv2 import VideoCapture, imwrite, destroyAllWindows, cvtColor, COLOR_BGR2RGB, split, merge
 
-# from save_db import SaveDB
+from save_db import SaveDB
 from video_thread import VideoThread
 from main_window import Ui_MainWindow
 from tflite_thread import TfliteThread
@@ -71,6 +71,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.visibility = 0
         self.qtimer = None
         self.vis_km = 0
+        self.vis_m = 0
         self.result = None
         self.crop_img = None
 
@@ -78,7 +79,6 @@ class Js06MainWindow(Ui_MainWindow):
 
         self.epoch = None
         self.list_flag = False
-        self.data = None
 
         # Draw target
         self.painter = None
@@ -125,24 +125,15 @@ class Js06MainWindow(Ui_MainWindow):
         try:
             super().setupUi(MainWindow)
 
-            # image = Image.open('C://Users/user/Workspace/integration/src/target/image/PNM/2104/20210422155849.png')
-            # self.data = np.asarray(image)
-
             # Table Widget을 On/Off 가능한 버튼
             # self.list_btn.setGeometry(1836, 40, 60, 30)
             # self.list_btn.clicked.connect(self.list_btn_click)
             # self.list_btn.setText("Hide")
 
-            # Target information tableWidget
-            # self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
-            # self.tableWidget.setRowCount(len(self.target_x))
-            # self.tableWidget.setColumnCount(3)
-            # self.tableWidget.setHorizontalHeaderLabels(['거리 (km)', '거리 (mi)', '판별'])
-
             # webEngineView 위젯에 아래의 주소(Grafana)로 이동
             self.webEngineView.load(
                 QUrl(
-                    "http://localhost:3000/d/TWQ9hKoGz/visibility?orgId=1&from=now-2h-30m&to=now%2B5m&refresh=5s&kiosk"
+                    "http://localhost:3000/d/TWQ9hKoGz/visibility?orgId=1&from=now-3h&to=now&refresh=5s&kiosk"
                 ))
             self.open_PNM()
             self.update_plot()
@@ -152,14 +143,10 @@ class Js06MainWindow(Ui_MainWindow):
             self.horizontalLayout.addWidget(self.webEngineView, 1)
 
             # Event
-            # self.blank_lbl.raise_()
-
             # self.blank_lbl.wheelEvent = self.wheelEvent
             self.blank_lbl.mousePressEvent = self.mousePressEvent
             self.blank_lbl.mouseDoubleClickEvent = self.test
             self.blank_lbl.paintEvent = self.paintEvent
-
-            self.actionSaveframe.triggered.connect(self.save_frame)
         except:
             err = traceback.format_exc()
             ErrorLog(str(err))
@@ -171,7 +158,6 @@ class Js06MainWindow(Ui_MainWindow):
                 self.list_btn.setGeometry(1440, 40, 60, 30)
                 self.list_btn.setText("List")
                 self.tableWidget.setVisible(True)
-                # self.graphicView.setMaximumSize(QSize(16777215, 16777215))
                 self.graphicView.resize(1920, 578)
                 self.list_flag = True
 
@@ -179,24 +165,20 @@ class Js06MainWindow(Ui_MainWindow):
                 self.list_btn.setGeometry(1836, 40, 60, 30)
                 self.list_btn.setText("Hide")
                 self.tableWidget.setVisible(True)
-                # self.graphicView.setMaximumSize(QSize(1524, 16777215))
                 self.list_flag = False
         except:
             err = traceback.format_exc()
             ErrorLog(str(err))
 
     def test(self, event):
-        print("Double Click")
-        print(self.graphicView.size())
-        print(self.videoWidget.size())
-        print(self.videoWidget.nativeSize().width(), self.videoWidget.nativeSize().height())
-        print(self.graphicView.geometry().width(), self.graphicView.geometry().height())
-        self.graphicView.fitInView(self.videoWidget)
-        self.videoWidget.setAspectRatioMode(Qt.IgnoreAspectRatio)
-
-        # dialog = QMessageBox.setText(self, "askdljjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj")
-        reply = QMessageBox.question(self, 'Message', 'Are you sure to quit?',
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        try:
+            QMessageBox.information(self.centralwidget, 'Info',
+                                    f'QGraphicsView.size:               {self.graphicView.size().width(), self.graphicView.size().height()}\n'
+                                    f'QGraphicsVideoItem.size:          {self.videoWidget.size().width(), self.videoWidget.size().height()}\n'
+                                    f'QGraphicsVideoItem.nativeSize:    {self.videoWidget.nativeSize().width(), self.videoWidget.nativeSize().height()}')
+        except:
+            err = traceback.format_exc()
+            ErrorLog(str(err))
 
     def update_plot(self):
         """Update Target Plot with read information."""
@@ -228,6 +210,9 @@ class Js06MainWindow(Ui_MainWindow):
             #     # elif self.oxlist[i] == 0:
             #     #     self.tableWidget.setItem(i, 2, QTableWidgetItem("X"))
             #     #     self.tableWidget.item(i, 2).setBackground(QColor(255, 0, 0))
+
+            if self.save_DB is not None:
+                self.save_DB.c_visibility = self.vis_m
 
         except Exception:
             err = traceback.format_exc()
@@ -278,10 +263,18 @@ class Js06MainWindow(Ui_MainWindow):
         self.qtimer.start()
 
     def convert_cv_qt(self, cv_img):
-        rpg_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        self.crop_image(rpg_image)
+        try:
+            rpg_image = cvtColor(cv_img, COLOR_BGR2RGB)
+            self.crop_image(rpg_image)
+            self.epoch = time.strftime("%Y%m%d%H%M%S", time.localtime(time.time()))
+            self.restoration()
 
-        self.restoration()
+            if self.epoch[-2:] == "00":
+                self.save_frame(cv_img, self.epoch)
+                self.save_target_frame(self.epoch)
+        except:
+            err = traceback.format_exc()
+            ErrorLog(str(err))
 
     def wheelEvent(self, event):
         zoom = 1
@@ -296,14 +289,10 @@ class Js06MainWindow(Ui_MainWindow):
     def draw_rect(self, qp):
         if self.target_x:
             for name, x, y in zip(self.target, self.label_x, self.label_y):
-                # print(self.oxlist[self.label_x.index(x)])
                 if self.oxlist[self.label_x.index(x)] == 0:
-                    # self.rect_color = QPen(Qt.red, 2)
                     qp.setPen(QPen(Qt.red, 2))
                 else:
-                    # self.rect_color = QPen(Qt.green, 2)
                     qp.setPen(QPen(Qt.green, 2))
-                # qp.setPen(QPen(Qt.green, 2))
                 qp.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
                 qp.drawText(x - 4, y - 10, f"{name}")
 
@@ -343,9 +332,11 @@ class Js06MainWindow(Ui_MainWindow):
                         del self.label_y[text - 1]
                         del self.distance[text - 1]
                         del self.oxlist[text - 1]
-                        self.save_target()
-                        self.get_target()
                         print(f"타겟 {text}번을 제거했습니다.")
+                        self.save_target()
+
+                    else:
+                        print("제거할 영상목표가 없습니다.")
 
         except AttributeError:
             pass
@@ -359,6 +350,7 @@ class Js06MainWindow(Ui_MainWindow):
         try:
             if self.target_process:
                 self.target_process = False
+                self.save_target()
 
             else:
                 self.target_process = True
@@ -444,15 +436,6 @@ class Js06MainWindow(Ui_MainWindow):
             err = traceback.format_exc()
             ErrorLog(str(err))
 
-    def conversion(self):
-        """Label 좌표 값을 저장한다."""
-        try:
-            # self.label_x = []
-            pass
-        except:
-            err = traceback.format_exc()
-            ErrorLog(str(err))
-
     @staticmethod
     def f2i(num: float):
         """float형 숫자를 0.5를 더하고 정수형으로 바꿔준다."""
@@ -474,55 +457,44 @@ class Js06MainWindow(Ui_MainWindow):
         except Exception as e:
             print(e)
 
-    def save_target_image(self, epoch: str):
+    def save_target_frame(self, epoch: str):
         try:
             for i in range(len(self.target_x)):
-                imagepath = os.path.join(self.filepath, "image", "100x100", f"target{i + 1}")
-                if not os.path.isdir(imagepath):
-                    os.makedirs(imagepath)
-                if not os.path.isfile(f"{imagepath}/target{i + 1}_{epoch}.jpg"):
-                    b, g, r = cv2.split(self.crop_imagelist100[i])
-                    if self.tflite_thread is None:
-                        cv2.imwrite(f"{imagepath}/target{i + 1}_{epoch}_None.jpg", cv2.merge([r, g, b]))
-                        continue
+                print(i)
+                image_path = os.path.join(self.filepath, "image", "100x100", f"target{i + 1}")
+                if not os.path.isdir(image_path):
+                    os.makedirs(image_path)
+                if not os.path.isfile(f"{image_path}/target_{i + 1}_{epoch}.jpg"):
+                    b, g, r = split(self.crop_imagelist100[i])
                     if self.oxlist[i] == 1:
-                        cv2.imwrite(f"{imagepath}/target{i + 1}_{epoch}_Y.jpg", cv2.merge([r, g, b]))
+                        imwrite(f"{image_path}/target_{i + 1}_{epoch}_Y.jpg", merge([r, g, b]))
                     else:
-                        cv2.imwrite(f"{imagepath}/target{i + 1}_{epoch}_N.jpg", cv2.merge([r, g, b]))
-            self.crop_imagelist100 = []
-            cv2.destroyAllWindows()
+                        imwrite(f"{image_path}/target_{i + 1}_{epoch}_N.jpg", merge([r, g, b]))
+            del self.crop_imagelist100
+            destroyAllWindows()
         except:
             err = traceback.format_exc()
             ErrorLog(str(err))
 
-    def save_frame(self):
+    def save_frame(self, image: np.ndarray, epoch: str):
         try:
-            image_path = os.path.join(self.filepath, "image", "PNM", f"{self.epoch[2:6]}")
-            fileName = f"{self.epoch}"
-
-            cap = VideoCapture('rtsp://admin:sijung5520@192.168.100.100/profile2/media.smp')
-            if not cap.isOpened():
-                pass
-            ret, img = cap.read()
+            image_path = os.path.join(self.filepath, "image", "PNM", f"{epoch[2:6]}")
+            fileName = f"{epoch}_{self.vis_m}"
             if not os.path.isdir(image_path):
                 os.makedirs(image_path)
-            if not os.path.isfile(f"{image_path}/{fileName}.png"):
-                imwrite(f'{image_path}/{fileName}.png', img)
-            image = Image.open(f"{image_path}/{fileName}.png")
-            self.data = np.asarray(image)
-            cap.release()
+            if not os.path.isfile(f"{image_path}/{fileName}.jpg"):
+                imwrite(f'{image_path}/{fileName}.jpg', image)
+            del image
+            del image_path
             destroyAllWindows()
+
         except Exception:
             err = traceback.format_exc()
-            print(err)
-            # sys.exit()
+            ErrorLog(str(err))
 
     def crop_image(self, image: np.ndarray):
         """영상목표를 100x100으로 잘라내 리스트로 저장하고, 리스트를 tflite_thread 에 업데이트 한다."""
         try:
-            # if self.data is None:
-            #     pass
-            # else:
             new_crop_image = []
             # 영상목표를 100x100으로 잘라 리스트에 저장한다.
             for i in range(len(self.target_x)):
@@ -561,13 +533,25 @@ class Js06MainWindow(Ui_MainWindow):
                     self.tflite_thread.update_oxlist_signal.connect(self.get_visiblity)
                     self.tflite_thread.start()
 
+                    self.save_DB = SaveDB()
+                    if not self.save_DB.flag:
+                        # print("Save Database thread start.")
+                        self.save_DB.flag = True
+                        self.save_DB.start()
+
             else:
                 if self.tflite_thread is None:
                     return
                 if self.tflite_thread.run_flag:
                     print("모델적용을 중지합니다.")
                     self.tflite_thread.stop()
-                    self.tflite_thread = None
+                    self.tflite_thread = False
+
+                    if self.save_DB.flag:
+                        # print("Save Database thread stop.")
+                        self.save_DB.stop()
+                        self.save_DB.flag = False
+                        self.save_DB = None
 
         except:
             err = traceback.format_exc()
@@ -583,6 +567,7 @@ class Js06MainWindow(Ui_MainWindow):
                 self.vis_km = 0
             elif res:
                 self.vis_km = round(max(res), 2)
+                self.vis_m = int(self.vis_km * 1000)
                 self.visibility = str(self.vis_km) + " km"
 
             self.oxlist = oxlist
@@ -594,6 +579,28 @@ class Js06MainWindow(Ui_MainWindow):
             err = traceback.format_exc()
             ErrorLog(str(err))
             pass
+
+    # def save_database(self):
+    #     try:
+    #         # print("Save in Database.")
+    #         self.save_DB = SaveDB()
+    #
+    #         # Start Visibility value at InfluxDB
+    #         if self.actionInference.isChecked():
+    #             if not self.save_DB.flag:
+    #                 # print("Save Database thread start.")
+    #                 self.save_DB.flag = True
+    #                 self.save_DB.start()
+    #         elif not self.actionInference.isChecked():
+    #             if self.save_DB.flag:
+    #                 # print("Save Database thread stop.")
+    #                 self.save_DB.stop()
+    #                 self.save_DB.flag = False
+    #                 self.save_DB = None
+    #
+    #     except:
+    #         err = traceback.format_exc()
+    #         ErrorLog(str(err))
 
 
 def Bye():
