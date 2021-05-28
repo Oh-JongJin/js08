@@ -522,7 +522,7 @@ class Js06MainWindow(Ui_MainWindow):
                     if self.save_DB.flag:
                         # print("Save Database thread stop.")
                         self.save_DB.stop()
-                        self.save_DB.flag = False3
+                        self.save_DB.flag = False
                         self.save_DB = None
 
         except:
