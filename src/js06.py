@@ -27,10 +27,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import paho.mqtt.client as mqtt
 
-from PyQt5.QtGui import QPainter, QPen
+from PyQt5.QtGui import QPainter, QPen, QImage, QPalette
 from PyQt5.QtCore import Qt, QTimer, QUrl, QSize
-from PyQt5.QtMultimedia import QMediaContent
-from PyQt5.QtWidgets import QMainWindow, QApplication, QInputDialog, QTableWidget, QTableWidgetItem, QMessageBox
+from PyQt5.QtMultimedia import QMediaContent, QAbstractVideoSurface, QVideoFrame
+from PyQt5.QtWidgets import QMainWindow, QApplication, QInputDialog, QTableWidget, \
+    QTableWidgetItem, QMessageBox, QWidget, QSizePolicy
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from cv2 import VideoCapture, imwrite, destroyAllWindows, cvtColor, COLOR_BGR2RGB, split, merge
@@ -107,10 +108,6 @@ class Js06MainWindow(Ui_MainWindow):
         self.ylabel.set_rotation(45)
         plt.rcParams.update({'font.size': 7})
 
-        # self.fig = None
-        # self.canvas = None
-        # self.axes = None
-
         # TODO(Kyungwon): Set adequate action for the exception.
         self.filepath = os.path.join(os.getcwd(), "target")
         self.filepath_log = os.path.join(os.getcwd(), "Log")
@@ -125,11 +122,6 @@ class Js06MainWindow(Ui_MainWindow):
         try:
             super().setupUi(MainWindow)
 
-            # Table Widget을 On/Off 가능한 버튼
-            # self.list_btn.setGeometry(1836, 40, 60, 30)
-            # self.list_btn.clicked.connect(self.list_btn_click)
-            # self.list_btn.setText("Hide")
-
             # webEngineView 위젯에 아래의 주소(Grafana)로 이동
             self.webEngineView.load(
                 QUrl(
@@ -139,11 +131,11 @@ class Js06MainWindow(Ui_MainWindow):
             self.update_plot()
 
             self.actionEdit_target.triggered.connect(self.target_mode)
+            self.actionSaveframe.triggered.connect(self.save_videoframe)
             self.horizontalLayout.addWidget(self.canvas, 0)
             self.horizontalLayout.addWidget(self.webEngineView, 1)
 
             # Event
-            # self.blank_lbl.wheelEvent = self.wheelEvent
             self.blank_lbl.mousePressEvent = self.mousePressEvent
             self.blank_lbl.mouseDoubleClickEvent = self.test
             self.blank_lbl.paintEvent = self.paintEvent
@@ -197,20 +189,6 @@ class Js06MainWindow(Ui_MainWindow):
 
             self.canvas.draw()
 
-            # # tabelWidget 위젯 설정
-            # self.tableWidget.setRowCount(len(self.target_x))
-            # self.tableWidget.setColumnCount(3)
-            # self.tableWidget.setHorizontalHeaderLabels(['거리 (km)', '거리 (mi)', '판별'])
-            #
-            # for i in range(len(self.target_x)):
-            #     self.tableWidget.setItem(i, 0, QTableWidgetItem(f"{self.distance[i]}"))
-            #     self.tableWidget.setItem(i, 1, QTableWidgetItem(f"{round(self.distance[i] * 1.609, 2)}"))
-            #     # if self.oxlist[i] == 1:
-            #     #     self.tableWidget.setItem(i, 2, QTableWidgetItem("O"))
-            #     # elif self.oxlist[i] == 0:
-            #     #     self.tableWidget.setItem(i, 2, QTableWidgetItem("X"))
-            #     #     self.tableWidget.item(i, 2).setBackground(QColor(255, 0, 0))
-
             if self.save_DB is not None:
                 self.save_DB.c_visibility = self.vis_m
 
@@ -246,7 +224,7 @@ class Js06MainWindow(Ui_MainWindow):
         """Get video from Hanwha PNM-9030V"""
         self.camera_name = "PNM-9030V"
 
-        # create the video capture thread
+        # Create the video capture thread
         self.player.setMedia(QMediaContent(QUrl("rtsp://admin:sijung5520@192.168.100.100/profile2/media.smp")))
         self.player.play()
         self.blank_lbl.raise_()
@@ -345,6 +323,10 @@ class Js06MainWindow(Ui_MainWindow):
             print("거리 입력 값이 잘못되었습니다.")
             pass
 
+    def save_videoframe(self):
+        # self.player.stop()
+        self.player.setVideoOutput(None)
+
     def target_mode(self):
         """목표 영상 수정 모드를 설정한다."""
         try:
@@ -370,15 +352,8 @@ class Js06MainWindow(Ui_MainWindow):
     def get_target(self):
         """Read target information from a file"""
         try:
-            # self.target = []
-            # self.prime_x = []
-            # self.prime_y = []
-            # self.target_x = []
-            # self.target_y = []
-            # self.distance = []
-            # self.oxlist = []
-
             if os.path.isfile(f"target/{self.camera_name}.csv"):
+                print(self.camera_name)
                 result = pd.read_csv(f"target/{self.camera_name}.csv")
                 self.target = result.target.tolist()
                 self.prime_x = result.x.tolist()
@@ -394,9 +369,6 @@ class Js06MainWindow(Ui_MainWindow):
         except AttributeError:
             err = traceback.format_exc()
             ErrorLog(str(err))
-
-            # TODO: This code have to delete after catch errors.
-            # os.remove(f"target/{self.camera_name}.csv")
 
     def save_target(self):
         """Save the target information for each camera."""
@@ -550,7 +522,7 @@ class Js06MainWindow(Ui_MainWindow):
                     if self.save_DB.flag:
                         # print("Save Database thread stop.")
                         self.save_DB.stop()
-                        self.save_DB.flag = False
+                        self.save_DB.flag = False3
                         self.save_DB = None
 
         except:
@@ -579,28 +551,6 @@ class Js06MainWindow(Ui_MainWindow):
             err = traceback.format_exc()
             ErrorLog(str(err))
             pass
-
-    # def save_database(self):
-    #     try:
-    #         # print("Save in Database.")
-    #         self.save_DB = SaveDB()
-    #
-    #         # Start Visibility value at InfluxDB
-    #         if self.actionInference.isChecked():
-    #             if not self.save_DB.flag:
-    #                 # print("Save Database thread start.")
-    #                 self.save_DB.flag = True
-    #                 self.save_DB.start()
-    #         elif not self.actionInference.isChecked():
-    #             if self.save_DB.flag:
-    #                 # print("Save Database thread stop.")
-    #                 self.save_DB.stop()
-    #                 self.save_DB.flag = False
-    #                 self.save_DB = None
-    #
-    #     except:
-    #         err = traceback.format_exc()
-    #         ErrorLog(str(err))
 
 
 def Bye():
