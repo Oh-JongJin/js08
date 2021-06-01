@@ -22,8 +22,8 @@ import traceback
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import paho.mqtt.client as mqtt
 
+from pytest import ExitCode
 from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt, QTimer, QUrl
 from PyQt5.QtMultimedia import QMediaContent
@@ -398,19 +398,6 @@ class Js06MainWindow(Ui_MainWindow):
             err = traceback.format_exc()
             error_log(str(err))
 
-    def mqtt_send(self, msg: str):  # pylint: disable=no-self-use
-        """MQTT를 사용하여 원격 시정 서버에 메시지를 보낸다."""
-        try:
-            send = mqtt.Client("test")
-            send.connect("121.159.74.131", 1883)
-            send.publish('sitemqtt', msg)
-            send.loop_stop()
-            send.disconnect()
-            time.sleep(1)
-        except:  # pylint: disable=bare-except
-            err = traceback.format_exc()
-            error_log(str(err))
-
     def save_target_frame(self, epoch: str):
         """Save 100x100 target frame in camera image"""
         try:
@@ -537,6 +524,11 @@ class Js06MainWindow(Ui_MainWindow):
 
 def close_func():
     os.system("TASKKILL /F /IM influxd.exe")
+
+
+def pytest_sessionfinish(session, exitstatus):
+    if exitstatus == 5:
+        session.exitstatus = 10
 
 
 if __name__ == '__main__':
