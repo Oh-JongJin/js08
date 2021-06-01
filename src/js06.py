@@ -19,22 +19,18 @@ import time
 import atexit
 import traceback
 
-import cv2
-from PIL import Image
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import paho.mqtt.client as mqtt
 
-from PyQt5.QtGui import QPainter, QPen, QImage, QPalette
-from PyQt5.QtCore import Qt, QTimer, QUrl, QSize
-from PyQt5.QtMultimedia import QMediaContent, QAbstractVideoSurface, QVideoFrame
-from PyQt5.QtWidgets import QMainWindow, QApplication, QInputDialog, QTableWidget, \
-    QTableWidgetItem, QMessageBox, QWidget, QSizePolicy
+from PyQt5.QtGui import QPainter, QPen
+from PyQt5.QtCore import Qt, QTimer, QUrl
+from PyQt5.QtMultimedia import QMediaContent
+from PyQt5.QtWidgets import QMainWindow, QApplication, QInputDialog, QMessageBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-from cv2 import VideoCapture, imwrite, destroyAllWindows, cvtColor, COLOR_BGR2RGB, split, merge
+from cv2 import imwrite, destroyAllWindows, cvtColor, COLOR_BGR2RGB, split, merge
 
 from save_db import SaveDB
 from video_thread import VideoThread
@@ -42,11 +38,12 @@ from main_window import Ui_MainWindow
 from tflite_thread import TfliteThread
 
 
-def ErrorLog(error: str):
+def error_log(error: str):
+    """If occur error, run this function"""
     current_time = time.strftime("%Y.%m.%d/%H:%M:%S", time.localtime(time.time()))
     cur_day = time.strftime("%m%d", time.localtime(time.time()))
-    with open(f"Log/{cur_day}.txt", "a") as f:
-        f.write(f"[{current_time}] - {error}\n")
+    with open(f"Log/{cur_day}.txt", "a") as txt:
+        txt.write(f"[{current_time}] - {error}\n")
 
 
 class Js06MainWindow(Ui_MainWindow):
@@ -76,15 +73,13 @@ class Js06MainWindow(Ui_MainWindow):
         self.result = None
         self.crop_img = None
 
-        self.save_DB = None
+        self.save_db = None
 
         self.epoch = None
         self.list_flag = False
 
         # Draw target
         self.painter = None
-        self.rect_color_N = QPen(Qt.red, 2)
-        self.rect_color_Y = QPen(Qt.green, 2)
 
         # Required for Target Plot function
         self._plot_ref_red = None
@@ -127,11 +122,10 @@ class Js06MainWindow(Ui_MainWindow):
                 QUrl(
                     "http://localhost:3000/d/TWQ9hKoGz/visibility?orgId=1&from=now-3h&to=now&refresh=5s&kiosk"
                 ))
-            self.open_PNM()
+            self.open_cam()
             self.update_plot()
 
             self.actionEdit_target.triggered.connect(self.target_mode)
-            self.actionSaveframe.triggered.connect(self.save_videoframe)
             self.horizontalLayout.addWidget(self.canvas, 0)
             self.horizontalLayout.addWidget(self.webEngineView, 1)
 
@@ -139,9 +133,9 @@ class Js06MainWindow(Ui_MainWindow):
             self.blank_lbl.mousePressEvent = self.mousePressEvent
             self.blank_lbl.mouseDoubleClickEvent = self.test
             self.blank_lbl.paintEvent = self.paintEvent
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def list_btn_click(self):
         try:
@@ -158,9 +152,9 @@ class Js06MainWindow(Ui_MainWindow):
                 self.list_btn.setText("Hide")
                 self.tableWidget.setVisible(True)
                 self.list_flag = False
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def test(self, event):
         try:
@@ -168,9 +162,9 @@ class Js06MainWindow(Ui_MainWindow):
                                     f'QGraphicsView.size:               {self.graphicView.size().width(), self.graphicView.size().height()}\n'
                                     f'QGraphicsVideoItem.size:          {self.videoWidget.size().width(), self.videoWidget.size().height()}\n'
                                     f'QGraphicsVideoItem.nativeSize:    {self.videoWidget.nativeSize().width(), self.videoWidget.nativeSize().height()}')
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def update_plot(self):
         """Update Target Plot with read information."""
@@ -181,6 +175,7 @@ class Js06MainWindow(Ui_MainWindow):
             self.axes.clear()
             self.plot_canvas()
 
+            # pylint: disable=invalid-name
             for i, xy in enumerate(zip(plot_x, self.distance), start=0):
                 if self.oxlist[i] == 0:
                     self._plot_ref_red, = self.axes.plot(plot_x[i], self.distance[i], 'ro')
@@ -189,12 +184,12 @@ class Js06MainWindow(Ui_MainWindow):
 
             self.canvas.draw()
 
-            if self.save_DB is not None:
-                self.save_DB.c_visibility = self.vis_m
+            if self.save_db is not None:
+                self.save_db.c_visibility = self.vis_m
 
-        except Exception:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def plot_canvas(self):
         """Target Plot Axes"""
@@ -211,16 +206,11 @@ class Js06MainWindow(Ui_MainWindow):
             self.ylabel.set_rotation(45)
             self.xlabel = self.axes.set_xlabel(f"Visibility: {self.visibility}", fontsize=20)
             plt.rcParams.update({'font.size': 7})
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
-    def closeEvent(self, event):
-        """Window close event"""
-        print("DEBUG: ", type(event))
-        event.accept()
-
-    def open_PNM(self):
+    def open_cam(self):
         """Get video from Hanwha PNM-9030V"""
         self.camera_name = "PNM-9030V"
 
@@ -250,14 +240,9 @@ class Js06MainWindow(Ui_MainWindow):
             if self.epoch[-2:] == "00":
                 self.save_frame(cv_img, self.epoch)
                 self.save_target_frame(self.epoch)
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
-
-    def wheelEvent(self, event):
-        zoom = 1
-        zoom = zoom + event.angleDelta().y() / 10000
-        self.graphicView.scale(zoom, zoom)
+            error_log(str(err))
 
     def paintEvent(self, event):
         self.painter = QPainter(self.blank_lbl)
@@ -299,6 +284,7 @@ class Js06MainWindow(Ui_MainWindow):
                     self.get_target()
 
             if event.buttons() == Qt.RightButton:
+                # pylint: disable=invalid-name
                 text, ok = QInputDialog.getText(self.centralwidget, '타겟 입력', '제거할 타겟 번호 입력')
                 text = int(text)
                 if ok:
@@ -321,11 +307,6 @@ class Js06MainWindow(Ui_MainWindow):
 
         except ValueError:
             print("거리 입력 값이 잘못되었습니다.")
-            pass
-
-    def save_videoframe(self):
-        # self.player.stop()
-        self.player.setVideoOutput(None)
 
     def target_mode(self):
         """목표 영상 수정 모드를 설정한다."""
@@ -345,9 +326,9 @@ class Js06MainWindow(Ui_MainWindow):
 
             return self.target_process
 
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def get_target(self):
         """Read target information from a file"""
@@ -368,7 +349,7 @@ class Js06MainWindow(Ui_MainWindow):
 
         except AttributeError:
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def save_target(self):
         """Save the target information for each camera."""
@@ -386,9 +367,9 @@ class Js06MainWindow(Ui_MainWindow):
                 self.result["distance"] = self.distance
                 self.result["discernment"] = self.oxlist
                 self.result.to_csv(f"{self.filepath}/{self.camera_name}.csv", mode="w", index=False)
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def coordinator(self):
         """영상목표의 좌표값을 -1~1 값으로 정규화한다."""
@@ -397,27 +378,27 @@ class Js06MainWindow(Ui_MainWindow):
             self.prime_x = [2 * x / self.videoWidget.nativeSize().width() - 1 for x in self.target_x]
         except:
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def restoration(self):
         """정규화한 값을 다시 복구한다."""
         try:
             self.target_x = [self.f2i((x + 1) * self.videoWidget.nativeSize().width() / 2) for x in self.prime_x]
             self.target_y = [self.f2i(y * self.videoWidget.nativeSize().height()) for y in self.prime_y]
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     @staticmethod
     def f2i(num: float):
         """float형 숫자를 0.5를 더하고 정수형으로 바꿔준다."""
         try:
             return int(num + 0.5)
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
-    def mqtt_send(self, msg: str):
+    def mqtt_send(self, msg: str):  # pylint: disable=no-self-use
         """MQTT를 사용하여 원격 시정 서버에 메시지를 보낸다."""
         try:
             send = mqtt.Client("test")
@@ -426,10 +407,12 @@ class Js06MainWindow(Ui_MainWindow):
             send.loop_stop()
             send.disconnect()
             time.sleep(1)
-        except Exception as e:
-            print(e)
+        except:  # pylint: disable=bare-except
+            err = traceback.format_exc()
+            error_log(str(err))
 
     def save_target_frame(self, epoch: str):
+        """Save 100x100 target frame in camera image"""
         try:
             for i in range(len(self.target_x)):
                 print(i)
@@ -444,25 +427,26 @@ class Js06MainWindow(Ui_MainWindow):
                         imwrite(f"{image_path}/target_{i + 1}_{epoch}_N.jpg", merge([r, g, b]))
             del self.crop_imagelist100
             destroyAllWindows()
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def save_frame(self, image: np.ndarray, epoch: str):
+        """Save frame in camera image"""
         try:
             image_path = os.path.join(self.filepath, "image", "PNM", f"{epoch[2:6]}")
-            fileName = f"{epoch}_{self.vis_m}"
+            file_name = f"{epoch}_{self.vis_m}"
             if not os.path.isdir(image_path):
                 os.makedirs(image_path)
-            if not os.path.isfile(f"{image_path}/{fileName}.jpg"):
-                imwrite(f'{image_path}/{fileName}.jpg', image)
+            if not os.path.isfile(f"{image_path}/{file_name}.jpg"):
+                imwrite(f'{image_path}/{file_name}.jpg', image)
             del image
             del image_path
             destroyAllWindows()
 
-        except Exception:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def crop_image(self, image: np.ndarray):
         """영상목표를 100x100으로 잘라내 리스트로 저장하고, 리스트를 tflite_thread 에 업데이트 한다."""
@@ -480,9 +464,9 @@ class Js06MainWindow(Ui_MainWindow):
             if self.actionInference.isChecked() and self.tflite_thread is not None:
                 self.tflite_thread.crop_imagelist100 = new_crop_image
             del image
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
     def inference_clicked(self):
         """모델 쓰레드를 제어한다."""
@@ -502,13 +486,13 @@ class Js06MainWindow(Ui_MainWindow):
                     print("모델적용을 시작합니다.")
                     self.tflite_thread = TfliteThread(self.crop_imagelist100)
                     self.tflite_thread.run_flag = True
-                    self.tflite_thread.update_oxlist_signal.connect(self.get_visiblity)
+                    self.tflite_thread.update_oxlist_signal.connect(self.get_visibility)
                     self.tflite_thread.start()
 
-                    self.save_DB = SaveDB()
-                    if not self.save_DB.flag:
-                        self.save_DB.flag = True
-                        self.save_DB.start()
+                    self.save_db = SaveDB()
+                    if not self.save_db.flag:
+                        self.save_db.flag = True
+                        self.save_db.start()
 
             else:
                 if self.tflite_thread is None:
@@ -518,16 +502,16 @@ class Js06MainWindow(Ui_MainWindow):
                     self.tflite_thread.stop()
                     self.tflite_thread = False
 
-                    if self.save_DB.flag:
-                        self.save_DB.stop()
-                        self.save_DB.flag = False
-                        self.save_DB = None
+                    if self.save_db.flag:
+                        self.save_db.stop()
+                        self.save_db.flag = False
+                        self.save_db = None
 
-        except:
+        except:  # pylint: disable=bare-except
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
 
-    def get_visiblity(self, oxlist):
+    def get_visibility(self, oxlist):
         """크롭한 이미지들을 모델에 돌려 결과를 저장하고 보이는것들 중 가장 먼 거리를 출력한다."""
         try:
             res = [self.distance[x] for x, y in enumerate(oxlist) if y == 1]
@@ -547,11 +531,11 @@ class Js06MainWindow(Ui_MainWindow):
 
         except ValueError:
             err = traceback.format_exc()
-            ErrorLog(str(err))
+            error_log(str(err))
             pass
 
 
-def Bye():
+def close_func():
     os.system("TASKKILL /F /IM influxd.exe")
 
 
@@ -563,5 +547,5 @@ if __name__ == '__main__':
     ui = Js06MainWindow()  # pylint: disable-msg=I1101
     ui.setupUi(MainWindow)
     MainWindow.show()
-    atexit.register(Bye)
+    atexit.register(close_func)
     sys.exit(app.exec_())
