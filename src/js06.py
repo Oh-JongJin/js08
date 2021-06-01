@@ -23,7 +23,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from pytest import ExitCode
 from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt, QTimer, QUrl
 from PyQt5.QtMultimedia import QMediaContent
@@ -524,11 +523,6 @@ class Js06MainWindow(Ui_MainWindow):
 
 def close_func():
     os.system("TASKKILL /F /IM influxd.exe")
-
-
-def pytest_sessionfinish(session, exitstatus):
-    if exitstatus == 5:
-        session.exitstatus = 10
 
 
 if __name__ == '__main__':
