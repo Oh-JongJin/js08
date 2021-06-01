@@ -49,7 +49,6 @@ class TfliteThread(QtCore.QThread):
         input_tensor = interpreter.tensor(tensor_index)()[0]
         input_tensor[:, :] = image
 
-    # @jit(nopython=True)
     def classify_image(self, interpreter, image):
         """Returns a sorted array of classification results."""
 

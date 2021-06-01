@@ -47,43 +47,20 @@ class Ui_MainWindow(object):
         self.blank_lbl.setMinimumSize(QtCore.QSize(0, 0))
         self.blank_lbl.setMaximumSize(QtCore.QSize(16777215, 16777215))
 
-        # self.list_btn = QtWidgets.QPushButton(self.blank_lbl)
-        # self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
-        # self.tableWidget.setGeometry(QtCore.QRect(1524, 0, 396, 578))
-        # self.tableWidget.setVisible(False)
-
-        ##############################
         self.scene = QtWidgets.QGraphicsScene()
         self.graphicView = QtWidgets.QGraphicsView(self.scene)
         self.graphicView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.graphicView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.videoWidget = QGraphicsVideoItem()
-        # self.videoWidget.setSize(QtCore.QSizeF(1920, 1080))
         self.scene.addItem(self.videoWidget)
         self.player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
         self.player.setVideoOutput(self.videoWidget)
         self.verticalLayout.addWidget(self.graphicView)
-        ##############################
-
-        # self.videoWidget = QVideoWidget()
-        # self.videoWidget.setAspectRatioMode(QtCore.Qt.IgnoreAspectRatio)
-        # self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
-
-        # self.mediaPlayer.setVideoOutput(self.videoWidget) 
-        # self.list_btn = QtWidgets.QPushButton(MainWindow)
-        # self.list_btn.setGeometry(1440, 40, 60, 30)
-
-        # self.enlarge_img = QtWidgets.QLabel(self.image_label)
-        # self.enlarge_img_out = QtWidgets.QLabel(self.image_label)
-        # self.target_info = QtWidgets.QLabel(self.image_label)
 
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setContentsMargins(-1, -1, -1, 0)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.webEngineView = QWebView()
-
-        # self.webEngineView.mouseGrabber()
-        # self.verticalLayout.addWidget(self.videoWidget)
 
         self.horizontalLayout.addWidget(self.webEngineView)
         self.verticalLayout.addLayout(self.horizontalLayout)
@@ -101,10 +78,6 @@ class Ui_MainWindow(object):
         MainWindow.setMenuBar(self.menubar)
         self.actionImage_File = QtWidgets.QAction(MainWindow)
         self.actionImage_File.setObjectName("actionImage_File")
-        # self.actionCamera_1 = QtWidgets.QAction(MainWindow)
-        # self.actionCamera_1.setObjectName("actionCamera_1")
-        # self.actionCamera_2 = QtWidgets.QAction(MainWindow)
-        # self.actionCamera_2.setObjectName("actionCamera_2")
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
         self.actionInference = QtWidgets.QAction(MainWindow)
@@ -120,8 +93,6 @@ class Ui_MainWindow(object):
         self.actionSaveframe = QtWidgets.QAction(MainWindow)
         self.actionSaveframe.setCheckable(True)
         self.actionSaveframe.setObjectName("actionSaveframe")
-        # self.menuSource.addAction(self.actionCamera_1)
-        # self.menuSource.addAction(self.actionCamera_2)
         self.menuSource.addAction(self.actionExit)
         self.menuMode.addAction(self.actionEdit_target)
         self.menuMode.addSeparator()
@@ -141,12 +112,6 @@ class Ui_MainWindow(object):
         self.menuMode.setTitle(_translate("MainWindow", "Mode"))
         self.actionImage_File.setText(_translate("MainWindow", "Image File"))
         self.actionImage_File.setStatusTip(_translate("MainWindow", "Open an image file"))
-        # self.actionCamera_1.setText(_translate("MainWindow", "XNO-8080R"))
-        # self.actionCamera_1.setStatusTip(_translate("MainWindow", "Get video from webcam"))
-        # self.actionCamera_1.setShortcut(_translate("MainWindow", "1"))
-        # self.actionCamera_2.setText(_translate("MainWindow", "PNM-9030V"))
-        # self.actionCamera_2.setStatusTip(_translate("MainWindow", "Get video from Hanwha PNM-9030V"))
-        # self.actionCamera_2.setShortcut(_translate("MainWindow", "2"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
         self.actionExit.setStatusTip(_translate("MainWindow", "Exit JS-06"))
         self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+W"))
@@ -159,8 +124,6 @@ class Ui_MainWindow(object):
         self.actionSaveframe.setText(_translate("MainWindow", "Save Frame"))
         self.actionSaveframe.setShortcut(_translate("MainWindow", "S"))
 
-
-# from PyQt5 import QtWebEngineWidgets
 
 if __name__ == "__main__":
     import sys

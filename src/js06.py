@@ -507,7 +507,6 @@ class Js06MainWindow(Ui_MainWindow):
 
                     self.save_DB = SaveDB()
                     if not self.save_DB.flag:
-                        # print("Save Database thread start.")
                         self.save_DB.flag = True
                         self.save_DB.start()
 
@@ -520,7 +519,6 @@ class Js06MainWindow(Ui_MainWindow):
                     self.tflite_thread = False
 
                     if self.save_DB.flag:
-                        # print("Save Database thread stop.")
                         self.save_DB.stop()
                         self.save_DB.flag = False
                         self.save_DB = None

@@ -33,7 +33,6 @@ class SaveDB(QThread):
                 client.close()
 
                 # Save every 1 minute.
-                print("WOW")
                 time.sleep(60)
 
             except TypeError:
