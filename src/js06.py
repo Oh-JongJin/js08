@@ -525,14 +525,6 @@ def close_func():
     os.system("TASKKILL /F /IM influxd.exe")
 
 
-def inc(x):
-    return x + 1
-
-
-def test_answer():
-    assert int(3) == 4
-
-
 if __name__ == '__main__':
     import sys
 
