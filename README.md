@@ -22,7 +22,7 @@ JS-06 is being developed on the following target platforms.
 - Webcams
 
 ## Development Environment
-- Visual Studio Code with theend of line sequence to **LF**.
+- Visual Studio Code with the end of line sequence to **LF**.
 - Anaconda Python 3.7 64-bit or less
 - Required Python packages that can be installed using `conda`:
   - binascii
@@ -36,3 +36,7 @@ JS-06 is being developed on the following target platforms.
   - PyQt5
 - Required Python packages that can be installed using `pip`:
   - TensorFlow Lite interpreter: https://www.tensorflow.org/lite/guide/python
+
+- Must install **LAV Filter** to use Video widget.
+  - LAV Filter: https://files.1f0.de/lavf/LAVFilters-0.74.1-x64.zip
+
