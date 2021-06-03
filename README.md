@@ -22,7 +22,7 @@ JS-06 is being developed on the following target platforms.
 - Webcams
 
 ## Development Environment
-- Set git to resolve the end of line difference between OS:
+- Visual Studio Code with the end of line sequence to **LF**. You can set git to resolve the issue automatically:
   - Windows
   ```
   git config --global core.autocrlf true
