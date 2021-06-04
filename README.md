@@ -22,7 +22,15 @@ JS-06 is being developed on the following target platforms.
 - Webcams
 
 ## Development Environment
-- Visual Studio Code with the end of line sequence to **LF**.
+- Visual Studio Code with the end of line sequence to **LF**. You can set git to resolve the issue automatically:
+  - Windows
+  ```
+  git config --global core.autocrlf true
+  ```
+  - Linux and MacOS
+  ```
+  git config --global core.autocrlf input
+  ```
 - Anaconda Python 3.7 64-bit or less
 - Required Python packages that can be installed using `conda`:
   - binascii
