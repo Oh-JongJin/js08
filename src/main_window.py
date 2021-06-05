@@ -11,16 +11,16 @@ from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem, QVideoWidget
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtWebEngineWidgets import QWebEngineView as QWebView
 
-from win32api import GetSystemMetrics
 
-
-class Ui_MainWindow(object):
+class Ui_MainWindow:
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
-        width = GetSystemMetrics(0)
-        height = GetSystemMetrics(1)
+
+        width = 1024
+        height = 768
         MainWindow.resize(width, height)
+
         MainWindow.setWindowFlag(QtCore.Qt.FramelessWindowHint)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
