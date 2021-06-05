@@ -217,11 +217,11 @@ class Js06MainWindow(Ui_MainWindow):
         self.camera_name = "PNM-9030V"
 
         # Create the video capture thread
-        self.player.setMedia(QMediaContent(QUrl("rtsp://admin:sijung5520@192.168.100.100/profile2/media.smp")))
+        self.player.setMedia(QMediaContent(QUrl("rtsp://admin:sijung5520@d617.asuscomm.com:1552/profile2/media.smp")))
         self.player.play()
         self.blank_lbl.raise_()
 
-        self.video_thread = VideoThread("rtsp://admin:sijung5520@192.168.100.100/profile2/media.smp")
+        self.video_thread = VideoThread("rtsp://admin:sijung5520@d617.asuscomm.com:1552/profile2/media.smp")
         self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
         self.video_thread.start()
 
