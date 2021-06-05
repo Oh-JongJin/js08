@@ -18,7 +18,6 @@ import cv2
 import argparse
 import io
 import time
-from numba import jit
 import numpy as np
 
 import tflite_runtime.interpreter as tflite
