@@ -109,7 +109,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.filepath = os.path.join(os.getcwd(), "target")
         self.filepath_log = os.path.join(os.getcwd(), "log")
         try:
-            os.startfile("influxd.exe")
+            # os.startfile("influxd.exe")
             os.makedirs(self.filepath, exist_ok=True)
             os.makedirs(self.filepath_log, exist_ok=True)
         except OSError:
@@ -393,7 +393,7 @@ class Js06MainWindow(Ui_MainWindow):
 
     @staticmethod
     def f2i(num: float):
-        """float형 숫자를 0.5를 더하고 정수형으로 바꿔준다."""
+        """Convert float to int with round off."""
         try:
             return int(num + 0.5)
         except:  # pylint: disable=bare-except
