@@ -37,11 +37,11 @@ from main_window import Ui_MainWindow
 from tflite_thread import TfliteThread
 
 
-def error_log(error: str, path: str="log", verbose: int=3):
+def error_log(error: str, path: str = "log", verbose: int = 3):
     """Write the error to a log file."""
     if verbose == 3:
         print(error)
-    
+
     current_time = time.strftime("%Y.%m.%d/%H:%M:%S", time.localtime(time.time()))
     cur_day = time.strftime("%m%d", time.localtime(time.time()))
     with open(os.path.join(path, f"{cur_day}.txt"), "a") as txt:
@@ -109,6 +109,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.filepath = os.path.join(os.getcwd(), "target")
         self.filepath_log = os.path.join(os.getcwd(), "log")
         try:
+            # TODO(Jongjin): Replace InfluxDB with installation form or the other.
             # os.startfile("influxd.exe")
             os.makedirs(self.filepath, exist_ok=True)
             os.makedirs(self.filepath_log, exist_ok=True)
@@ -133,40 +134,40 @@ class Js06MainWindow(Ui_MainWindow):
 
             # Event
             self.blank_lbl.mousePressEvent = self.mousePressEvent
-            self.blank_lbl.mouseDoubleClickEvent = self.test
+            # self.blank_lbl.mouseDoubleClickEvent = self.test
             self.blank_lbl.paintEvent = self.paintEvent
         except:  # pylint: disable=bare-except
             err = traceback.format_exc()
             error_log(str(err))
 
-    def list_btn_click(self):
-        try:
-            print(self.graphicView.geometry().width(), self.graphicView.geometry().height())
-            if self.list_flag is False:
-                self.list_btn.setGeometry(1440, 40, 60, 30)
-                self.list_btn.setText("List")
-                self.tableWidget.setVisible(True)
-                self.graphicView.resize(1920, 578)
-                self.list_flag = True
+    # def list_btn_click(self):
+    #     try:
+    #         print(self.graphicView.geometry().width(), self.graphicView.geometry().height())
+    #         if self.list_flag is False:
+    #             self.list_btn.setGeometry(1440, 40, 60, 30)
+    #             self.list_btn.setText("List")
+    #             self.tableWidget.setVisible(True)
+    #             self.graphicView.resize(1920, 578)
+    #             self.list_flag = True
+    #
+    #         elif self.list_flag is True:
+    #             self.list_btn.setGeometry(1836, 40, 60, 30)
+    #             self.list_btn.setText("Hide")
+    #             self.tableWidget.setVisible(True)
+    #             self.list_flag = False
+    #     except:  # pylint: disable=bare-except
+    #         err = traceback.format_exc()
+    #         error_log(str(err))
 
-            elif self.list_flag is True:
-                self.list_btn.setGeometry(1836, 40, 60, 30)
-                self.list_btn.setText("Hide")
-                self.tableWidget.setVisible(True)
-                self.list_flag = False
-        except:  # pylint: disable=bare-except
-            err = traceback.format_exc()
-            error_log(str(err))
-
-    def test(self, event):
-        try:
-            QMessageBox.information(self.centralwidget, 'Info',
-                                    f'QGraphicsView.size:               {self.graphicView.size().width(), self.graphicView.size().height()}\n'
-                                    f'QGraphicsVideoItem.size:          {self.videoWidget.size().width(), self.videoWidget.size().height()}\n'
-                                    f'QGraphicsVideoItem.nativeSize:    {self.videoWidget.nativeSize().width(), self.videoWidget.nativeSize().height()}')
-        except:  # pylint: disable=bare-except
-            err = traceback.format_exc()
-            error_log(str(err))
+    # def test(self, event):
+    #     try:
+    #         QMessageBox.information(self.centralwidget, 'Info',
+    #                                 f'QGraphicsView.size:               {self.graphicView.size().width(), self.graphicView.size().height()}\n'
+    #                                 f'QGraphicsVideoItem.size:          {self.videoWidget.size().width(), self.videoWidget.size().height()}\n'
+    #                                 f'QGraphicsVideoItem.nativeSize:    {self.videoWidget.nativeSize().width(), self.videoWidget.nativeSize().height()}')
+    #     except:  # pylint: disable=bare-except
+    #         err = traceback.format_exc()
+    #         error_log(str(err))
 
     def update_plot(self):
         """Update Target Plot with read information."""
