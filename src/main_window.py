@@ -17,8 +17,8 @@ class Ui_MainWindow:
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
 
-        width = 1024
-        height = 768
+        width = QtWidgets.QApplication.primaryScreen().size().width()
+        height = QtWidgets.QApplication.primaryScreen().size().height()
         MainWindow.resize(width, height)
 
         MainWindow.setWindowFlag(QtCore.Qt.FramelessWindowHint)
