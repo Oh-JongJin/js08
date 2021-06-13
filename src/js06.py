@@ -38,7 +38,21 @@ from tflite_thread import TfliteThread
 
 
 def error_log(error: str, path: str="log", verbose: int=3):
-    """Write the error to a log file."""
+    """
+    Write the error to a log file.
+
+    :param error: Error string to print out. Required.
+
+    :param path: A path of the log file.
+
+        This parameter defaults to `log`.
+
+    :param verbose: Verbosity level. 0 is quiet.
+
+        This parameter defaults to `3`.
+
+    :return:
+    """
     if verbose == 3:
         print(error)
     
