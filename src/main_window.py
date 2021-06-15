@@ -16,10 +16,15 @@ class Ui_MainWindow:
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
+        MainWindow.showFullScreen()
+
+        app_icon = QtGui.QIcon("ui/logo.png")
+        MainWindow.setWindowIcon(app_icon)
 
         width = QtWidgets.QApplication.primaryScreen().size().width()
         height = QtWidgets.QApplication.primaryScreen().size().height()
         MainWindow.resize(width, height)
+        MainWindow.showFullScreen()
 
         MainWindow.setWindowFlag(QtCore.Qt.FramelessWindowHint)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
@@ -69,7 +74,7 @@ class Ui_MainWindow:
         self.menubar = QtWidgets.QMainWindow.menuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, width, 0.0195 * height))
         self.menubar.setAutoFillBackground(False)
-        self.menubar.setNativeMenuBar(False)
+        #self.menubar.setNativeMenuBar(False)
         self.menubar.setObjectName("menubar")
         self.menuSource = QtWidgets.QMenu(self.menubar)
         self.menuSource.setObjectName("menuSource")

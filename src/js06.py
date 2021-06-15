@@ -38,10 +38,24 @@ from tflite_thread import TfliteThread
 
 
 def error_log(error: str, path: str="log", verbose: int=3):
-    """Write the error to a log file."""
+    """
+    Write the error to a log file.
+
+    :param error: Error string to print out. Required.
+
+    :param path: A path of the log file.
+
+        This parameter defaults to `log`.
+
+    :param verbose: Verbosity level. 0 is quiet.
+
+        This parameter defaults to `3`.
+
+    :return:
+    """
     if verbose == 3:
         print(error)
-    
+
     current_time = time.strftime("%Y.%m.%d/%H:%M:%S", time.localtime(time.time()))
     cur_day = time.strftime("%m%d", time.localtime(time.time()))
     with open(os.path.join(path, f"{cur_day}.txt"), "a") as txt:
@@ -109,6 +123,7 @@ class Js06MainWindow(Ui_MainWindow):
         self.filepath = os.path.join(os.getcwd(), "target")
         self.filepath_log = os.path.join(os.getcwd(), "log")
         try:
+            # TODO(Jongjin): Replace InfluxDB with installation form or the other.
             # os.startfile("influxd.exe")
             os.makedirs(self.filepath, exist_ok=True)
             os.makedirs(self.filepath_log, exist_ok=True)
@@ -133,7 +148,7 @@ class Js06MainWindow(Ui_MainWindow):
 
             # Event
             self.blank_lbl.mousePressEvent = self.mousePressEvent
-            self.blank_lbl.mouseDoubleClickEvent = self.test
+            # self.blank_lbl.mouseDoubleClickEvent = self.test
             self.blank_lbl.paintEvent = self.paintEvent
         except:  # pylint: disable=bare-except
             err = traceback.format_exc()
