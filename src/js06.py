@@ -361,8 +361,12 @@ class Js06MainWindow(Ui_MainWindow):
                 self.distance = result.distance.tolist()
                 self.oxlist = [0 for i in range(len(self.prime_x))]
                 print("영상목표를 불러옵니다.")
+
+            elif os.path.isfile(f"target/{self.camera_name}.csv") is False:
+                print("No csv file.")
+
             else:
-                print("csv 파일을 불러올 수 없습니다.")
+                print("Unable to load csv file.")
 
         except AttributeError:
             err = traceback.format_exc()
