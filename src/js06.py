@@ -134,7 +134,7 @@ class Js06MainWindow(Ui_MainWindow):
         try:
             super().setupUi(MainWindow)
 
-            # webEngineView 위젯에 아래의 주소(Grafana)로 이동
+            # Link the webEngineView widget to the address below.
             self.webEngineView.load(
                 QUrl(
                     "http://localhost:3000/d/TWQ9hKoGz/visibility?orgId=1&from=now-3h&to=now&refresh=5s&kiosk"
@@ -148,40 +148,10 @@ class Js06MainWindow(Ui_MainWindow):
 
             # Event
             self.blank_lbl.mousePressEvent = self.mousePressEvent
-            # self.blank_lbl.mouseDoubleClickEvent = self.test
             self.blank_lbl.paintEvent = self.paintEvent
         except:  # pylint: disable=bare-except
             err = traceback.format_exc()
             error_log(str(err))
-
-    # def list_btn_click(self):
-    #     try:
-    #         print(self.graphicView.geometry().width(), self.graphicView.geometry().height())
-    #         if self.list_flag is False:
-    #             self.list_btn.setGeometry(1440, 40, 60, 30)
-    #             self.list_btn.setText("List")
-    #             self.tableWidget.setVisible(True)
-    #             self.graphicView.resize(1920, 578)
-    #             self.list_flag = True
-    #
-    #         elif self.list_flag is True:
-    #             self.list_btn.setGeometry(1836, 40, 60, 30)
-    #             self.list_btn.setText("Hide")
-    #             self.tableWidget.setVisible(True)
-    #             self.list_flag = False
-    #     except:  # pylint: disable=bare-except
-    #         err = traceback.format_exc()
-    #         error_log(str(err))
-
-    # def test(self, event):
-    #     try:
-    #         QMessageBox.information(self.centralwidget, 'Info',
-    #                                 f'QGraphicsView.size:               {self.graphicView.size().width(), self.graphicView.size().height()}\n'
-    #                                 f'QGraphicsVideoItem.size:          {self.videoWidget.size().width(), self.videoWidget.size().height()}\n'
-    #                                 f'QGraphicsVideoItem.nativeSize:    {self.videoWidget.nativeSize().width(), self.videoWidget.nativeSize().height()}')
-    #     except:  # pylint: disable=bare-except
-    #         err = traceback.format_exc()
-    #         error_log(str(err))
 
     def update_plot(self):
         """Update Target Plot with read information."""
@@ -229,16 +199,17 @@ class Js06MainWindow(Ui_MainWindow):
 
     def open_cam(self):
         """Get video from Hanwha PNM-9030V"""
+        ADD = "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp"
         self.camera_name = "PNM-9030V"
 
         # Create the video capture thread
-        self.player.setMedia(QMediaContent(QUrl("rtsp://admin:sijung5520@d617.asuscomm.com:1552/profile2/media.smp")))
+        self.player.setMedia(QMediaContent(QUrl(ADD)))
         self.player.play()
         self.blank_lbl.raise_()
 
-        self.video_thread = VideoThread("rtsp://admin:sijung5520@d617.asuscomm.com:1552/profile2/media.smp")
-        self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
-        self.video_thread.start()
+        # self.video_thread = VideoThread(ADD)
+        # self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
+        # self.video_thread.start()
 
         self.get_target()
 
@@ -288,21 +259,21 @@ class Js06MainWindow(Ui_MainWindow):
                 return
 
             if event.buttons() == Qt.LeftButton:
-                text, ok = QInputDialog.getText(self.centralwidget, '거리 입력', '거리 (km)')
+                text, ok = QInputDialog.getText(self.centralwidget, 'Add Target', 'Distance (km)')
                 if ok:
                     self.target_x.append(x)
                     self.target_y.append(y)
                     self.distance.append(float(text))
                     self.target.append(str(len(self.target_x)))
                     self.oxlist.append(0)
-                    print(f"영상목표 위치: {self.target_x[-1]}, {self.target_y[-1]}")
+                    print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
                     self.coordinator()
                     self.save_target()
                     self.get_target()
 
             if event.buttons() == Qt.RightButton:
                 # pylint: disable=invalid-name
-                text, ok = QInputDialog.getText(self.centralwidget, '타겟 입력', '제거할 타겟 번호 입력')
+                text, ok = QInputDialog.getText(self.centralwidget, 'Remove Target', 'Enter target number to remove')
                 text = int(text)
                 if ok:
                     if len(self.prime_x) >= 1:
@@ -313,20 +284,20 @@ class Js06MainWindow(Ui_MainWindow):
                         del self.label_y[text - 1]
                         del self.distance[text - 1]
                         del self.oxlist[text - 1]
-                        print(f"타겟 {text}번을 제거했습니다.")
+                        print(f"[Target {text}] remove.")
                         self.save_target()
 
                     else:
-                        print("제거할 영상목표가 없습니다.")
+                        print("There are no targets to remove.")
 
         except AttributeError:
             pass
 
         except ValueError:
-            print("거리 입력 값이 잘못되었습니다.")
+            print("Invalid distance input value.")
 
     def target_mode(self):
-        """목표 영상 수정 모드를 설정한다."""
+        """Set target image modification mode."""
         try:
             if self.target_process:
                 self.target_process = False
@@ -360,7 +331,7 @@ class Js06MainWindow(Ui_MainWindow):
                 self.label_y = result.label_y.tolist()
                 self.distance = result.distance.tolist()
                 self.oxlist = [0 for i in range(len(self.prime_x))]
-                print("영상목표를 불러옵니다.")
+                print("Load csv file.")
 
             elif os.path.isfile(f"target/{self.camera_name}.csv") is False:
                 print("No csv file.")
@@ -393,7 +364,7 @@ class Js06MainWindow(Ui_MainWindow):
             error_log(str(err))
 
     def coordinator(self):
-        """영상목표의 좌표값을 -1~1 값으로 정규화한다."""
+        """Normalize the coordinate value of the image target to -1 to 1."""
         try:
             self.prime_y = [y / self.videoWidget.nativeSize().height() for y in self.target_y]
             self.prime_x = [2 * x / self.videoWidget.nativeSize().width() - 1 for x in self.target_x]
@@ -402,7 +373,7 @@ class Js06MainWindow(Ui_MainWindow):
             error_log(str(err))
 
     def restoration(self):
-        """정규화한 값을 다시 복구한다."""
+        """Reinstate coordinate values."""
         try:
             self.target_x = [self.f2i((x + 1) * self.videoWidget.nativeSize().width() / 2) for x in self.prime_x]
             self.target_y = [self.f2i(y * self.videoWidget.nativeSize().height()) for y in self.prime_y]
