@@ -18,8 +18,7 @@ __pycache__/
 *$py.class
 
 # Ignore image data files
-*.png
-*.jpg
+target/
 
 # Ignore data files
 *.csv

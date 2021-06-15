@@ -24,14 +24,16 @@ JS-06 is being developed on the following target platforms.
 ## Development Environment
 - Visual Studio Code with the end of line sequence to **LF**. You can set git to resolve the issue automatically:
   - Windows
-  ```
+  ```bash
   git config --global core.autocrlf true
   ```
   - Linux and MacOS
-  ```
+  ```bash
   git config --global core.autocrlf input
   ```
+  
 - Anaconda Python 3.7 64-bit or less
+
 - Required Python packages that can be installed using `conda`:
   - binascii
   - os
@@ -42,9 +44,51 @@ JS-06 is being developed on the following target platforms.
   - NumPy
   - Pandas
   - PyQt5
+  - InfluxDB
+  
 - Required Python packages that can be installed using `pip`:
   - TensorFlow Lite interpreter: https://www.tensorflow.org/lite/guide/python
 
-- Must install **LAV Filter** to use Video widget.
-  - LAV Filter: https://files.1f0.de/lavf/LAVFilters-0.74.1-x64.zip
+- Must install Codec to use Video widget.
+  - LAV Filter (Windows): https://files3.codecguide.com/K-Lite_Codec_Pack_1625_Basic.exe
+
+  - GStreamer (Linux): 
+  
+    ```bash
+    sudo apt install gstreamer1.0-libav ubuntu-restricted-extras
+    ```
+
+## Install InfluxDB, Grafana
+
+- Windows
+
+  InfluxDB: https://dl.influxdata.com/influxdb/releases/influxdb-1.8.6_windows_amd64.zip
+
+  Grafana: https://dl.grafana.com/oss/release/grafana-8.0.2.windows-amd64.msi
+
+- Linux
+
+  InfluxDB: 
+
+  ```bash
+  sudo apt-get update && sudo apt-get install influxdb
+  ```
+  Grafana:
+
+  ```bash
+  sudo apt-get install -y adduser libfontconfig1
+  wget https://dl.grafana.com/oss/release/grafana_8.0.4_amd64.deb
+  sudo dpkg -i grafana_8.0.4_amd64.deb
+  ```
+
+  Configure the InfluxDB, Grafana server to start at boot:
+
+  ```bash
+  sudo service influxdb start
+  sudo service grafana-server start
+  ```
+
+  
+
+
 

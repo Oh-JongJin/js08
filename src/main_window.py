@@ -16,7 +16,6 @@ class Ui_MainWindow:
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
-        MainWindow.showFullScreen()
 
         app_icon = QtGui.QIcon("ui/logo.png")
         MainWindow.setWindowIcon(app_icon)
