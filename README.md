@@ -42,9 +42,20 @@ JS-06 is being developed on the following target platforms.
   - NumPy
   - Pandas
   - PyQt5
-- Required Python packages that can be installed using `pip`:
-  - TensorFlow Lite interpreter: https://www.tensorflow.org/lite/guide/python
 
-- Must install **LAV Filter** to use Video widget.
-  - LAV Filter: https://files.1f0.de/lavf/LAVFilters-0.74.1-x64.zip
+- To execute TensorFlow Lite models with Python, TensorFlow Lite interpreter is required to execute TensorFlow Lite models:
+  - If you're running Debian Linux or a derivative of Debian (including Raspberry Pi OS)
+```shell
+echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install python3-tflite-runtime
+```
+  - For all other systems:
+```shell
+pip3 install --index-url https://google-coral.github.io/py-repo/ tflite_runtime
+```
+
+- For Windows, DirectShow filters are required to play RTSP video streams. Download the latest LAV Filter and install it at the following link.
+  - LAV Filter: https://github.com/Nevcairiel/LAVFilters/releases
 
