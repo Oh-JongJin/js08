@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "D:\\Opt\\anaconda3\\envs\\js06\\python.exe",
+    "python.pythonPath": "C:\\Users\\ruddy\\Anaconda3\\envs\\js06\\python.exe",
     "python.linting.banditEnabled": false,
     "python.linting.pylintEnabled": true,
     "python.linting.mypyEnabled": false,
