@@ -21,7 +21,7 @@ import os
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup
+from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox
 from PyQt5 import uic
 
 # import cv2
@@ -37,6 +37,7 @@ import resources
 from video_widget import Js06VideoWidget
 from target_plot_widget import Js06TargetPlotWidget
 from time_series_plot_widget import Js06TimeSeriesPlotWidget
+from settings import Js06Settings
 
 class Js06MainWindow(QMainWindow):
 
@@ -49,6 +50,19 @@ class Js06MainWindow(QMainWindow):
         
         app_icon = QIcon(":icon/logo.png")
         self.setWindowIcon(app_icon)
+
+        # Check the last shutdown status
+        shutdown_status = Js06Settings.get('normal_shutdown')
+        if shutdown_status == False:
+            response = QMessageBox.question(
+                self,
+                'JS-06 Restore to defaults',
+                'The last exit status of JS-06 was recorded as abnormal. '
+                'Do you want to restore to the factory default?',
+            )
+            if response == QMessageBox.Yes:
+                Js06Settings.restore_defaults()
+        Js06Settings.set('normal_shutdown', False)
 
         # video dock
         self.video_dock = QDockWidget("Video", self)
@@ -63,16 +77,28 @@ class Js06MainWindow(QMainWindow):
         VIDEO_SRC3 = "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp"
         
         self.actionCamera_1.triggered.connect(lambda: self.video_widget.onCameraChange(VIDEO_SRC1))
+        self.actionCamera_1.triggered.connect(lambda: Js06Settings.set('camera', 1))
         self.actionCamera_2.triggered.connect(lambda: self.video_widget.onCameraChange(VIDEO_SRC2))
+        self.actionCamera_2.triggered.connect(lambda: Js06Settings.set('camera', 2))
         self.actionCamera_3.triggered.connect(lambda: self.video_widget.onCameraChange(VIDEO_SRC3))
-        
+        self.actionCamera_3.triggered.connect(lambda: Js06Settings.set('camera', 3))
+
         action_group = QActionGroup(self)
         action_group.addAction(self.actionCamera_1)
         action_group.addAction(self.actionCamera_2)
         action_group.addAction(self.actionCamera_3)
 
-        self.video_widget.onCameraChange(VIDEO_SRC2)
-        self.actionCamera_2.setChecked(True)
+        camera_choice = Js06Settings.get('camera')
+        if camera_choice == 1:
+            self.actionCamera_1.triggered.emit()
+            # self.video_widget.onCameraChange(VIDEO_SRC2)
+            self.actionCamera_1.setChecked(True)
+        elif camera_choice == 2:
+            self.actionCamera_2.triggered.emit()
+            self.actionCamera_2.setChecked(True)
+        elif camera_choice == 3:
+            self.actionCamera_3.triggered.emit()
+            self.actionCamera_3.setChecked(True)
 
         # target plot dock
         self.target_plot_dock = QDockWidget("Target plot", self)
@@ -92,6 +118,12 @@ class Js06MainWindow(QMainWindow):
 
         self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
     # end of __init__
+
+    def closeEvent(self, event):
+        Js06Settings.set('normal_shutdown', True)
+        event.accept()
+    # end of closeEvent
+
 # end of Js06MainWindow
 
 
