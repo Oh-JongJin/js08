@@ -16,8 +16,8 @@ import os
 # import atexit
 # import traceback
 
-import numpy as np
-import pandas as pd
+# import numpy as np
+# import pandas as pd
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -34,12 +34,14 @@ from PyQt5 import uic
 # from tflite_thread import TfliteThread
 
 import resources
-from video_widget import VideoWidget
-from target_plot_widget import TargetPlotWidget
-from time_series_plot_widget import TimeSeriesPlotWidget
+from video_widget import Js06VideoWidget
+from target_plot_widget import Js06TargetPlotWidget
+from time_series_plot_widget import Js06TimeSeriesPlotWidget
 
 class Js06MainWindow(QMainWindow):
+
     def __init__(self, *args, **kwargs):
+
         super().__init__(*args, **kwargs)
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
         "designer/js06_form.ui")
@@ -53,7 +55,7 @@ class Js06MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.video_dock)
         self.video_dock.setFeatures(
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        self.video_widget = VideoWidget(self)
+        self.video_widget = Js06VideoWidget(self)
         self.video_dock.setWidget(self.video_widget)
         
         VIDEO_SRC1 = "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp"
@@ -77,7 +79,7 @@ class Js06MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.target_plot_dock)
         self.target_plot_dock.setFeatures(
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        self.target_plot_widget = TargetPlotWidget(self)
+        self.target_plot_widget = Js06TargetPlotWidget(self)
         self.target_plot_dock.setWidget(self.target_plot_widget)
 
         # grafana dock 1
@@ -85,7 +87,7 @@ class Js06MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.target_plot_dock)
         self.web_dock_1.setFeatures(
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        self.web_view_1 = TimeSeriesPlotWidget()
+        self.web_view_1 = Js06TimeSeriesPlotWidget()
         self.web_dock_1.setWidget(self.web_view_1)
 
         self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)

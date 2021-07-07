@@ -6,9 +6,9 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 SRC = "https://grafana.com/static/img/docs/v41/test_data_csv_example.png"
 
-class TimeSeriesPlotWidget(QWidget):
+class Js06TimeSeriesPlotWidget(QWidget):
     def __init__(self, parent=None):
-        super(TimeSeriesPlotWidget, self).__init__(parent)
+        super(Js06TimeSeriesPlotWidget, self).__init__(parent)
         
         self.view = QWebEngineView()
         self.view.load(QUrl(SRC))
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    window = TimeSeriesPlotWidget()
+    window = Js06TimeSeriesPlotWidget()
     window.show()
     sys.exit(app.exec_())
 # end of time_series_plot_widget.py

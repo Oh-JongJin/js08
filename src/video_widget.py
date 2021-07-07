@@ -10,9 +10,9 @@ VIDEO_SRC1 = "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp"
 VIDEO_SRC2 = "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp"
 VIDEO_SRC3 = "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp"
 
-class VideoWidget2(QWidget):
+class Js06VideoWidget2(QWidget):
     def __init__(self, parent=None):
-        super(VideoWidget2, self).__init__(parent)
+        super(Js06VideoWidget2, self).__init__(parent)
         
         self.scene = QGraphicsScene(self)
         self.view = QGraphicsView(self.scene)
@@ -41,9 +41,9 @@ class VideoWidget2(QWidget):
     # end of on_stateChanged
 # end of VideoWidget2
 
-class VideoWidget(QWidget):
+class Js06VideoWidget(QWidget):
     def __init__(self, parent=None):
-        super(VideoWidget, self).__init__(parent)
+        super(Js06VideoWidget, self).__init__(parent)
         self._viewer = QVideoWidget() # self is required?
         self._player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
         self._player.setVideoOutput(self._viewer)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    window = VideoWidget()
+    window = Js06VideoWidget()
     window.show()
     sys.exit(app.exec_())
 # end of video_widget.py

@@ -18,9 +18,9 @@ from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem, QVideoWidget
 import numpy as np
 import time
 
-class TargetPlotWidget(QWidget):
+class Js06TargetPlotWidget(QWidget):
     def __init__(self, parent=None):
-        super(TargetPlotWidget, self).__init__(parent)
+        super(Js06TargetPlotWidget, self).__init__(parent)
         layout = QVBoxLayout(self)
 
         canvas = FigureCanvas(Figure(figsize=(5, 3)))
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    window = TargetPlotWidget()
+    window = Js06TargetPlotWidget()
     window.show()
     sys.exit(app.exec_())
 # end of target_plot_widget.py
