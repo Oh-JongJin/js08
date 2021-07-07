@@ -76,7 +76,7 @@
      <x>0</x>
      <y>0</y>
      <width>400</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="autoFillBackground">
@@ -247,7 +247,9 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../asset/resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>actionExit</sender>

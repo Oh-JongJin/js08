@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup
 from PyQt5 import uic
 
@@ -31,6 +32,8 @@ from PyQt5 import uic
 # from main_window import Ui_MainWindow
 # from js06_form import Ui_MainWindow
 # from tflite_thread import TfliteThread
+
+import resources
 from video_widget import VideoWidget
 from target_plot_widget import TargetPlotWidget
 from time_series_plot_widget import TimeSeriesPlotWidget
@@ -41,6 +44,9 @@ class Js06MainWindow(QMainWindow):
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 
         "designer/js06_form.ui")
         uic.loadUi(ui_path, self)
+        
+        app_icon = QIcon(":icon/logo.png")
+        self.setWindowIcon(app_icon)
 
         # video dock
         self.video_dock = QDockWidget("Video", self)
