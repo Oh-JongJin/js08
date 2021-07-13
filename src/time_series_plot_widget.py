@@ -1,4 +1,10 @@
 # !/usr/bin/env python3
+#
+# Copyright 2020-21 Sijung Co., Ltd.
+# Authors: 
+#     ruddyscent@gmail.com (Kyungwon Chun)
+#     5jx2oh@gmail.com (Jongjin Oh)
+
 
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWidgets import QWidget, QVBoxLayout

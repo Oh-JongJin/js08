@@ -1,14 +1,9 @@
 # !/usr/bin/env python3
 #
-# A sample implementation of a main window for JS-06.
-#
-# This example illustrates the following techniques:
-# * Layout design using Qt Designer
-# * Open RTSP video source
-#
-#
-#
-# Reference: https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1
+# Copyright 2020-21 Sijung Co., Ltd.
+# Authors: 
+#     ruddyscent@gmail.com (Kyungwon Chun)
+#     5jx2oh@gmail.com (Jongjin Oh)
 
 
 import os
@@ -91,7 +86,6 @@ class Js06MainWindow(QMainWindow):
         camera_choice = Js06Settings.get('camera')
         if camera_choice == 1:
             self.actionCamera_1.triggered.emit()
-            # self.video_widget.onCameraChange(VIDEO_SRC2)
             self.actionCamera_1.setChecked(True)
         elif camera_choice == 2:
             self.actionCamera_2.triggered.emit()
