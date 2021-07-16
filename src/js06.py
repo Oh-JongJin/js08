@@ -90,12 +90,15 @@ class Js06MainWindow(QMainWindow):
 
         camera_choice = Js06Settings.get('camera')
         if camera_choice == 1:
+            # QND-8020R
             self.actionCamera_1.triggered.emit()
             self.actionCamera_1.setChecked(True)
         elif camera_choice == 2:
+            # PNM-9030V
             self.actionCamera_2.triggered.emit()
             self.actionCamera_2.setChecked(True)
         elif camera_choice == 3:
+            # XNO-8080R
             self.actionCamera_3.triggered.emit()
             self.actionCamera_3.setChecked(True)
 
