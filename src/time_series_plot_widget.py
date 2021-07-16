@@ -12,15 +12,18 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 SRC = "https://grafana.com/static/img/docs/v41/test_data_csv_example.png"
 
+
 class Js06TimeSeriesPlotWidget(QWidget):
     def __init__(self, parent=None):
         super(Js06TimeSeriesPlotWidget, self).__init__(parent)
-        
+
         self.view = QWebEngineView()
         self.view.load(QUrl(SRC))
         layout = QVBoxLayout(self)
         layout.addWidget(self.view)
     # end of __init__
+
+
 # end of TimeSeriesPlotWidget
 
 if __name__ == '__main__':

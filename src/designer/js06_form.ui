@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>948</width>
+    <height>746</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -75,8 +75,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>400</width>
-     <height>23</height>
+     <width>948</width>
+     <height>18</height>
     </rect>
    </property>
    <property name="autoFillBackground">
@@ -118,7 +118,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>XNO-8080R</string>
+    <string>QND-8020R</string>
    </property>
    <property name="statusTip">
     <string>Get video from webcam</string>
@@ -240,10 +240,13 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Camera 3</string>
+    <string>XNO-8080R</string>
    </property>
    <property name="toolTip">
     <string>Camera 3</string>
+   </property>
+   <property name="shortcut">
+    <string>3</string>
    </property>
   </action>
  </widget>

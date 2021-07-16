@@ -5,36 +5,39 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
- 
+
 from PyQt5.QtCore import QSettings
 
-class Js06Settings(object):
 
+class Js06Settings(object):
     settings = QSettings('sijung', 'js06')
 
     defaults = {
         'camera': 2,
         'normal_shutdown': False,
-        }
+    }
 
     @classmethod
     def set(cls, key, value):
         cls.settings.setValue(key, value)
+
     # end of set
 
     @classmethod
     def get(cls, key):
         return cls.settings.value(
-            key, 
-            cls.defaults[key], 
+            key,
+            cls.defaults[key],
             type(cls.defaults[key])
-            )
+        )
+
     # end of get
 
     def restore_defaults(cls):
         for key, value in cls.defaults:
             cls.settings.set(key, value)
     # end of restore_defaults
+
 
 # end of Js06Settings
 

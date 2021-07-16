@@ -6,6 +6,7 @@
 #     5jx2oh@gmail.com (Jongjin Oh)
 
 from matplotlib.backends.qt_compat import QtCore, QtWidgets
+
 if QtCore.qVersion() >= "5.":
     from matplotlib.backends.backend_qt5agg import (
         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
@@ -23,6 +24,7 @@ from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem, QVideoWidget
 import numpy as np
 import time
 
+
 class Js06TargetPlotWidget(QWidget):
     def __init__(self, parent=None):
         super(Js06TargetPlotWidget, self).__init__(parent)
@@ -35,9 +37,10 @@ class Js06TargetPlotWidget(QWidget):
         t = np.linspace(0, 10, 101)
         # Set up a Line2D.
         self._line, = self._ax.plot(t, np.sin(t + time.time()))
-        self._timer = canvas.new_timer(50)
+        self._timer = canvas.new_timer(1)
         self._timer.add_callback(self._update_canvas)
         self._timer.start()
+
     # end of __init__
 
     def _update_canvas(self):
@@ -46,6 +49,8 @@ class Js06TargetPlotWidget(QWidget):
         self._line.set_data(t, np.sin(t + time.time()))
         self._line.figure.canvas.draw()
     # end of _update_canvas
+
+
 # end of TargetPlotWidget
 
 if __name__ == '__main__':
