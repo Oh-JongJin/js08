@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>948</width>
+    <width>1500</width>
     <height>746</height>
    </rect>
   </property>
@@ -27,7 +27,7 @@
   </property>
   <property name="maximumSize">
    <size>
-    <width>1920</width>
+    <width>1500</width>
     <height>1080</height>
    </size>
   </property>
@@ -75,7 +75,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>948</width>
+     <width>1500</width>
      <height>18</height>
     </rect>
    </property>
@@ -92,6 +92,8 @@
     <addaction name="actionCamera_1"/>
     <addaction name="actionCamera_2"/>
     <addaction name="actionCamera_3"/>
+    <addaction name="actionOpen_with_RTSP"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuMode">
@@ -247,6 +249,11 @@
    </property>
    <property name="shortcut">
     <string>3</string>
+   </property>
+  </action>
+  <action name="actionOpen_with_RTSP">
+   <property name="text">
+    <string>Open with RTSP</string>
    </property>
   </action>
  </widget>

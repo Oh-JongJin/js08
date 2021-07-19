@@ -16,23 +16,19 @@ import os
 
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog
 from PyQt5 import uic
 
-# import cv2
 
 # js06 modules
-# from save_db import SaveDB
-# from video_thread import VideoThread
-# from main_window import Ui_MainWindow
-# from js06_form import Ui_MainWindow
-# from tflite_thread import TfliteThread
-
 import resources
 from video_widget import Js06VideoWidget
-from target_plot_widget import Js06TargetPlotWidget
+from target_plot_widget import Js06TargetPlotWidget, Js06TargetPlotWidget2
 from time_series_plot_widget import Js06TimeSeriesPlotWidget
+from video_thread import VideoThread
+from tflite_thread import TfliteThread
 from settings import Js06Settings
+from save_db import SaveDB
 
 
 class Js06MainWindow(QMainWindow):
@@ -47,7 +43,7 @@ class Js06MainWindow(QMainWindow):
         app_icon = QIcon(":icon/logo.png")
         self.setWindowIcon(app_icon)
         # self.showFullScreen()
-        self.setGeometry(300, 50, 1500, 1000)
+        self.setGeometry(400, 50, 1500, 1000)
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
 
         # Check the last shutdown status
@@ -82,6 +78,9 @@ class Js06MainWindow(QMainWindow):
         self.actionCamera_2.triggered.connect(lambda: Js06Settings.set('camera', 2))
         self.actionCamera_3.triggered.connect(lambda: self.video_widget.onCameraChange(VIDEO_SRC3))
         self.actionCamera_3.triggered.connect(lambda: Js06Settings.set('camera', 3))
+
+        self.actionEdit_target.triggered.connect(self.target_mode)
+        self.actionOpen_with_RTSP.triggered.connect(self.open_with_rtsp)
 
         action_group = QActionGroup(self)
         action_group.addAction(self.actionCamera_1)
@@ -118,12 +117,13 @@ class Js06MainWindow(QMainWindow):
         self.web_view_1 = Js06TimeSeriesPlotWidget()
         self.web_dock_1.setWidget(self.web_view_1)
 
-        self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
+        # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
+        self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
 
-        self.qtimer = QTimer()
-        self.qtimer.setInterval(2000)
-        self.qtimer.timeout.connect(self.inference)
-        self.qtimer.start()
+        # self.qtimer = QTimer()
+        # self.qtimer.setInterval(2000)
+        # self.qtimer.timeout.connect(self.inference)
+        # self.qtimer.start()
 
     # end of __init__
 
@@ -138,8 +138,17 @@ class Js06MainWindow(QMainWindow):
         # print(self.video_dock.size())
         pass
 
-    def video_dock_moveEvent(self, event):
+    def video_dock_mousePressEvent(self, event):
         print(self.video_dock.size())
+
+    def target_mode(self):
+        """Set target image modification mode"""
+        self.save_target()
+
+    def open_with_rtsp(self):
+        text, ok = QInputDialog.getText(self, "Input RTSP", "Only Hanwha Camera")
+        if ok:
+            print(text)
 
     # end of closeEvent
 

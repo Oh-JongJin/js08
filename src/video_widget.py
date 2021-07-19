@@ -17,39 +17,39 @@ VIDEO_SRC2 = "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp"
 VIDEO_SRC3 = "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp"
 
 
-class Js06VideoWidget2(QWidget):
-    def __init__(self, parent=None):
-        super(Js06VideoWidget2, self).__init__(parent)
-
-        self.scene = QGraphicsScene(self)
-        self.view = QGraphicsView(self.scene)
-        self.video_item = QGraphicsVideoItem()
-        self.scene.addItem(self.video_item)
-        self.rect_item = QGraphicsRectItem(QRectF(50, 50, 40, 40), self.video_item)
-        self.rect_item.setBrush(QBrush(Qt.green))
-        self.rect_item.setPen(QPen(Qt.red))
-
-        self.player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
-        self.player.stateChanged.connect(self.on_stateChanged)
-        self.player.setVideoOutput(self.video_item)
-        self.player.setMedia(QMediaContent(QUrl(VIDEO_SRC2)))
-        self.player.setPosition(0)
-        self.player.play()
-
-        self.resize(640, 480)
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.view)
-
-    # end of __init__
-
-    @pyqtSlot(QMediaPlayer.State)
-    def on_stateChanged(self, state):
-        if state == QMediaPlayer.PlayingState:
-            self.view.fitInView(self.video_item, Qt.KeepAspectRatio)
-    # end of on_stateChanged
-
-
-# end of VideoWidget2
+# class Js06VideoWidget2(QWidget):
+#     def __init__(self, parent=None):
+#         super(Js06VideoWidget2, self).__init__(parent)
+#
+#         self.scene = QGraphicsScene(self)
+#         self.view = QGraphicsView(self.scene)
+#         self.video_item = QGraphicsVideoItem()
+#         self.scene.addItem(self.video_item)
+#         self.rect_item = QGraphicsRectItem(QRectF(50, 50, 40, 40), self.video_item)
+#         self.rect_item.setBrush(QBrush(Qt.green))
+#         self.rect_item.setPen(QPen(Qt.red))
+#
+#         self.player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
+#         self.player.stateChanged.connect(self.on_stateChanged)
+#         self.player.setVideoOutput(self.video_item)
+#         self.player.setMedia(QMediaContent(QUrl(VIDEO_SRC2)))
+#         self.player.setPosition(0)
+#         self.player.play()
+#
+#         self.resize(640, 480)
+#         layout = QVBoxLayout(self)
+#         layout.addWidget(self.view)
+#
+#     # end of __init__
+#
+#     @pyqtSlot(QMediaPlayer.State)
+#     def on_stateChanged(self, state):
+#         if state == QMediaPlayer.PlayingState:
+#             self.view.fitInView(self.video_item, Qt.KeepAspectRatio)
+#     # end of on_stateChanged
+#
+#
+# # end of VideoWidget2
 
 class Js06VideoWidget(QWidget):
     def __init__(self, parent=None):
@@ -64,6 +64,8 @@ class Js06VideoWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self._viewer)
 
+        self._viewer.mousePressEvent = self.viewer_mousePressEvent
+
     # end of __init__
 
     @pyqtSlot(str)
@@ -71,6 +73,13 @@ class Js06VideoWidget(QWidget):
         self._player.setMedia(QMediaContent(QUrl(url)))
         self._player.play()
     # end of onCameraChange
+
+    def viewer_mousePressEvent(self, event):
+        print(event.pos())
+        print(f"videoWidget: {self._viewer.sizeHint()}")
+        # self.resize(self._viewer.sizeHint().width(), self._viewer.sizeHint().height())
+        # self.resize(300, 300)
+    # end of viewer_mousePressEvent
 
 
 # end of VideoPlayer
