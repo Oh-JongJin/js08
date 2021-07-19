@@ -136,7 +136,7 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    window = Js06TargetPlotWidget()
+    window = Js06TargetPlotWidget2()
     window.resize(600, 600)
     window.show()
     # window.animation()
