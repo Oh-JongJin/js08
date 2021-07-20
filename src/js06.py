@@ -16,7 +16,7 @@ from PyQt5 import uic
 # js06 modules
 import resources
 
-from video_widget import Js06VideoWidget, Js06VideoWidget2
+from video_widget_2 import Js06VideoWidget2
 from target_plot_widget import Js06TargetPlotWidget
 from time_series_plot_widget import Js06TimeSeriesPlotWidget
 from video_thread import VideoThread
@@ -45,8 +45,8 @@ class Js06MainWindow(QMainWindow):
             response = QMessageBox.question(
                 self,
                 'JS-06 Restore to defaults',
-                'The last exit status of JS-06 was recorded as abnormal. '
-                'Do you want to restore to the factory default?',
+                'The JS-06 exited abnormally. '
+                'Do you want to restore the factory default?',
             )
             if response == QMessageBox.Yes:
                 Js06Settings.restore_defaults()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2020-21 Sijung Co., Ltd.
+# Copyright 2020-2021 Sijung Co., Ltd.
 # 
 # Authors: 
 #     ruddyscent@gmail.com (Kyungwon Chun)
@@ -17,12 +17,14 @@ class Js06VisibilityIo:
         self.port = 8086
         self.db_name = 'js06'
         self.client = InfluxDBClient(self.hostname, self.port)        
+    # end of __init__
         
     def create_database(self, db_name=None):
         if db_name is not None:
             self.db_name = db_name
         self.client.create_database(self.db_name)
-        
+    # end of create_database
+
     def write(self, value={}, tags={}):
         """Write to visibility values to DB.
 
@@ -50,6 +52,7 @@ class Js06VisibilityIo:
             'fields': value
         }]
         self.client.write_points(json_body)
+    # end of write
 
 # end of Js06VisibilityIo
 
@@ -64,4 +67,5 @@ if __name__ == '__main__':
     points = result.get_points(tags={})
     for point in points:
         print(point)
+
 # end of visibility_io.py
