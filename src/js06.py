@@ -1,36 +1,28 @@
 #!/usr/bin/env python3
 #
-# Copyright 2020-21 Sijung Co., Ltd.
+# Copyright 2020-2021 Sijung Co., Ltd.
 # 
 # Authors: 
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-
 import os
-# import time
-# import atexit
-# import traceback
-
-# import numpy as np
-# import pandas as pd
 
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog
 from PyQt5 import uic
 
-
 # js06 modules
 import resources
+
 from video_widget import Js06VideoWidget, Js06VideoWidget2
-from target_plot_widget import Js06TargetPlotWidget, Js06TargetPlotWidget2
+from target_plot_widget import Js06TargetPlotWidget
 from time_series_plot_widget import Js06TimeSeriesPlotWidget
 from video_thread import VideoThread
 from tflite_thread import TfliteThread
 from settings import Js06Settings
 from save_db import SaveDB
-
 
 class Js06MainWindow(QMainWindow):
 
@@ -151,9 +143,7 @@ class Js06MainWindow(QMainWindow):
 
     # end of closeEvent
 
-
 # end of Js06MainWindow
-
 
 if __name__ == '__main__':
     import sys
@@ -163,4 +153,5 @@ if __name__ == '__main__':
     window = Js06MainWindow()
     window.show()
     sys.exit(app.exec_())
+
 # end of js06.py
