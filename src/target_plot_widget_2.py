@@ -5,23 +5,23 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-from PyQt5.QtWidgets import QWidget, QVBoxLayout
+import sys
 
 import numpy as np
-import time
+
+from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
 from pyqtgraph.Qt import QtCore, QtGui
 from pyqtgraph import GLViewWidget, GLGridItem, GLLinePlotItem
 import pyqtgraph as pg
-import sys
 
 class Js06TargetPlotWidget2(QWidget):
+    """Plot using PyQtGraph
+    """
+    
     def __init__(self, parent=None):
         super(Js06TargetPlotWidget2, self).__init__(parent)
         layout = QVBoxLayout(self)
-
-        canvas = FigureCanvas(Figure(figsize=(5, 3)))
-        # layout.addWidget(canvas)
 
         self.traces = dict()
         self.app = QtGui.QApplication(sys.argv)
@@ -51,7 +51,7 @@ class Js06TargetPlotWidget2(QWidget):
 
         for i in range(self.n):
             yi = np.array([self.y[i]] * self.m)
-            d = np.sqrt(self.x ** 2 + yi ** 2)
+            d = np.sqrt(self.x**2 + yi**2)
             z = 10 * np.cos(d + self.phase) / (d + 1)
             pts = np.vstack([self.x, yi, z]).transpose()
             self.traces[i] = GLLinePlotItem(pos=pts, color=pg.glColor(
@@ -73,7 +73,7 @@ class Js06TargetPlotWidget2(QWidget):
     def update(self):
         for i in range(self.n):
             yi = np.array([self.y[i]] * self.m)
-            d = np.sqrt(self.x ** 2 + yi ** 2)
+            d = np.sqrt(self.x**2 + yi**2)
             z = 10 * np.cos(d + self.phase) / (d + 1)
             pts = np.vstack([self.x, yi, z]).transpose()
             self.set_plotdata(
