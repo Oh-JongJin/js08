@@ -16,7 +16,7 @@ from PyQt5 import uic
 # js06 modules
 import resources
 
-from video_widget import Js06VideoWidget, Js06VideoWidget2
+from video_widget_2 import Js06VideoWidget2
 from target_plot_widget import Js06TargetPlotWidget
 from time_series_plot_widget import Js06TimeSeriesPlotWidget
 from video_thread import VideoThread
