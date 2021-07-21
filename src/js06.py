@@ -9,8 +9,8 @@
 import os
 
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog
+from PyQt5.QtGui import QIcon, QPainter, QPen
+from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog, QLabel
 from PyQt5 import uic
 
 # js06 modules
@@ -60,6 +60,11 @@ class Js06MainWindow(QMainWindow):
         self.video_dock.setWidget(self.video_widget)
         self.setCentralWidget(self.video_dock)
 
+        # To drawing target box in blank label
+        self.blank_lbl = QLabel(self.video_widget)
+        self.blank_lbl.mousePressEvent = self.lbl_mousePressEvent
+        self.blank_lbl.paintEvent = self.lbl_paintEvent
+
         VIDEO_SRC1 = "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp"
         VIDEO_SRC2 = "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp"
         VIDEO_SRC3 = "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp"
@@ -71,7 +76,6 @@ class Js06MainWindow(QMainWindow):
         self.actionCamera_3.triggered.connect(lambda: self.video_widget.onCameraChange(VIDEO_SRC3))
         self.actionCamera_3.triggered.connect(lambda: Js06Settings.set('camera', 3))
 
-        self.actionInference.triggered.connect(self.inference)
         self.actionEdit_target.triggered.connect(self.target_mode)
         self.actionOpen_with_RTSP.triggered.connect(self.open_with_rtsp)
 
@@ -112,38 +116,66 @@ class Js06MainWindow(QMainWindow):
 
         self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
 
-        # self.qtimer = QTimer()
-        # self.qtimer.setInterval(2000)
-        # self.qtimer.timeout.connect(self.inference)
-        # self.qtimer.start()
-
+        self.qtimer = QTimer()
+        self.qtimer.setInterval(2000)
+        self.qtimer.timeout.connect(self.inference)
+        self.qtimer.start()
     # end of __init__
 
     def closeEvent(self, event):
         Js06Settings.set('normal_shutdown', True)
         event.accept()
+    # end of closeEvent
 
     def inference(self):
         self.video_widget.graphicView.fitInView(self.video_widget.video_item)
-        print('You checked Inference menu bar.')
+        self.blank_lbl.setGeometry(self.video_widget.graphicView.geometry())
+
+        self.horizontal_y1 = self.blank_lbl.height() * (1 / 4)
+        self.horizontal_y2 = self.blank_lbl.height() * (1 / 2)
+        self.horizontal_y3 = self.blank_lbl.height() * (3 / 4)
+    # end of inference
 
     def target_mode(self):
         """Set target image modification mode"""
         if self.actionEdit_target.isChecked():
-            print("hi")
+            print("Edit target select.")
+    # end of target_mode
 
-    def mousePressEvent(self, event):
+    def lbl_mousePressEvent(self, event):
         if self.actionEdit_target.isChecked():
-            print('mousePressEvent')
+            print('draw target this position')
+    # end of lbl_mousePressEvent
+
+    def lbl_paintEvent(self, event):
+        painter = QPainter(self.blank_lbl)
+        if self.actionEdit_target.isChecked():
+            painter.setPen(QPen(Qt.black, 2, Qt.DotLine))
+            x1 = painter.drawLine(self.blank_lbl.width() * (1 / 4), 0, self.blank_lbl.width() * (1 / 4), self.blank_lbl.height())
+            x2 = painter.drawLine(self.blank_lbl.width() * (1 / 2), 0, self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
+            x3 = painter.drawLine(self.blank_lbl.width() * (3 / 4), 0, self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
+
+            y1 = painter.drawLine(0, self.horizontal_y1, self.blank_lbl.width(), self.horizontal_y1)
+            y2 = painter.drawLine(0, self.horizontal_y2, self.blank_lbl.width(), self.horizontal_y2)
+            y3 = painter.drawLine(0, self.horizontal_y3, self.blank_lbl.width(), self.horizontal_y3)
+        else:
+            x1 = None
+            x2 = None
+            x3 = None
+            y1 = None
+            y2 = None
+            y3 = None
+        painter.end()
+    # end of lbl_paintEvent
 
     def open_with_rtsp(self):
         text, ok = QInputDialog.getText(self, "Input RTSP", "Only Hanwha Camera")
         if ok:
             print(text)
-
-    # end of closeEvent
+    # end of open_with_rtsp
 
 # end of Js06MainWindow
+
 
 if __name__ == '__main__':
     import sys
