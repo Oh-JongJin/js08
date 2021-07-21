@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
+#
+# Copyright 2020-21 Sijung Co., Ltd.
+# Authors:
+#     ruddyscent@gmail.com (Kyungwon Chun)
+#     5jx2oh@gmail.com (Jongjin Oh)
 
 import numpy as np
 import time
@@ -8,10 +13,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 
 
 class VideoThread(QtCore.QThread):
-    """
-    Video output running as QThread
-    QThread로 실행되는 OpenCV 비디오 출력
-    """
+    """Video output running as QThread"""
     update_pixmap_signal = QtCore.pyqtSignal(np.ndarray)
 
     def __init__(self, src: str = ""):
@@ -19,10 +21,10 @@ class VideoThread(QtCore.QThread):
         self._run_flag = True
         self.cap = None
         self.src = src
+    # end of __init__
 
     def run(self):
         try:
-            time.sleep(0)
             if self.src == "":
                 self.cap = cv2.VideoCapture(0)
             else:
@@ -42,8 +44,21 @@ class VideoThread(QtCore.QThread):
         except cv2.error:
             self.cap.release()
             cv2.destroyAllWindows()
+    # end of run
 
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
         self._run_flag = False
         self.wait()
+    # end of stop
+
+
+if __name__ == "__main__":
+    import sys
+    from PyQt5.QtWidgets import QApplication
+
+    app = QApplication(sys.argv)
+    window = VideoThread()
+    sys.exit(app.exec_())
+
+# end of video_thread.py
