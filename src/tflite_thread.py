@@ -1,32 +1,26 @@
-#!/usr/bin/env python3
-"""
-Observate Visibility using TF Lite version of JS-02 model with the Hanhwa camera image.
+# !/usr/bin/env python3
+#
+# Copyright 2020-21 Sijung Co., Ltd.
+# Authors:
+#     ruddyscent@gmail.com (Kyungwon Chun)
+#     5jx2oh@gmail.com (Jongjin Oh)
 
-This code is based on the
-https://github.com/tensorflow/examples/tree/master/lite/examples/image_classification/raspberry_pi
-
-Usage example:
-python3 js02_lamp.py --model andrew_1583797361.tflite
-
-"""
 
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
 import cv2
-import argparse
 import io
 import time
 import numpy as np
 
 import tflite_runtime.interpreter as tflite
+from PyQt5.QtCore import QThread, pyqtSignal
 
-from PyQt5 import QtWidgets, QtGui, QtCore
 
-
-class TfliteThread(QtCore.QThread):
-    update_oxlist_signal = QtCore.pyqtSignal(list)
+class TfliteThread(QThread):
+    update_oxlist_signal = pyqtSignal(list)
 
     def __init__(self, crop_imagelist100=None):
         super().__init__()
@@ -37,6 +31,7 @@ class TfliteThread(QtCore.QThread):
         self.oxlist = []
         self.interpreter = tflite.Interpreter("Model/JS06N21011201.tflite")
         self.interpreter.allocate_tensors()
+    # end of __init__
 
     def __del__(self):
         self.wait()
@@ -47,6 +42,7 @@ class TfliteThread(QtCore.QThread):
         tensor_index = interpreter.get_input_details()[0]['index']
         input_tensor = interpreter.tensor(tensor_index)()[0]
         input_tensor[:, :] = image
+    # end of set_input_tensor
 
     def classify_image(self, interpreter, image):
         """Returns a sorted array of classification results."""
@@ -57,6 +53,7 @@ class TfliteThread(QtCore.QThread):
         output = np.squeeze(interpreter.get_tensor(output_details['index']))
         predict = np.argmax(output)
         return predict, output[predict]
+    # end of classify_image
 
     def run(self):
         """영상목표를 모델에 넣어 결과를 전송한다."""
@@ -70,7 +67,24 @@ class TfliteThread(QtCore.QThread):
                 self.update_oxlist_signal.emit(self.oxlist)
                 self.oxlist = []
 
+        if self.run_flag is False:
+            print("flag is False.\nPlease shut this program.")
+            self.stop()
+    # end of run
+
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
         self.run_flag = False
         self.terminate()
+    # end of stop
+
+
+if __name__ == '__main__':
+    import sys
+    from PyQt5.QtWidgets import QApplication
+
+    app = QApplication(sys.argv)
+    window = TfliteThread()
+    window.run()
+    sys.exit(app.exec_())
+# end of tflite_thread.py
