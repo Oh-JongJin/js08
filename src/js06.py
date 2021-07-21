@@ -45,8 +45,8 @@ class Js06MainWindow(QMainWindow):
             response = QMessageBox.question(
                 self,
                 'JS-06 Restore to defaults',
-                'The last exit status of JS-06 was recorded as abnormal. '
-                'Do you want to restore to the factory default?',
+                'The JS-06 exited abnormally. '
+                'Do you want to restore the factory default?',
             )
             if response == QMessageBox.Yes:
                 Js06Settings.restore_defaults()

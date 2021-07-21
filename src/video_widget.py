@@ -1,6 +1,6 @@
-# !/usr/bin/env python3
+#!/usr/bin/env python3
 #
-# Copyright 2020-21 Sijung Co., Ltd.
+# Copyright 2020-2021 Sijung Co., Ltd.
 # Authors: 
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
@@ -44,7 +44,6 @@ class Js06VideoWidget(QWidget):
         # self.resize(300, 300)
     # end of viewer_mousePressEvent
 
-
 # end of VideoPlayer
 
 if __name__ == '__main__':
@@ -55,5 +54,5 @@ if __name__ == '__main__':
     window = Js06VideoWidget()
     window.show()
     sys.exit(app.exec_())
-    
+
 # end of video_widget.py
