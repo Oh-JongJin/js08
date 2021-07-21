@@ -220,7 +220,7 @@
     <bool>true</bool>
    </property>
    <property name="checked">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="text">
     <string>Inference</string>
@@ -235,6 +235,9 @@
    </property>
    <property name="text">
     <string>Edit_target</string>
+   </property>
+   <property name="shortcut">
+    <string>E</string>
    </property>
   </action>
   <action name="actionCamera_3">

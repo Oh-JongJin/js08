@@ -71,6 +71,7 @@ class Js06MainWindow(QMainWindow):
         self.actionCamera_3.triggered.connect(lambda: self.video_widget.onCameraChange(VIDEO_SRC3))
         self.actionCamera_3.triggered.connect(lambda: Js06Settings.set('camera', 3))
 
+        self.actionInference.triggered.connect(self.inference)
         self.actionEdit_target.triggered.connect(self.target_mode)
         self.actionOpen_with_RTSP.triggered.connect(self.open_with_rtsp)
 
@@ -109,13 +110,12 @@ class Js06MainWindow(QMainWindow):
         self.web_view_1 = Js06TimeSeriesPlotWidget()
         self.web_dock_1.setWidget(self.web_view_1)
 
-        # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
         self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
 
-        self.qtimer = QTimer()
-        self.qtimer.setInterval(2000)
-        self.qtimer.timeout.connect(self.inference)
-        self.qtimer.start()
+        # self.qtimer = QTimer()
+        # self.qtimer.setInterval(2000)
+        # self.qtimer.timeout.connect(self.inference)
+        # self.qtimer.start()
 
     # end of __init__
 
@@ -124,17 +124,17 @@ class Js06MainWindow(QMainWindow):
         event.accept()
 
     def inference(self):
-        # self.video_dock.setGeometry(0, 0, self.width(), self.height() / 2)
-        # self.target_plot_dock.setGeometry(self.width(), self.height() / 2, self.width() / 2, self.height() / 2)
-        # self.web_dock_1.setGeometry(self.width() / 2, self.height() / 2, self.width() / 2, self.height() / 2)
-        # print(self.video_dock.size())
         self.video_widget.graphicView.fitInView(self.video_widget.video_item)
+        print('You checked Inference menu bar.')
 
     def target_mode(self):
         """Set target image modification mode"""
-        # self.save_target()
-        if self.target_process:
-            print(self.target_process)
+        if self.actionEdit_target.isChecked():
+            print("hi")
+
+    def mousePressEvent(self, event):
+        if self.actionEdit_target.isChecked():
+            print('mousePressEvent')
 
     def open_with_rtsp(self):
         text, ok = QInputDialog.getText(self, "Input RTSP", "Only Hanwha Camera")
