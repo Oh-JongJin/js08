@@ -1,16 +1,16 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 #
-# Copyright 2020-2021 Sijung Co., Ltd.
-# 
-# Authors: 
+# Copyright 2020-21 Sijung Co., Ltd.
+# Authors:
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
 import os
+import pandas as pd
 
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon, QPainter, QPen
-from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog, QLabel
+from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog, QLabel, QTabBar
 from PyQt5 import uic
 
 # js06 modules
@@ -24,6 +24,7 @@ from tflite_thread import TfliteThread
 from settings import Js06Settings
 from save_db import SaveDB
 
+
 class Js06MainWindow(QMainWindow):
 
     def __init__(self, *args, **kwargs):
@@ -35,9 +36,28 @@ class Js06MainWindow(QMainWindow):
 
         app_icon = QIcon(":icon/logo.png")
         self.setWindowIcon(app_icon)
-        # self.showFullScreen()
         self.setGeometry(400, 50, 1500, 1000)
+        # self.showFullScreen()
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
+
+        # Initialize variable
+        self.horizontal_y1 = None
+        self.horizontal_y2 = None
+        self.horizontal_y3 = None
+        self.tflite_thread = None
+        self.target = None
+        self.target_x = None
+        self.target_y = None
+        self.prime_x = None
+        self.prime_y = None
+        self.distance = None
+        self.oxlist = None
+
+        self.filepath = os.path.join(os.getcwd(), "target")
+        try:
+            os.makedirs(self.filepath, exist_ok=True)
+        except OSError:
+            pass
 
         # Check the last shutdown status
         shutdown_status = Js06Settings.get('normal_shutdown')
@@ -45,8 +65,8 @@ class Js06MainWindow(QMainWindow):
             response = QMessageBox.question(
                 self,
                 'JS-06 Restore to defaults',
-                'The JS-06 exited abnormally. '
-                'Do you want to restore the factory default?',
+                'The last exit status of JS-06 was recorded as abnormal. '
+                'Do you want to restore to the factory default?',
             )
             if response == QMessageBox.Yes:
                 Js06Settings.restore_defaults()
@@ -86,15 +106,18 @@ class Js06MainWindow(QMainWindow):
 
         camera_choice = Js06Settings.get('camera')
         if camera_choice == 1:
-            # QND-8020R
+            self.video_widget.camera_name = "QND-8020R"
+            self.camera_name = "QND-8020R"
             self.actionCamera_1.triggered.emit()
             self.actionCamera_1.setChecked(True)
         elif camera_choice == 2:
-            # PNM-9030V
+            self.video_widget.camera_name = "PNM-9030V"
+            self.camera_name = "PNM-9030V"
             self.actionCamera_2.triggered.emit()
             self.actionCamera_2.setChecked(True)
         elif camera_choice == 3:
-            # XNO-8080R
+            self.video_widget.camera_name = "XNO-8080R"
+            self.camera_name = "XNO-8080R"
             self.actionCamera_3.triggered.emit()
             self.actionCamera_3.setChecked(True)
 
@@ -115,6 +138,8 @@ class Js06MainWindow(QMainWindow):
         self.web_dock_1.setWidget(self.web_view_1)
 
         self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
+        tabbar = self.findChild(QTabBar, "")
+        tabbar.tabBarClicked.connect(self.current_dock)
 
         self.qtimer = QTimer()
         self.qtimer.setInterval(2000)
@@ -127,33 +152,118 @@ class Js06MainWindow(QMainWindow):
         event.accept()
     # end of closeEvent
 
+    def current_dock(self, index):
+        tabbar = self.sender()
+        print(f"You clicked {tabbar.tabText(index)}.")
+
     def inference(self):
         self.video_widget.graphicView.fitInView(self.video_widget.video_item)
         self.blank_lbl.setGeometry(self.video_widget.graphicView.geometry())
 
-        self.horizontal_y1 = self.blank_lbl.height() * (1 / 4)
-        self.horizontal_y2 = self.blank_lbl.height() * (1 / 2)
-        self.horizontal_y3 = self.blank_lbl.height() * (3 / 4)
+        if self.horizontal_y1 is None:
+            self.horizontal_y1 = self.blank_lbl.height() * (1 / 4)
+            self.horizontal_y2 = self.blank_lbl.height() * (1 / 2)
+            self.horizontal_y3 = self.blank_lbl.height() * (3 / 4)
+
+        if self.actionInference.isChecked():
+            self.actionEdit_target.setChecked(False)
+            if self.tflite_thread is None:
+                if not self.prime_x:
+                    return
+                print("Start Inference.")
+                self.tflite_thread = TfliteThread(self.crop_imagelist100)
+                self.tflite_thread.run_flag = True
+                self.tflite_thread.update_oxlist_signal.connect(self.get_vidibility)
+                self.tflite_thread.start()
+        else:
+            if self.tflite_thread is None:
+                return
+            if self.tflite_thread.run_flag:
+                print("Stop Inference.")
     # end of inference
 
     def target_mode(self):
         """Set target image modification mode"""
         if self.actionEdit_target.isChecked():
-            print("Edit target select.")
+            self.save_target()
+        else:
+            self.actionInference.setChecked(False)
+            if self.tflite_thread is not None:
+                self.tflite_thread.stop()
+                self.tflite_thread = None
+            print("Target edit mode.")
     # end of target_mode
 
+    def get_target(self):
+        if os.path.isfile(f"target/{self.camera_name}.csv"):
+            print(self.camera_name)
+            result = pd.read_csv(f"target/{self.camera_name}.csv")
+            self.target = result.target.tolist()
+            self.prime_x = result.x.tolist()
+            self.prime_y = result.y.tolist()
+            self.label_x = result.label_x.tolist()
+            self.label_y = result.label_y.tolist()
+            self.distance = result.distance.tolist()
+            self.oxlist = [0 for i in range(len(self.prime_x))]
+            print("Load csv file.")
+
+        elif os.path.isfile(f"target/{self.camera_name}.csv") is False:
+            print("No csv file.")
+        else:
+            print("Unable to load csv file.")
+    # end of get_target
+
+    def save_target(self):
+        if self.prime_x:
+            col = ["target", "x", "y", "label_x", "label_y", "distance", "discernment"]
+            self.result = pd.DataFrame(columns=col)
+            self.result["target"] = self.target
+            self.result["x"] = self.prime_x
+            self.result["y"] = self.prime_y
+            self.result["label_x"] = [round(x * self.video_widget.graphicView.geometry().width() /
+                                            self.video_widget.video_item.nativeSize().width(), 3) for x in self.target_x]
+            self.result["label_y"] = [round(y * self.video_widget.graphicView.geometry().height() /
+                                            self.video_widget.video_item.nativeSize().height(), 3) for y in self.target_y]
+            self.result["distance"] = self.distance
+            self.result["discernment"] = self.oxlist
+            self.result.to_csv(f"{self.filepath}/{self.camera_name}.csv", mode="w", index=False)
+    # end of save_target
+
+    def coordinator(self):
+        self.prime_x = [y / self.video_widget.video_item.nativeSize().height() for y in self.target_y]
+        self.prime_x = [2 * x / self.video_widget.video_item.nativeSize.width() - 1 for x in self.target_x]
+    # end of coordinator
+
+    def restoration(self):
+        self.target_x = [self.f2i((x + 1) * self.video_widget.video_item.nativeSize().width() / 2) for x in self.prime_x]
+        self.target_y = [self.f2i(y * self.video_widget.video_item.nativeSize().height()) for y in self.prime_y]
+    # end of restoration
+
+    @staticmethod
+    def f2i(num: float):
+        return int(num + 0.5)
+    # end of f2i
+
     def lbl_mousePressEvent(self, event):
+        y = int(event.pos().y() / self.video_widget.graphicView.geometry().height() *
+                self.video_widget.video_item.nativeSize().height())
+        x = int(event.pos().x() / self.video_widget.graphicView.geometry().width() *
+                self.video_widget.video_item.nativeSize().width())
+
         if self.actionEdit_target.isChecked():
-            print('draw target this position')
+            print(x, y)
     # end of lbl_mousePressEvent
 
     def lbl_paintEvent(self, event):
         painter = QPainter(self.blank_lbl)
         if self.actionEdit_target.isChecked():
             painter.setPen(QPen(Qt.black, 2, Qt.DotLine))
-            x1 = painter.drawLine(self.blank_lbl.width() * (1 / 4), 0, self.blank_lbl.width() * (1 / 4), self.blank_lbl.height())
-            x2 = painter.drawLine(self.blank_lbl.width() * (1 / 2), 0, self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
-            x3 = painter.drawLine(self.blank_lbl.width() * (3 / 4), 0, self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
+            x1 = painter.drawLine(self.blank_lbl.width() * (1 / 4), 0,
+                                  self.blank_lbl.width() * (1 / 4), self.blank_lbl.height())
+            x2 = painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
+                                  self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
+            x3 = painter.drawLine(self.blank_lbl.width() * (3 / 4), 0,
+                                  self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
 
             y1 = painter.drawLine(0, self.horizontal_y1, self.blank_lbl.width(), self.horizontal_y1)
             y2 = painter.drawLine(0, self.horizontal_y2, self.blank_lbl.width(), self.horizontal_y2)
@@ -185,5 +295,4 @@ if __name__ == '__main__':
     window = Js06MainWindow()
     window.show()
     sys.exit(app.exec_())
-
 # end of js06.py
