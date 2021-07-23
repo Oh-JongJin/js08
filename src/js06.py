@@ -169,12 +169,14 @@ class Js06MainWindow(QMainWindow):
             self.actionEdit_target.setChecked(False)
             if self.tflite_thread is None:
                 if not self.prime_x:
+                    print("There is nothing to Inference.")
                     return
                 print("Start Inference.")
-                self.tflite_thread = TfliteThread(self.crop_imagelist100)
-                self.tflite_thread.run_flag = True
-                self.tflite_thread.update_oxlist_signal.connect(self.get_vidibility)
-                self.tflite_thread.start()
+
+                # self.tflite_thread = TfliteThread(self.crop_imagelist100)
+                # self.tflite_thread.run_flag = True
+                # self.tflite_thread.update_oxlist_signal.connect(self.get_visibility)
+                # self.tflite_thread.start()
         else:
             if self.tflite_thread is None:
                 return
