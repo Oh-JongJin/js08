@@ -95,7 +95,7 @@ if __name__ == '__main__':
     def exit():
         sys.exit()
 
-    window = Js06VideoWidget()
+    window = Js06VideoWidget2()
     menubar = QMenuBar(window)
     exitMenu = menubar.addMenu("File")
     exitAction = QAction("Exit", window)
@@ -109,6 +109,7 @@ if __name__ == '__main__':
 
     actionCamera_2.triggered.connect(lambda: window.onCameraChange(VIDEO_SRC2))
     actionCamera_3.triggered.connect(lambda: window.onCameraChange(VIDEO_SRC3))
+    actionCamera_2.triggered.emit()
 
     window.resize(600, 600)
     window.show()
