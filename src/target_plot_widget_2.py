@@ -1,108 +1,57 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 #
-# Copyright 2020-2021 Sijung Co., Ltd.
-# Authors: 
+# Copyright 2020-21 Sijung Co., Ltd.
+# Authors:
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-import sys
-
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
-from pyqtgraph.Qt import QtCore, QtGui
-from pyqtgraph import GLViewWidget, GLGridItem, GLLinePlotItem
-import pyqtgraph as pg
 
-class Js06TargetPlotWidget2(QWidget):
-    """Plot using PyQtGraph
-    """
-    
+class Js06TargetPlotWidget(QWidget):
     def __init__(self, parent=None):
-        super(Js06TargetPlotWidget2, self).__init__(parent)
+        super(Js06TargetPlotWidget, self).__init__(parent)
         layout = QVBoxLayout(self)
 
-        self.traces = dict()
-        self.app = QtGui.QApplication(sys.argv)
-        self.w = GLViewWidget()
-        self.w.opts['distance'] = 40
-        self.w.setWindowTitle('pyqtgraph example: GLLinePlotItem')
-        self.w.setGeometry(0, 110, 300, 300)
 
-        # create the background grids
-        gx = GLGridItem()
-        gx.rotate(90, 0, 1, 0)
-        gx.translate(-10, 0, 0)
-        self.w.addItem(gx)
-        gy = GLGridItem()
-        gy.rotate(90, 1, 0, 0)
-        gy.translate(0, -10, 0)
-        self.w.addItem(gy)
-        gz = GLGridItem()
-        gz.translate(0, 0, -10)
-        self.w.addItem(gz)
+        pi = np.pi
+        self._plot_ref_red = None
+        self._plot_ref_green = None
+        self.annotate = None
+        self.ylabel = None
+        self.xlabel = None
 
-        self.n = 50
-        self.m = 1000
-        self.y = np.linspace(-10, 10, self.n)
-        self.x = np.linspace(-10, 10, self.m)
-        self.phase = 0
+        self.fig = plt.Figure(figsize=(5, 4), dpi=100, facecolor=(0.9686, 0.9725, 0.9803), tight_layout=False)
+        self.fig.suptitle("Target Distribution")
+        self.canvas = FigureCanvas(self.fig)
+        self.axes = self.fig.add_subplot(111, projection="polar")
 
-        for i in range(self.n):
-            yi = np.array([self.y[i]] * self.m)
-            d = np.sqrt(self.x**2 + yi**2)
-            z = 10 * np.cos(d + self.phase) / (d + 1)
-            pts = np.vstack([self.x, yi, z]).transpose()
-            self.traces[i] = GLLinePlotItem(pos=pts, color=pg.glColor(
-                (i, self.n * 1.3)), width=(i + 1) / 10, antialias=True)
-            self.w.addItem(self.traces[i])
+        self.axes.set_thetamin(-90)
+        self.axes.set_thetamax(90)
+        self.axes.set_xticks([-pi / 2, -pi / 6, -pi / 3, 0, pi / 6, pi / 3, pi / 2])
+        self.axes.set_theta_zero_location("N")
+        self.axes.set_theta_direction(-1)
+        self.ylabel = self.axes.set_ylabel("(km)", fontsize=7)
+        self.ylabel.set_position((2, 0.2))
+        self.ylabel.set_rotation(45)
+        vis = int(np.random.randint(0, 10000, size=1))
+        self.xlabel = self.axes.set_xlabel(f"Visibility: {vis} m", fontsize=20)
+        plt.rcParams.update({'font.size': 7})
 
-        layout.addWidget(self.w)
-    # end of __init__
+        layout.addWidget(self.canvas)
 
-    def start(self):
-        if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-            QtGui.QApplication.instance().exec_()
-    # end of start
-
-    def set_plotdata(self, name, points, color, width):
-        self.traces[name].setData(pos=points, color=color, width=width)
-    # end of set_plotdata
-
-    def update(self):
-        for i in range(self.n):
-            yi = np.array([self.y[i]] * self.m)
-            d = np.sqrt(self.x**2 + yi**2)
-            z = 10 * np.cos(d + self.phase) / (d + 1)
-            pts = np.vstack([self.x, yi, z]).transpose()
-            self.set_plotdata(
-                name=i, points=pts,
-                color=pg.glColor((i, self.n * 1.3)),
-                width=(i + 1) / 10
-            )
-            self.phase -= .003
-    # end of update
-
-    def animation(self):
-        timer = QtCore.QTimer()
-        timer.timeout.connect(self.update)
-        timer.start(20)
-        self.start()
-    # end of animation
-
-# end of TargetPlotWidget
 
 if __name__ == '__main__':
     import sys
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    window = Js06TargetPlotWidget2()
+    window = Js06TargetPlotWidget()
     window.resize(600, 600)
     window.show()
-    # window.animation()
 
     sys.exit(app.exec_())
-
-# end of target_plot_widget_2.py

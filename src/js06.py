@@ -17,7 +17,7 @@ from PyQt5 import uic
 import resources
 
 from video_widget_2 import Js06VideoWidget2
-from target_plot_widget import Js06TargetPlotWidget
+from target_plot_widget import Js06TargetPlotWidget, Js06TargetPlotWidget2
 from time_series_plot_widget import Js06TimeSeriesPlotWidget
 from video_thread import VideoThread
 from tflite_thread import TfliteThread
@@ -130,7 +130,7 @@ class Js06MainWindow(QMainWindow):
         self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
         self.target_plot_dock.setFeatures(
             QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        self.target_plot_widget = Js06TargetPlotWidget(self)
+        self.target_plot_widget = Js06TargetPlotWidget2(self)
         self.target_plot_dock.setWidget(self.target_plot_widget)
 
         # grafana dock 1
