@@ -44,6 +44,7 @@ class Js06MainWindow(QMainWindow):
         self.horizontal_y1 = None
         self.horizontal_y2 = None
         self.horizontal_y3 = None
+        self.horizontal_flag = False
         self.tflite_thread = None
         self.target = None
         self.target_x = None
@@ -52,6 +53,7 @@ class Js06MainWindow(QMainWindow):
         self.prime_y = None
         self.distance = None
         self.oxlist = None
+        self.target_process = False
 
         self.filepath = os.path.join(os.getcwd(), "target")
         try:
@@ -83,6 +85,7 @@ class Js06MainWindow(QMainWindow):
         # To drawing target box in blank label
         self.blank_lbl = QLabel(self.video_widget)
         self.blank_lbl.mousePressEvent = self.lbl_mousePressEvent
+        self.blank_lbl.mouseMoveEvent = self.lbl_mouseMoveEvent
         self.blank_lbl.paintEvent = self.lbl_paintEvent
 
         VIDEO_SRC1 = "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp"
@@ -98,6 +101,7 @@ class Js06MainWindow(QMainWindow):
 
         self.actionEdit_target.triggered.connect(self.target_mode)
         self.actionOpen_with_RTSP.triggered.connect(self.open_with_rtsp)
+        self.actionHorizontal.triggered.connect(self.replace_horizontal)
 
         action_group = QActionGroup(self)
         action_group.addAction(self.actionCamera_1)
@@ -186,15 +190,20 @@ class Js06MainWindow(QMainWindow):
 
     def target_mode(self):
         """Set target image modification mode"""
-        if self.actionEdit_target.isChecked():
+        self.save_target()
+        if self.target_process:
+            self.target_process = False
             self.save_target()
         else:
+            self.target_process = True
             self.actionInference.setChecked(False)
             if self.tflite_thread is not None:
                 self.tflite_thread.stop()
-                self.tflite_thread = None
+                self.tflite_thread = False
             print("Target edit mode.")
+            self.save_target()
     # end of target_mode
+
 
     def get_target(self):
         if os.path.isfile(f"target/{self.camera_name}.csv"):
@@ -251,14 +260,70 @@ class Js06MainWindow(QMainWindow):
                 self.video_widget.video_item.nativeSize().height())
         x = int(event.pos().x() / self.video_widget.graphicView.geometry().width() *
                 self.video_widget.video_item.nativeSize().width())
-
         if self.actionEdit_target.isChecked():
             print(x, y)
+
+        if self.target:
+            for i in range(len(self.target)):
+                self.target[i] = i + 1
+
+        if not self.target_process:
+            return
+
+        if event.buttons() == Qt.LeftButton:
+            text, ok = QInputDialog.getText(self.centralWidget(), "Add Target", "Distance (km)")
+            if ok:
+                self.target_x.append(x)
+                self.target_y.append(y)
+                self.distance.append(float(text))
+                self.target.append(str(len(self.target_x)))
+                self.oxlist.append(0)
+                print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
+                self.coordinator()
+                self.save_target()
+                self.get_target()
+
+        if event.buttons() == Qt.RightButton:
+            text, ok = QInputDialog.getText(self.centralWidget(), "Remove Target", "Enter target number to remove")
+            text = int(text)
+            if ok:
+                if len(self.prime_x) >= 1:
+                    del self.target[text - 1]
+                    del self.prime_x[text - 1]
+                    del self.prime_y[text - 1]
+                    del self.label_x[text - 1]
+                    del self.label_y[text - 1]
+                    del self.distance[text - 1]
+                    del self.oxlist[text - 1]
+                    print(f"[Target {text}] remove.")
+                    self.save_target()
+
+                else:
+                    print("There are no targets to remove.")
     # end of lbl_mousePressEvent
+
+    def lbl_mouseMoveEvent(self, event):
+        if Qt.LeftButton and self.horizontal_flag:
+            if self.horizontal_y1 - 5 < event.pos().y() < self.horizontal_y1 + 5:
+                self.horizontal_y1 = event.pos().y()
+                self.setCursor(QCursor(Qt.ClosedHandCursor))
+
+            if self.horizontal_y2 - 5 < event.pos().y() < self.horizontal_y2 + 5:
+                self.horizontal_y2 = event.pos().y()
+                self.setCursor(QCursor(Qt.ClosedHandCursor))
+
+            if self.horizontal_y3 - 5 < event.pos().y() < self.horizontal_y3 + 5:
+                self.horizontal_y3 = event.pos().y()
+                self.setCursor(QCursor(Qt.ClosedHandCursor))
+    # end of lbl_mouseMoveEvent
+
+    def lbl_mouseReleaseEvent(self, event):
+        self.setCursor(QCursor(Qt.ArrowCursor))
+    # end of lbl_mouseReleaseEvent
 
     def lbl_paintEvent(self, event):
         painter = QPainter(self.blank_lbl)
-        if self.actionEdit_target.isChecked():
+        if self.horizontal_flag:
             painter.setPen(QPen(Qt.black, 2, Qt.DotLine))
             x1 = painter.drawLine(self.blank_lbl.width() * (1 / 4), 0,
                                   self.blank_lbl.width() * (1 / 4), self.blank_lbl.height())
@@ -279,6 +344,13 @@ class Js06MainWindow(QMainWindow):
             y3 = None
         painter.end()
     # end of lbl_paintEvent
+
+    def replace_horizontal(self):
+        if self.actionHorizontal.isChecked():
+            self.horizontal_flag = True
+        else:
+            self.horizontal_flag = False
+    # end of replace_horizontal
 
     def open_with_rtsp(self):
         text, ok = QInputDialog.getText(self, "Input RTSP", "Only Hanwha Camera")

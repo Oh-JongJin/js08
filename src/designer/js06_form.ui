@@ -101,6 +101,7 @@
      <string>Mode</string>
     </property>
     <addaction name="actionEdit_target"/>
+    <addaction name="actionHorizontal"/>
     <addaction name="separator"/>
     <addaction name="actionInference"/>
    </widget>
@@ -234,7 +235,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Edit_target</string>
+    <string>Edit Target</string>
    </property>
    <property name="shortcut">
     <string>E</string>
@@ -257,6 +258,17 @@
   <action name="actionOpen_with_RTSP">
    <property name="text">
     <string>Open with RTSP</string>
+   </property>
+  </action>
+  <action name="actionHorizontal">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Horizontal Line Ranging</string>
+   </property>
+   <property name="shortcut">
+    <string>H</string>
    </property>
   </action>
  </widget>
