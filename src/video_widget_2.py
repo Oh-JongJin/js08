@@ -24,6 +24,8 @@ VIDEO_SRC5 = "rtsp://admin:sijung5520@d617.asuscomm.com:5554/profile2/media.smp"
 
 
 class Js06VideoWidget2(QWidget):
+    """Video stream player using QGraphicsVideoItem
+    """
     def __init__(self, parent=None):
         super(Js06VideoWidget2, self).__init__(parent)
 
@@ -34,9 +36,9 @@ class Js06VideoWidget2(QWidget):
         self.video_item = QGraphicsVideoItem()
         self.scene.addItem(self.video_item)
 
-        self._player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
-        self._player.setVideoOutput(self.video_item)
-        self._player.setPosition(0)
+        self.player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
+        self.player.setVideoOutput(self.video_item)
+        self.player.setPosition(0)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.graphicView)
@@ -57,13 +59,13 @@ class Js06VideoWidget2(QWidget):
 
     @pyqtSlot(str)
     def onCameraChange(self, url):
-        self._player.setMedia(QMediaContent(QUrl(url)))
+        self.player.setMedia(QMediaContent(QUrl(url)))
         self.graphicView.fitInView(self.video_item)
-        self._player.play()
+        self.player.play()
 
-        self.video_thread = VideoThread(url)
-        self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
-        self.video_thread.start()
+        # self.video_thread = VideoThread(url)
+        # self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
+        # self.video_thread.start()
     # end of onCameraChange
 
     def convert_cv_qt(self, cv_img):
@@ -94,7 +96,7 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     window = Js06VideoWidget2()
-    window._player.setMedia(QMediaContent(QUrl(VIDEO_SRC5)))
+    window.onCameraChange(VIDEO_SRC5)
     window.show()
     sys.exit(app.exec_())
 
