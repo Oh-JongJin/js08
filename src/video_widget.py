@@ -25,7 +25,6 @@ class Js06VideoWidget(QWidget):
         self.player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
         self.player.setVideoOutput(self.viewer)
         self.player.setPosition(0)  # Required?
-        self.viewer.show()
         layout = QVBoxLayout(self)
         layout.addWidget(self.viewer)
         self.viewer.setGeometry(0, 0, 100, 100)
@@ -54,8 +53,7 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     window = Js06VideoWidget()
-    window.player.setMedia(QMediaContent(QUrl(VIDEO_SRC5)))
-    window.player.play()
+    window.onCameraChange(VIDEO_SRC5)
     window.show()
     sys.exit(app.exec_())
 
