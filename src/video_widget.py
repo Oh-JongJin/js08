@@ -24,10 +24,8 @@ class Js06VideoWidget(QWidget):
         self.viewer = QVideoWidget()  # self is required?
         self.player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
         self.player.setVideoOutput(self.viewer)
-        # self._player.setMedia(QMediaContent(QUrl(VIDEO_SRC3)))
         self.player.setPosition(0)  # Required?
         self.viewer.show()
-        # self._player.play()
         layout = QVBoxLayout(self)
         layout.addWidget(self.viewer)
         self.viewer.setGeometry(0, 0, 100, 100)

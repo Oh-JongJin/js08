@@ -16,9 +16,11 @@ from PyQt5.QtWidgets import QWidget, QGraphicsScene, QGraphicsView, QVBoxLayout
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 
-VIDEO_SRC1 = "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp"
-VIDEO_SRC2 = "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp"
+VIDEO_SRC1 = "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp"
+VIDEO_SRC2 = "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp"
 VIDEO_SRC3 = "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp"
+VIDEO_SRC4 = "rtsp://admin:sijung5520@d617.asuscomm.com:4554/profile2/media.smp"
+VIDEO_SRC5 = "rtsp://admin:sijung5520@d617.asuscomm.com:5554/profile2/media.smp"
 
 
 class Js06VideoWidget2(QWidget):
@@ -88,30 +90,11 @@ class Js06VideoWidget2(QWidget):
 
 if __name__ == '__main__':
     import sys
-    from PyQt5.QtWidgets import QApplication, QMenuBar, QAction, qApp
+    from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-
-    def exit():
-        sys.exit()
-
     window = Js06VideoWidget2()
-    menubar = QMenuBar(window)
-    exitMenu = menubar.addMenu("File")
-    exitAction = QAction("Exit", window)
-    exitAction.setShortcut("Ctrl+W")
-    actionCamera_2 = QAction("PNM-9030V", window)
-    actionCamera_3 = QAction("XNO-8080R", window)
-    exitAction.triggered.connect(exit)
-    exitMenu.addAction(actionCamera_2)
-    exitMenu.addAction(actionCamera_3)
-    exitMenu.addAction(exitAction)
-
-    actionCamera_2.triggered.connect(lambda: window.onCameraChange(VIDEO_SRC2))
-    actionCamera_3.triggered.connect(lambda: window.onCameraChange(VIDEO_SRC3))
-    actionCamera_2.triggered.emit()
-
-    window.resize(600, 600)
+    window._player.setMedia(QMediaContent(QUrl(VIDEO_SRC5)))
     window.show()
     sys.exit(app.exec_())
 

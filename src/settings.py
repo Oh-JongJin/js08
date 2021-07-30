@@ -11,7 +11,7 @@ class Js06Settings(object):
     settings = QSettings('sijung', 'js06')
 
     defaults = {
-        'camera': 2,
+        'camera': 3,
         'normal_shutdown': False,
     }
 
