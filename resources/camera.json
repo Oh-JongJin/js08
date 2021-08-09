@@ -1,41 +1,67 @@
 [
     {
-        "label": "null",
-        "manufacturer": "null",
-        "model": "null",
+        "label": "headquarters panorama",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "PNM-9030V",
         "serial_number": "null",
         "resolution": [
-            0,
-            0
+            7744,
+            1936
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp",
+        "direction": 135,
+        "view_angle": 220
+    },
+    {
+        "label": "dead",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "QND-8020R",
+        "serial_number": "null",
+        "resolution": [
+            1920,
+            1080
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp",
         "direction": 0,
-        "view_angle": 0
+        "view_angle": 79.8
     },
     {
-        "label": "null",
-        "manufacturer": "null",
-        "model": "null",
+        "label": "headquarters",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "XNO-8080R",
         "serial_number": "null",
         "resolution": [
-            0,
-            0
-        ],
-        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp",
-        "direction": 0,
-        "view_angle": 0
-    },
-    {
-        "label": "null",
-        "manufacturer": "null",
-        "model": "null",
-        "serial_number": "null",
-        "resolution": [
-            0,
-            0
+            2560,
+            1920
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
+        "direction": 135,
+        "view_angle": 92.1
+    },
+    {
+        "label": "fisheye",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "XNP-9010RV",
+        "serial_number": "null",
+        "resolution": [
+            3008,
+            3008
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:4554/profile2/media.smp",
         "direction": 0,
-        "view_angle": 0
+        "view_angle": 187
+    },
+    {
+        "label": "indoor panorama",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "PNM-9022V",
+        "serial_number": "null",
+        "resolution": [
+            4096,
+            1792
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:5554/profile2/media.smp",
+        "direction": 0,
+        "view_angle": 209
     }
 ]
