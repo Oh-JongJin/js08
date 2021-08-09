@@ -1,0 +1,41 @@
+[
+    {
+        "label": "null",
+        "manufacturer": "null",
+        "model": "null",
+        "serial_number": "null",
+        "resolution": [
+            0,
+            0
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp",
+        "direction": 0,
+        "view_angle": 0
+    },
+    {
+        "label": "null",
+        "manufacturer": "null",
+        "model": "null",
+        "serial_number": "null",
+        "resolution": [
+            0,
+            0
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp",
+        "direction": 0,
+        "view_angle": 0
+    },
+    {
+        "label": "null",
+        "manufacturer": "null",
+        "model": "null",
+        "serial_number": "null",
+        "resolution": [
+            0,
+            0
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
+        "direction": 0,
+        "view_angle": 0
+    }
+]

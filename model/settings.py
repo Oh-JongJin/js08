@@ -5,14 +5,20 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings # pylint: disable=no-name-in-module
 
-class Js06Settings(object):
+class Js06Settings:
     settings = QSettings('sijung', 'js06')
 
     defaults = {
         'camera': 3,
         'normal_shutdown': False,
+        'db_host': 'localhost',
+        'db_port': 27017,
+        'db_admin': 'sijung',
+        'db_admin_password': 'sijung_pw',
+        'db_user': 'js06',
+        'db_user_password': 'js06_pw'
     }
 
     @classmethod

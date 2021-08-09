@@ -1,0 +1,27 @@
+{
+    "label": "dev",
+    "version": "0.1",
+    "platform": "null",
+    "serial_number": "null",
+    "location": {
+        "type": "Point",
+        "coordinates": [127.3947501, 36.4322411]
+    },
+    "camera":
+        {
+            "label": "cam3",
+            "resolution": [
+                0,
+                0
+            ],
+            "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
+            "direction": 0,
+            "view_angle": 0
+        },
+    "target": [],
+    "discernment_model": {
+        "single": "null",
+        "compound": "null"
+    },
+    "vis_collection": "null"
+}
