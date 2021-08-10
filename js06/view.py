@@ -31,7 +31,7 @@ class Js06MainView(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        ui_path = os.path.join(os.paths.dirname(os.path.realpath(__file__)),
+        ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/main_view.ui")
         uic.loadUi(ui_path, self)
 
