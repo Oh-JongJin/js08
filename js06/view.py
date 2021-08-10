@@ -9,12 +9,15 @@
 
 import os
 
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
 from PyQt5.QtGui import QCloseEvent  # pylint: disable=no-name-in-module
 from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog  # pylint: disable=no-name-in-module
 from PyQt5 import uic
 
 # js06 modules
+import sys
+sys.path.append("E:/Workspace/xavier-nx/")
+from views.video_widget_2 import Js06VideoWidget2
 # from views.target_plot_widget import Js06TargetPlotWidget
 # from views.time_series_plot_widget import Js06TimeSeriesPlotWidget
 # from video_thread import VideoThread
@@ -38,19 +41,30 @@ class Js06MainView(QMainWindow):
         # self.showFullScreen()
         self.setGeometry(400, 50, 1500, 1000)
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
+
+        self.actionSelect_Camera.triggered.connect(self.select_cam)
+        self.actionEdit_Target.triggered.connect(self.edit_target)
         
-        # # video dock
-        # self.video_dock = QDockWidget("Video", self)
-        # self.video_dock.setFeatures(
-        #     QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
-        # self.video_widget = Js06VideoWidget2(self)
-        # self.video_dock.setWidget(self.video_widget)
-        # self.setCentralWidget(self.video_dock)
+        # video dock
+        self.video_dock = QDockWidget("Video", self)
+        self.video_dock.setFeatures(
+            QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
+        self.video_widget = Js06VideoWidget2(self)
+        self.video_dock.setWidget(self.video_widget)
+        self.setCentralWidget(self.video_dock)
+        #
+        VIDEO_SRC1 = "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp"
+        VIDEO_SRC2 = "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp"
+        VIDEO_SRC3 = "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp"
 
-        # VIDEO_SRC1 = "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp"
-        # VIDEO_SRC2 = "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp"
-        # VIDEO_SRC3 = "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp"
+        self.video_widget.onCameraChange(VIDEO_SRC1)
 
+        self.qtimer = QTimer()
+        self.qtimer.setInterval(2000)
+        self.qtimer.timeout.connect(self.video_widget.inference_clicked)
+        self.qtimer.start()
+
+        #
         # self.actionCamera_1.triggered.connect(lambda: self.video_widget.onCameraChange(VIDEO_SRC1))
         # self.actionCamera_1.triggered.connect(lambda: self.camera_changed.emit(1))
         # self.actionCamera_2.triggered.connect(lambda: self.video_widget.onCameraChange(VIDEO_SRC2))
@@ -99,6 +113,18 @@ class Js06MainView(QMainWindow):
         # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
         # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
     # end of __init__
+
+    def select_cam(self):
+        # ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+        #                        "../resources/select_cam.ui")
+        # ui = uic.loadUi(ui_path, self)
+        # ui.show()
+        print("Cam")
+    # end of select_cam
+
+    def edit_target(self):
+        print("Edit")
+    # end of edit_target
 
     @pyqtSlot()
     def ask_restore_default(self):

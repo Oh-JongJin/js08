@@ -13,6 +13,9 @@
         },
         "camera": {
             "label": "headquarters",
+            "manufacturer": "Hanwha Techwin Co., Ltd.",
+            "model": "XNO-8080R",
+            "serial_number": "",
             "resolution": [
                 2560,
                 1920
@@ -21,27 +24,39 @@
             "direction": 135,
             "view_angle": 92.1
         },
-        "target": [
-            [
-                [
-                    -0.5,
-                    0.5
-                ],
-                [
-                    -0.3,
-                    0.3
+        "targets": [
+            {
+                "label": "t1",
+                "distance": 3,
+                "ordinal": "E",
+                "category": "single",
+                "roi": [
+                    [
+                        -0.5,
+                        0.5
+                    ],
+                    [
+                        -0.3,
+                        0.3
+                    ]
                 ]
-            ],
-            [
-                [
-                    0.5,
-                    -0.5
-                ],
-                [
-                    0.7,
-                    -0.7
+            },
+            {
+                "label": "t2",
+                "distance": 5,
+                "ordinal": "S",
+                "category": "single",
+                "roi": [
+                    [
+                        0.5,
+                        -0.5
+                    ],
+                    [
+                        0.7,
+                        -0.7
+                    ]
                 ]
-            ]
+            }
         ],
         "discernment_model": {
             "single": "",

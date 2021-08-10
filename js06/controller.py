@@ -10,6 +10,8 @@ from pymongo import MongoClient
 
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, pyqtSlot # pylint: disable=no-name-in-module
 
+import sys
+sys.path.append("E:/Workspace/xavier-nx/")
 from js06.model import Js06Model, Js06Settings
 from js06.view import Js06MainView
 
@@ -30,7 +32,7 @@ class Js06MainCtrl(QObject):
 
         self._view.main_view_closed.connect(self.close_process)
 
-        # self.init()
+        self.init()
     # end of __init__
 
     def init(self):
@@ -86,9 +88,9 @@ class Js06MainCtrl(QObject):
 
 # end of Js06MainCtrl
 
-# if __name__ == '__main__':
-#     ctrl = Js06MainCtrl()
-#     print(ctrl.get_attr)
+
+if __name__ == '__main__':
+    ctrl = Js06MainCtrl(model=Js06Model, view=Js06MainView)
+    print(ctrl.get_attr)
 
 # end of main_ctrl.py
- 

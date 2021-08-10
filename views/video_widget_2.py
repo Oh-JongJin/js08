@@ -12,7 +12,7 @@ import traceback
 import cv2
 import numpy as np
 import pandas as pd
-from video_thread import VideoThread
+# from video_thread import VideoThread
 
 from PyQt5.QtGui import QPainter, QPen
 from PyQt5.QtCore import Qt, QUrl, pyqtSlot, QTimer
@@ -63,10 +63,10 @@ class Js06VideoWidget2(QWidget):
 
         self.blank_lbl = QLabel(self)
 
-        self.qtimer = QTimer()
-        self.qtimer.setInterval(2000)
-        self.qtimer.timeout.connect(self.inference_clicked)
-        self.qtimer.start()
+        # self.qtimer = QTimer()
+        # self.qtimer.setInterval(2000)
+        # self.qtimer.timeout.connect(self.inference_clicked)
+        # self.qtimer.start()
 
         self.filepath = os.path.join(os.getcwd(), "target")
         try:
@@ -75,17 +75,17 @@ class Js06VideoWidget2(QWidget):
             pass
     # end of __init__
 
-    def paintEvent(self, event):
-        qp = QPainter(self.blank_lbl)
-        if self.target_x:
-            for name, x, y in zip(self.target, self.label_x, self.label_y):
-                if self.oxlist[self.label_x.index(x)] == 0:
-                    qp.setPen(QPen(Qt.red, 2))
-                else:
-                    qp.setPen(QPen(Qt.green, 2))
-                qp.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
-                qp.drawText(x - 4, y - 10, f"{int(name) - 1}")
-    # end of paintEvent
+    # def paintEvent(self, event):
+    #     qp = QPainter(self.blank_lbl)
+    #     if self.target_x:
+    #         for name, x, y in zip(self.target, self.label_x, self.label_y):
+    #             if self.oxlist[self.label_x.index(x)] == 0:
+    #                 qp.setPen(QPen(Qt.red, 2))
+    #             else:
+    #                 qp.setPen(QPen(Qt.green, 2))
+    #             qp.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
+    #             qp.drawText(x - 4, y - 10, f"{int(name) - 1}")
+    # # end of paintEvent
 
     @pyqtSlot(QMediaPlayer.State)
     def on_stateChanged(self, state):
@@ -97,7 +97,7 @@ class Js06VideoWidget2(QWidget):
     def onCameraChange(self, url):
         self.player.setMedia(QMediaContent(QUrl(url)))
         self.player.play()
-        self.blank_lbl.paintEvent = self.paintEvent
+        # self.blank_lbl.paintEvent = self.paintEvent
         self.blank_lbl.raise_()
 
         if url == VIDEO_SRC3:
@@ -105,9 +105,9 @@ class Js06VideoWidget2(QWidget):
         print(self.camera_name)
         self.get_target()
 
-        self.video_thread = VideoThread(url)
-        self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
-        self.video_thread.start()
+        # self.video_thread = VideoThread(url)
+        # self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
+        # self.video_thread.start()
     # end of onCameraChange
 
     def convert_cv_qt(self, cv_img):
