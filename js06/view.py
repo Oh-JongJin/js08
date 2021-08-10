@@ -113,10 +113,13 @@ class Js06MainView(QMainWindow):
     # end of __init__
 
     def select_cam(self):
-        # items = ["F", "C", "H"]
-        # text, ok = QInputDialog.getItem(self, "Select Camera", "Select Camera Manufacturer", items, 0, False)
-        # text1, ok1 = QInputDialog.getText(self, "Select Camera", "Input Camera URI")
-        ui = uic.
+        text, ok = QInputDialog.getItem(self, "Select Camera",
+                                        "Select Camera Manufacturer", ["H", "C", "F"], 0, False)
+        text1, ok1 = QInputDialog.getText(self, "Select Camera", "Input Camera URI")
+
+        if text == "H":
+            SRC = f"rtsp://admin:sijung5520@{text1}/profile2/media.smp"
+            self.video_widget.onCameraChange(SRC)
     # end of select_cam
 
     def edit_target(self):

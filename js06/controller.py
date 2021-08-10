@@ -42,7 +42,7 @@ class Js06MainCtrl(QObject):
         self._model.connect_to_db(db_host, db_port, db_name)
 
         attr = self._model.read_attr()
-        print(attr.to_dict())
+        # print(attr.to_dict())
     # end of init
     
     def check_exit_status(self):
