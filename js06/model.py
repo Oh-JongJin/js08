@@ -10,8 +10,7 @@ import json
 import platform
 import pymongo
 
-from PyQt5.QtCore import QRunnable, pyqtSlot # pylint: disable=no-name-in-module
-from PyQt5.QtCore import QSettings # pylint: disable=no-name-in-module
+from PyQt5.QtCore import QRunnable, pyqtSlot, QSettings # pylint: disable=no-name-in-module
 
 @enum.unique
 class Js06TargetCategory(enum.Enum):
@@ -47,7 +46,7 @@ class Js06Ordinal(enum.Enum):
     SW = 5
     W = 6
     NW = 7
-    
+
     def __str__(self):
         oridnal_to_str = {
             self.N: 'N',
@@ -61,7 +60,7 @@ class Js06Ordinal(enum.Enum):
             }
         return oridnal_to_str[self]
     # end of __str__
-    
+
     @classmethod
     def from_str(cls, ordinal_str:str):
         dictionary = {
@@ -80,8 +79,8 @@ class Js06Ordinal(enum.Enum):
 # end of Js06Ordinal
 
 class Js06Camera:
-    def __init__(self, _id:str=None, label:str=None, manufacturer:str=None, 
-    model:str=None, serial_number:str=None, resolution:tuple=None, 
+    def __init__(self, _id:str=None, label:str=None, manufacturer:str=None,
+    model:str=None, serial_number:str=None, resolution:tuple=None,
     uri:str=None, direction:int=None, view_angle:int=None):
         self._id = _id
         self.label = label
@@ -90,7 +89,7 @@ class Js06Camera:
         self.serial_number = serial_number
         self.resolution = resolution # (width, height)
         self.uri = uri
-        self.direction = direction 
+        self.direction = direction
         self.view_angle = view_angle
     # end of __init__
 
@@ -140,9 +139,9 @@ class Js06Camera:
 # end of Js06Camera
 
 class Js06Attribute:
-    def __init__(self, label:str=None, version:str=None, 
-    serial_number:str=None, os_str:str=None, location:tuple=None, 
-    camera:Js06Camera=None, targets:list=[], 
+    def __init__(self, label:str=None, version:str=None,
+    serial_number:str=None, os_str:str=None, location:tuple=None,
+    camera:Js06Camera=None, targets:list=[],
     discernment_model:tuple=None, vis_collection=None):
         self.label = label
         self.version = version
@@ -186,7 +185,7 @@ class Js06Attribute:
             'discernment_model': None,
             'vis_collection': self.vis_collection
         }
-        
+
         for target in self.targets:
             doc['targets'].append(target.to_dict())
 
@@ -198,7 +197,7 @@ class Js06Attribute:
 class Js06Target:
     def __init__(self, label:str=None, distance:float=None, ordinal:Js06Ordinal=None,
     category:Js06TargetCategory=None, roi:tuple=None):
-        """ 
+        """
             arguments:
                 roi: [upper left coordinate, lower right coordinate]
         """
@@ -214,13 +213,13 @@ class Js06Target:
         self.distance = target['distance']
         self.ordinal = Js06Ordinal.from_str(target['ordinal'])
         self.category = Js06TargetCategory.from_str(target['category'])
-        self.roi = target['roi'] 
+        self.roi = target['roi']
     # end of from_dict
 
     def to_dict(self):
         doc = {
             'label': self.label,
-            'distance': self.dist,
+            'distance': self.distance,
             'ordinal': str(self.ordinal),
             'category': str(self.category),
             'roi': self.roi
@@ -250,7 +249,7 @@ class Js06Model:
         client = pymongo.MongoClient(uri, port)
         self.db = client[db]
     # end of connect_to_db
-        
+
     def insert_camera(self, camera:Js06Camera):
         response = self.db.camera.insert_one(camera.to_dict())
         return response
@@ -350,9 +349,9 @@ if __name__ == '__main__':
     import faker
     import pprint
     import random
-    
+
     fake = faker.Faker()
-    
+
     js06_model = Js06Model()
     js06_model.connect_to_db('localhost', 27017, 'js06')
 
@@ -410,14 +409,14 @@ if __name__ == '__main__':
         target.ordinal = Js06Ordinal.from_str(random.choice(ordinals))
         target.category = random.choice([Js06TargetCategory.SINGLE, Js06TargetCategory.COMPOUND])
         target.roi = (
-            (random.uniform(-1, 0), random.uniform(0, 1)), 
+            (random.uniform(-1, 0), random.uniform(0, 1)),
             (random.uniform(0, 1), random.uniform(-1, 0))
             )
         js06_attr.targets.append(target)
 
     print('Js06Attribute with sample values:')
     pprint.pprint(js06_attr.to_dict())
-    
+
 
     js06_model.insert_attr(js06_attr)
     js06_attr_2 = js06_model.read_attr()
