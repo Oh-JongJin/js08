@@ -116,10 +116,11 @@ class Js06MainView(QMainWindow):
         text, ok = QInputDialog.getItem(self, "Select Camera",
                                         "Select Camera Manufacturer", ["H", "C", "F"], 0, False)
         text1, ok1 = QInputDialog.getText(self, "Select Camera", "Input Camera URI")
-
-        if text == "H":
-            SRC = f"rtsp://admin:sijung5520@{text1}/profile2/media.smp"
-            self.video_widget.onCameraChange(SRC)
+        print(text1)
+        if ok and ok1:
+            if text == "H" and text1 is not None:
+                SRC = f"rtsp://admin:sijung5520@{text1}/profile2/media.smp"
+                self.video_widget.onCameraChange(SRC)
     # end of select_cam
 
     def edit_target(self):
