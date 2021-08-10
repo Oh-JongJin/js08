@@ -3,7 +3,7 @@
         "label": "headquarters panorama",
         "manufacturer": "Hanwha Techwin Co., Ltd.",
         "model": "PNM-9030V",
-        "serial_number": "null",
+        "serial_number": "",
         "resolution": [
             7744,
             1936
@@ -16,7 +16,7 @@
         "label": "dead",
         "manufacturer": "Hanwha Techwin Co., Ltd.",
         "model": "QND-8020R",
-        "serial_number": "null",
+        "serial_number": "",
         "resolution": [
             1920,
             1080
@@ -29,7 +29,7 @@
         "label": "headquarters",
         "manufacturer": "Hanwha Techwin Co., Ltd.",
         "model": "XNO-8080R",
-        "serial_number": "null",
+        "serial_number": "",
         "resolution": [
             2560,
             1920
