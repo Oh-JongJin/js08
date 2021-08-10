@@ -15,11 +15,9 @@ from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox,
 from PyQt5 import uic
 
 # js06 modules
-import sys
-sys.path.append("E:/Workspace/xavier-nx/")
 from views.video_widget_2 import Js06VideoWidget2
-# from views.target_plot_widget import Js06TargetPlotWidget
-# from views.time_series_plot_widget import Js06TimeSeriesPlotWidget
+from views.target_plot_widget_2 import Js06TargetPlotWidget2
+from views.time_series_plot_widget import Js06TimeSeriesPlotWidget
 # from video_thread import VideoThread
 # from tflite_thread import TfliteThread
 # from save_db import SaveDB
@@ -53,11 +51,11 @@ class Js06MainView(QMainWindow):
         self.video_dock.setWidget(self.video_widget)
         self.setCentralWidget(self.video_dock)
         #
-        VIDEO_SRC1 = "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp"
-        VIDEO_SRC2 = "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp"
-        VIDEO_SRC3 = "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp"
-
-        self.video_widget.onCameraChange(VIDEO_SRC1)
+        # VIDEO_SRC1 = "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp"
+        # VIDEO_SRC2 = "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp"
+        # VIDEO_SRC3 = "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp"
+        #
+        # self.video_widget.onCameraChange(VIDEO_SRC1)
 
         self.qtimer = QTimer()
         self.qtimer.setInterval(2000)
@@ -94,32 +92,31 @@ class Js06MainView(QMainWindow):
         #     self.actionCamera_3.triggered.emit()
         #     self.actionCamera_3.setChecked(True)
 
-        # # target plot dock
-        # self.target_plot_dock = QDockWidget("Target plot", self)
-        # self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
-        # self.target_plot_dock.setFeatures(
-        #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        # self.target_plot_widget = Js06TargetPlotWidget(self)
-        # self.target_plot_dock.setWidget(self.target_plot_widget)
+        # target plot dock
+        self.target_plot_dock = QDockWidget("Target plot", self)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
+        self.target_plot_dock.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        self.target_plot_widget = Js06TargetPlotWidget2(self)
+        self.target_plot_dock.setWidget(self.target_plot_widget)
 
-        # # grafana dock 1
-        # self.web_dock_1 = QDockWidget("Grafana plot 1", self)
-        # self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
-        # self.web_dock_1.setFeatures(
-        #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        # self.web_view_1 = Js06TimeSeriesPlotWidget()
-        # self.web_dock_1.setWidget(self.web_view_1)
+        # grafana dock 1
+        self.web_dock_1 = QDockWidget("Grafana plot 1", self)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
+        self.web_dock_1.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        self.web_view_1 = Js06TimeSeriesPlotWidget()
+        self.web_dock_1.setWidget(self.web_view_1)
 
-        # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
-        # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
+        self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
+        self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
     # end of __init__
 
     def select_cam(self):
-        # ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-        #                        "../resources/select_cam.ui")
-        # ui = uic.loadUi(ui_path, self)
-        # ui.show()
-        print("Cam")
+        # items = ["F", "C", "H"]
+        # text, ok = QInputDialog.getItem(self, "Select Camera", "Select Camera Manufacturer", items, 0, False)
+        # text1, ok1 = QInputDialog.getText(self, "Select Camera", "Input Camera URI")
+        ui = uic.
     # end of select_cam
 
     def edit_target(self):

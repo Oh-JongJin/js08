@@ -10,8 +10,6 @@ from pymongo import MongoClient
 
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, pyqtSlot # pylint: disable=no-name-in-module
 
-import sys
-sys.path.append("E:/Workspace/xavier-nx/")
 from js06.model import Js06Model, Js06Settings
 from js06.view import Js06MainView
 

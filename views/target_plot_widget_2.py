@@ -12,9 +12,9 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
 
-class Js06TargetPlotWidget(QWidget):
+class Js06TargetPlotWidget2(QWidget):
     def __init__(self, parent=None):
-        super(Js06TargetPlotWidget, self).__init__(parent)
+        super(Js06TargetPlotWidget2, self).__init__(parent)
         layout = QVBoxLayout(self)
 
         pi = np.pi
@@ -81,7 +81,7 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    window = Js06TargetPlotWidget()
+    window = Js06TargetPlotWidget2()
     window.resize(600, 600)
     window.show()
 
