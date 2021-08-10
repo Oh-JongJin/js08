@@ -30,7 +30,7 @@ class Js06MainCtrl(QObject):
 
         self._view.main_view_closed.connect(self.close_process)
 
-        # self.init()
+        self.init()
     # end of __init__
 
     def init(self):

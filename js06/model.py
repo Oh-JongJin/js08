@@ -10,7 +10,6 @@ import json
 import platform
 import pymongo
 
-from PyQt5.QtCore import QObject # pylint: disable=no-name-in-module
 from PyQt5.QtCore import QRunnable, pyqtSlot # pylint: disable=no-name-in-module
 from PyQt5.QtCore import QSettings # pylint: disable=no-name-in-module
 
@@ -80,11 +79,10 @@ class Js06Ordinal(enum.Enum):
 
 # end of Js06Ordinal
 
-class Js06Camera(QObject):
+class Js06Camera:
     def __init__(self, _id:str=None, label:str=None, manufacturer:str=None, 
     model:str=None, serial_number:str=None, resolution:tuple=None, 
     uri:str=None, direction:int=None, view_angle:int=None):
-        super().__init__()
         self._id = _id
         self.label = label
         self.manufacturer = manufacturer
@@ -141,12 +139,11 @@ class Js06Camera(QObject):
 
 # end of Js06Camera
 
-class Js06Attribute(QObject):
+class Js06Attribute:
     def __init__(self, label:str=None, version:str=None, 
     serial_number:str=None, os_str:str=None, location:tuple=None, 
     camera:Js06Camera=None, targets:list=[], 
     discernment_model:tuple=None, vis_collection=None):
-        super().__init__()
         self.label = label
         self.version = version
         self.serial_number = serial_number
@@ -198,16 +195,15 @@ class Js06Attribute(QObject):
 
 # end of Js06Attribute
 
-class Js06Target(QObject):
+class Js06Target:
     def __init__(self, label:str=None, distance:float=None, ordinal:Js06Ordinal=None,
     category:Js06TargetCategory=None, roi:tuple=None):
         """ 
             arguments:
                 roi: [upper left coordinate, lower right coordinate]
         """
-        super().__init__()
         self.label = label
-        self.dist = distance # in kilometer
+        self.distance = distance # in kilometer
         self.ordinal = ordinal
         self.category = category # category: single, compound
         self.roi = roi # [ (x, y) of upper left, (x, y) of lower right ]
@@ -215,7 +211,7 @@ class Js06Target(QObject):
 
     def from_dict(self, target:dict):
         self.label = target['label']
-        self.dist = target['distance']
+        self.distance = target['distance']
         self.ordinal = Js06Ordinal.from_str(target['ordinal'])
         self.category = Js06TargetCategory.from_str(target['category'])
         self.roi = target['roi'] 
@@ -234,7 +230,7 @@ class Js06Target(QObject):
 
 # end of Js06Target
 
-class Js06Model(QObject):
+class Js06Model:
     def __init__(self):
         super().__init__()
         self.db = None
@@ -249,7 +245,7 @@ class Js06Model(QObject):
             attr_data = json.load(fh)
         self.db.js06.insert_one(attr_data)
     # end of setup_db
-    
+
     def connect_to_db(self, uri:str, port:int, db:str):
         client = pymongo.MongoClient(uri, port)
         self.db = client[db]
