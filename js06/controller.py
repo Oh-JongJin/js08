@@ -10,7 +10,7 @@ from pymongo import MongoClient
 
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, pyqtSlot # pylint: disable=no-name-in-module
 
-from js06.model import Js06Model, Js06Settings
+from js06.model import Js06CameraTableModel, Js06Model, Js06Settings
 
 class Js06MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
@@ -42,6 +42,12 @@ class Js06MainCtrl(QObject):
         self._attr = self._model.read_attr()
     # end of init
 
+    def get_camera_table_model(self):
+        cameras = self.get_cameras()
+        table_model =  Js06CameraTableModel(cameras)
+        return table_model
+    # end of get_camera_table_model
+
     # def select_camera(self):
     #     cameras = self._model.read_cameras()
 
@@ -60,7 +66,6 @@ class Js06MainCtrl(QObject):
 
     @pyqtSlot()
     def close_process(self):
-        print("DEBUG: inside close_process method")
         Js06Settings.set('normal_shutdown', True)
     # end of close_process
 
@@ -83,13 +88,14 @@ class Js06MainCtrl(QObject):
 
     @pyqtSlot()
     def restore_defaults(self):
-        print("DEBUG: inside restore_defaults")
         Js06Settings.restore_defaults()
 
     @pyqtSlot(bool)
     def set_normal_shutdown(self):
          Js06Settings.set('normal_shutdown', True)
 
+    def get_cameras(self):
+        return self._model.read_cameras()
 # end of Js06MainCtrl
 
 # if __name__ == '__main__':

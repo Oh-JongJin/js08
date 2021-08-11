@@ -11,7 +11,7 @@ import os
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QCloseEvent  # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QDial, QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog  # pylint: disable=no-name-in-module
+from PyQt5.QtWidgets import QDial, QDialog, QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog  # pylint: disable=no-name-in-module
 from PyQt5 import uic
 import pymongo
 
@@ -24,14 +24,18 @@ import pymongo
 
 from js06.controller import Js06MainCtrl
 
-class Js06CameraView(QDial):
-    def __init__(self):
+class Js06CameraView(QDialog):
+    def __init__(self, controller:Js06MainCtrl):
         super().__init__()
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/camera_view.ui")
         uic.loadUi(ui_path, self)
 
+        self._ctrl = controller
+        model = self._ctrl.get_camera_table_model()
+        self.tableView.setModel(model)
+    # end of __init__
 
 class Js06MainView(QMainWindow):
     camera_changed = pyqtSignal(int)
@@ -62,7 +66,8 @@ class Js06MainView(QMainWindow):
         
         self.actionSelect_Camera.triggered.connect(lambda: self.select_camera_requested.emit())
 
-        
+        self.actionSelect_Camera.triggered.connect(self.select_camera_triggered)
+
         # # video dock
         # self.video_dock = QDockWidget("Video", self)
         # self.video_dock.setFeatures(
@@ -124,10 +129,11 @@ class Js06MainView(QMainWindow):
         # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
     # end of __init__
 
-    # @pyqtSlot()
-    # def select_camera(self):
-        
-    #     response = Js06CameraView()
+    @pyqtSlot()
+    def select_camera_triggered(self):
+        dlg = Js06CameraView(self._ctrl)
+        dlg.exec_()
+    # end of select_cameara_triggered
 
     def ask_restore_default(self):
         # Check the last shutdown status
@@ -169,13 +175,13 @@ class Js06MainView(QMainWindow):
 
 # end of Js06MainView
 
-if __name__ == '__main__':
-    import sys
-    from PyQt5.QtWidgets import QApplication  # pylint: disable=no-name-in-module
+# if __name__ == '__main__':
+#     import sys
+#     from PyQt5.QtWidgets import QApplication  # pylint: disable=no-name-in-module
 
-    app = QApplication(sys.argv)
-    window = Js06MainView()
-    window.show()
-    sys.exit(app.exec_())
+#     app = QApplication(sys.argv)
+#     window = Js06MainView()
+#     window.show()
+#     sys.exit(app.exec_())
 
 # end of view.py
