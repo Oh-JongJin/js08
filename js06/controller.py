@@ -11,46 +11,52 @@ from pymongo import MongoClient
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, pyqtSlot # pylint: disable=no-name-in-module
 
 from js06.model import Js06Model, Js06Settings
-from js06.view import Js06MainView
 
 class Js06MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
 
-    def __init__(self, model:Js06Model, view:Js06MainView):
+    def __init__(self, model:Js06Model):
         super().__init__()
 
         self.thread_pool = QThreadPool.globalInstance()
 
         self._model = model
-        self._view = view
+        
+        # # Connect signals and slots
+        # self._view.restore_defaults_requested.connect(self.restore_defaults)
+        # self.abnormal_shutdown.connect(self._view.ask_restore_default)
 
-        # Connect signals and slots
-        self._view.restore_defaults_requested.connect(self.restore_defaults)
-        self.abnormal_shutdown.connect(self._view.ask_restore_default)
+        # self._view.main_view_closed.connect(self.close_process)
 
-        self._view.main_view_closed.connect(self.close_process)
+        # self._view.select_camera_requested.connect(self.send_request)
 
         self.init()
     # end of __init__
 
     def init(self):
-        self.check_exit_status()
-
         db_host = Js06Settings.get('db_host')
         db_port = Js06Settings.get('db_port')
         db_name = Js06Settings.get('db_name')
         self._model.connect_to_db(db_host, db_port, db_name)
 
-        attr = self._model.read_attr()
-        print(attr.to_dict())
+        self._attr = self._model.read_attr()
     # end of init
-    
+
+    # def select_camera(self):
+    #     cameras = self._model.read_cameras()
+
+    # end of select_camera
+    #     
     def check_exit_status(self):
         normal_exit = Js06Settings.get('normal_shutdown')
-        if not normal_exit:
-            self.abnormal_shutdown.emit()
         Js06Settings.set('normal_shutdown', False)
+        return normal_exit
     # end of check_exit_stauts
+
+    def update_cameras(self, cameras:list):
+        for cam in cameras:
+            self._model.update_camera(cam, upsert=True)
+    # end of update_cameras
 
     @pyqtSlot()
     def close_process(self):
@@ -70,19 +76,19 @@ class Js06MainCtrl(QObject):
         self.attr.insert_one(model.to_dict())
     # end of set_attr
 
-    @pyqtSlot(int)
-    def set_current_camera(self, num:int):
-        Js06Settings.set('camera', num)
-    # end of set_curent_camera
+    # @pyqtSlot(int)
+    # def set_current_camera(self, num:int):
+    #     Js06Settings.set('camera', num)
+    # # end of set_curent_camera
 
     @pyqtSlot()
     def restore_defaults(self):
         print("DEBUG: inside restore_defaults")
         Js06Settings.restore_defaults()
 
-    # @pyqtSlot(bool)
-    # def set_normal_shutdown(self):
-    #      Js06Settings.set('normal_shutdown', True)
+    @pyqtSlot(bool)
+    def set_normal_shutdown(self):
+         Js06Settings.set('normal_shutdown', True)
 
 # end of Js06MainCtrl
 

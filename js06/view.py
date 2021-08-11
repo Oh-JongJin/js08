@@ -11,8 +11,9 @@ import os
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QCloseEvent  # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog  # pylint: disable=no-name-in-module
+from PyQt5.QtWidgets import QDial, QMainWindow, QDockWidget, QActionGroup, QMessageBox, QInputDialog  # pylint: disable=no-name-in-module
 from PyQt5 import uic
+import pymongo
 
 # js06 modules
 # from views.target_plot_widget import Js06TargetPlotWidget
@@ -21,23 +22,46 @@ from PyQt5 import uic
 # from tflite_thread import TfliteThread
 # from save_db import SaveDB
 
-from js06.model import Js06Settings
+from js06.controller import Js06MainCtrl
+
+class Js06CameraView(QDial):
+    def __init__(self):
+        super().__init__()
+
+        ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               "../resources/camera_view.ui")
+        uic.loadUi(ui_path, self)
+
 
 class Js06MainView(QMainWindow):
     camera_changed = pyqtSignal(int)
     restore_defaults_requested = pyqtSignal()
     main_view_closed = pyqtSignal()
+    select_camera_requested = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, controller:Js06MainCtrl):
         super().__init__()
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/main_view.ui")
         uic.loadUi(ui_path, self)
 
+        self._ctrl = controller
+
+        # Connect signals and slots
+        self.restore_defaults_requested.connect(self._ctrl.restore_defaults)
+
+        # Check the exit status
+        normal_exit = self._ctrl.check_exit_status()
+        if not normal_exit:
+            self.ask_restore_default()
+
         # self.showFullScreen()
         self.setGeometry(400, 50, 1500, 1000)
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
+        
+        self.actionSelect_Camera.triggered.connect(lambda: self.select_camera_requested.emit())
+
         
         # # video dock
         # self.video_dock = QDockWidget("Video", self)
@@ -100,7 +124,11 @@ class Js06MainView(QMainWindow):
         # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
     # end of __init__
 
-    @pyqtSlot()
+    # @pyqtSlot()
+    # def select_camera(self):
+        
+    #     response = Js06CameraView()
+
     def ask_restore_default(self):
         # Check the last shutdown status
         response = QMessageBox.question(
@@ -115,7 +143,7 @@ class Js06MainView(QMainWindow):
 
     # TODO(kwchun): its better to emit signal and process at the controller
     def closeEvent(self, event:QCloseEvent):
-        Js06Settings.set('normal_shutdown', True)
+        self._ctrl.set_normal_shutdown()
         event.accept()
     # end of closeEvent
 

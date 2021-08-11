@@ -10,7 +10,7 @@ import json
 import platform
 import pymongo
 
-from PyQt5.QtCore import QRunnable, pyqtSlot # pylint: disable=no-name-in-module
+from PyQt5.QtCore import QAbstractTableModel, QRunnable, Qt, pyqtSlot # pylint: disable=no-name-in-module
 from PyQt5.QtCore import QSettings # pylint: disable=no-name-in-module
 
 @enum.unique
@@ -79,10 +79,57 @@ class Js06Ordinal(enum.Enum):
 
 # end of Js06Ordinal
 
+class Js06CameraTableModel(QAbstractTableModel):
+    def __init__(self, data:list):
+        super().__init__()
+        self._headers = [
+            "_id",
+            "label", 
+            "manufacturer", 
+            "model", 
+            "serial_number", 
+            "resolution", 
+            "uri",
+            "direction",
+            "view_angle"
+        ]
+
+        self._data = []
+        for el in data:
+            row = [el[col] for col in self._headers]
+            self._data.append(row)
+    # end of __init__
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            return str(self._data[index.row()][index.column()])
+    # end of data
+
+    def rowCount(self, index):
+        return len(self._data)
+    # end of rowCount
+
+    def columnCount(self, index):
+        return len(self._headers)
+    # end of columnCount
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+            return self._headers[section]
+        else:
+            return super().headerData(section, orientation, role)
+    # end of headerData
+
+# end of Js06CameraTableModel
+
+#############################
+#  MongoDB document models  #
+#############################
+
 class Js06Camera:
-    def __init__(self, _id:str=None, label:str=None, manufacturer:str=None, 
-    model:str=None, serial_number:str=None, resolution:tuple=None, 
-    uri:str=None, direction:int=None, view_angle:int=None):
+    def __init__(self, _id:str='', label:str='', manufacturer:str='', 
+    model:str='', serial_number:str='', resolution:tuple=None, 
+    uri:str='', direction:int=None, view_angle:int=None):
         self._id = _id
         self.label = label
         self.manufacturer = manufacturer
@@ -140,10 +187,11 @@ class Js06Camera:
 # end of Js06Camera
 
 class Js06Attribute:
-    def __init__(self, label:str=None, version:str=None, 
-    serial_number:str=None, os_str:str=None, location:tuple=None, 
+    def __init__(self, _id:str='', label:str='', version:str='', 
+    serial_number:str='', os_str:str='', location:tuple=None, 
     camera:Js06Camera=None, targets:list=[], 
     discernment_model:tuple=None, vis_collection=None):
+        self.f_id = _id
         self.label = label
         self.version = version
         self.serial_number = serial_number
@@ -156,6 +204,8 @@ class Js06Attribute:
     # end of __init__
 
     def from_dict(self, attr:dict):
+        if '_id' in attr.keys():
+            self._id = attr['_id']
         self.label = attr['label']
         self.version = attr['version']
         self.serial_number = attr['serial_number']
@@ -186,22 +236,24 @@ class Js06Attribute:
             'discernment_model': None,
             'vis_collection': self.vis_collection
         }
-        
         for target in self.targets:
             doc['targets'].append(target.to_dict())
-
+        if self._id:
+            doc['_id'] = self._id
         return doc
     # end of to_dict
 
 # end of Js06Attribute
 
 class Js06Target:
-    def __init__(self, label:str=None, distance:float=None, ordinal:Js06Ordinal=None,
-    category:Js06TargetCategory=None, roi:tuple=None):
+    def __init__(self, _id:str='', label:str='', distance:float=None, 
+    ordinal:Js06Ordinal=None, category:Js06TargetCategory=None, 
+    roi:tuple=()):
         """ 
             arguments:
                 roi: [upper left coordinate, lower right coordinate]
         """
+        self._id = _id
         self.label = label
         self.distance = distance # in kilometer
         self.ordinal = ordinal
@@ -210,6 +262,8 @@ class Js06Target:
     # end of __init__
 
     def from_dict(self, target:dict):
+        if '_id' in target.keys():
+            self._id = target['_id']
         self.label = target['label']
         self.distance = target['distance']
         self.ordinal = Js06Ordinal.from_str(target['ordinal'])
@@ -225,10 +279,16 @@ class Js06Target:
             'category': str(self.category),
             'roi': self.roi
         }
+        if self._id:
+            doc['_id'] = self._id        
         return doc
     # end of document
 
 # end of Js06Target
+
+####################################
+#  end of MongoDB document models  #
+####################################
 
 class Js06Model:
     def __init__(self):
@@ -256,8 +316,8 @@ class Js06Model:
         return response
     # end of insert_camera
 
-    def update_camera(self, camera:Js06Camera):
-        response = self.db.camera.update_many(
+    def update_camera(self, camera:Js06Camera, upsert:bool=False):
+        response = self.db.camera.update_one(
             { "_id": camera._id},
             { "$set": camera.to_dict() }
         )

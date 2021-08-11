@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-#
+ #
 # Copyright 2020-2021 Sijung Co., Ltd.
 # 
 # Authors: 
@@ -20,12 +20,13 @@ def main():
     """Main function"""
     # Create an instance of `QApplication`
     app = QApplication(sys.argv)
-    # Show the calculator's GUI
-    view = Js06MainView()
-    view.show()
-    # Create instances of the model and the controller
+    # Create instances of the model
     model = Js06Model()
-    Js06MainCtrl(model=model, view=view)
+    # Create instances of the controller
+    ctrl = Js06MainCtrl(model)
+    # Show GUI of JS-06
+    view = Js06MainView(ctrl)
+    view.show()
     # Set icon of the app
     app_icon = QIcon(":icon/logo.png")
     view.setWindowIcon(app_icon)
