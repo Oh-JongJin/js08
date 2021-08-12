@@ -5,16 +5,14 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-import enum
 import json
 import platform
 import pymongo
 
-from PyQt5.QtCore import QAbstractTableModel, QRunnable, Qt, pyqtSlot # pylint: disable=no-name-in-module
-from PyQt5.QtCore import QSettings # pylint: disable=no-name-in-module
+from PyQt5.QtCore import QAbstractTableModel, QRunnable, Qt, QSettings, pyqtSlot # pylint: disable=no-name-in-module
 
-Js06TargetCategory = {'single', 'compound'}
-Js06Ordinal = {'N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'}
+Js06TargetCategory = ['single', 'compound']
+Js06Ordinal = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 
 class Js06CameraTableModel(QAbstractTableModel):
     def __init__(self, data:list):
@@ -174,11 +172,12 @@ class Js06Settings:
 
 if __name__ == '__main__':
     import faker
+    import platform
     import pprint
     import random
-    
+
     fake = faker.Faker()
-    
+
     js06_model = Js06Model()
     js06_model.connect_to_db('localhost', 27017, 'js06')
 
@@ -202,14 +201,14 @@ if __name__ == '__main__':
     js06_attr['version'] = '0.1'
     js06_attr['serial_number'] = '0123456789XYZ'
     js06_attr['location'] = (float(fake.longitude()), float(fake.latitude()))
+    js06_attr['platform'] = platform.platform()
     js06_attr['camera'] = random.choice(cameras)
 
-    ordinals = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
     for i in range(2):
         target = {}
         target['label'] = str(i)
         target['dist'] = random.uniform(0, 20)
-        target['ordinal'] = random.choice(ordinals)
+        target['ordinal'] = random.choice(Js06Ordinal)
         target['category'] = random.choice(Js06TargetCategory)
         target['roi'] = (
             (random.uniform(-1, 0), random.uniform(0, 1)), 

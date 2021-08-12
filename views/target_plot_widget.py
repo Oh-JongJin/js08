@@ -5,7 +5,7 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-from matplotlib.backends.qt_compat import QtCore, QtWidgets
+from matplotlib.backends.qt_compat import QtCore
 
 if QtCore.qVersion() >= "5.":
     from matplotlib.backends.backend_qt5agg import (

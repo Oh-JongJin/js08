@@ -14,6 +14,7 @@ from js06.model import Js06CameraTableModel, Js06Model, Js06Settings
 
 class Js06MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
+    current_camera_changed = pyqtSignal(str)
 
     def __init__(self, model:Js06Model):
         super().__init__()
@@ -21,14 +22,6 @@ class Js06MainCtrl(QObject):
         self.thread_pool = QThreadPool.globalInstance()
 
         self._model = model
-        
-        # # Connect signals and slots
-        # self._view.restore_defaults_requested.connect(self.restore_defaults)
-        # self.abnormal_shutdown.connect(self._view.ask_restore_default)
-
-        # self._view.main_view_closed.connect(self.close_process)
-
-        # self._view.select_camera_requested.connect(self.send_request)
 
         self.init()
     # end of __init__
@@ -41,6 +34,10 @@ class Js06MainCtrl(QObject):
 
         self._attr = self._model.read_attr()
     # end of init
+
+    def get_current_camera_uri(self):
+        return self._attr['camera']['uri']
+    # end of get_current_camera_rui
 
     def get_camera_table_model(self):
         cameras = self.get_cameras()
@@ -98,9 +95,9 @@ class Js06MainCtrl(QObject):
         return self._model.read_cameras()
 # end of Js06MainCtrl
 
+
 # if __name__ == '__main__':
-#     ctrl = Js06MainCtrl()
+#     ctrl = Js06MainCtrl(model=Js06Model, view=Js06MainView)
 #     print(ctrl.get_attr)
 
 # end of main_ctrl.py
- 
