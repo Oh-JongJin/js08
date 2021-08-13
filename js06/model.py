@@ -6,6 +6,7 @@
 #     5jx2oh@gmail.com (Jongjin Oh)
 
 import json
+import os
 import platform
 import pymongo
 
@@ -77,8 +78,8 @@ class Js06Model:
         if attr_json is not None:
             with open(attr_json, 'r') as fh:
                 attr_data = json.load(fh)
-                attr_data["platform"] = platform.platform()
-            self.db.attr.insert_one(attr_data)
+                attr_data[0]["platform"] = platform.platform()
+            self.db.attr.insert_one(attr_data[0])
     # end of setup_db
 
     def connect_to_db(self, uri:str, port:int, db:str):
@@ -115,8 +116,14 @@ class Js06Model:
     # end of read_cameras
 
     def read_attr(self):
-        attr = self.db.attr.find().sort('_id', pymongo.DESCENDING).limit(1)
-        a = next(attr)
+        cr = self.db.attr.find().sort('_id', pymongo.DESCENDING).limit(1)
+        if cr.count() == 0:
+            attr_json = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+            "../resources/attr.json")
+            camera_json = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+            "../resources/camera.json")
+            self.setup_db(attr_json, camera_json)
+        a = next(cr)
         return a
     # end of read_attr
 

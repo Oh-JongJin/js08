@@ -95,7 +95,6 @@ class Js06MainCtrl(QObject):
         return self._model.read_cameras()
 # end of Js06MainCtrl
 
-
 # if __name__ == '__main__':
 #     ctrl = Js06MainCtrl(model=Js06Model, view=Js06MainView)
 #     print(ctrl.get_attr)
