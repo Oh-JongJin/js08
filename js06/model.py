@@ -63,14 +63,22 @@ class Js06Model:
         self.db = None
     # end of __init__
 
-    def setup_db(self, camera_json:str, attr_json:str):
-        with open(camera_json, 'r') as fh:
-            camera_data = json.load(fh)
-        self.db.camera.insert_many(camera_data)
+    def setup_db(self, attr_json:str, camera_json:str):
+        """
+        Paramters:
+          attr_json: Path to the attribute JSON file.
+          camera_json: Path to the files containing list of camera information.
+        """
+        if camera_json is not None:
+            with open(camera_json, 'r') as fh:
+                camera_data = json.load(fh)
+            self.db.camera.insert_many(camera_data)
 
-        with open(attr_json, 'r') as fh:
-            attr_data = json.load(fh)
-        self.db.js06.insert_one(attr_data)
+        if attr_json is not None:
+            with open(attr_json, 'r') as fh:
+                attr_data = json.load(fh)
+                attr_data["platform"] = platform.platform()
+            self.db.attr.insert_one(attr_data)
     # end of setup_db
 
     def connect_to_db(self, uri:str, port:int, db:str):
@@ -172,7 +180,6 @@ class Js06Settings:
 
 if __name__ == '__main__':
     import faker
-    import platform
     import pprint
     import random
 
@@ -218,7 +225,6 @@ if __name__ == '__main__':
 
     print('Js06Attribute with sample values:')
     pprint.pprint(js06_attr)
-    
 
     js06_model.insert_attr(js06_attr)
     js06_attr_2 = js06_model.read_attr()
