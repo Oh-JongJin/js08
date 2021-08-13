@@ -1,9 +1,10 @@
 [
     {
         "label": "dev",
+        "model": "JS-06",
         "version": "0.1",
         "platform": "",
-        "serial_number": "",
+        "serial_number": "H30S62FR5WNO",
         "location": {
             "type": "Point",
             "coordinates": [
