@@ -22,16 +22,23 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
-        <widget class="QPushButton" name="pushButton_2">
+        <widget class="QPushButton" name="insertAbove">
          <property name="text">
-          <string>Add</string>
+          <string>Insert Above</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="insertBelow">
          <property name="text">
-          <string>Delete</string>
+          <string>Insert Below</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="removeRows">
+         <property name="text">
+          <string>Remove Row(s)</string>
          </property>
         </widget>
        </item>
