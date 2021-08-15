@@ -35,9 +35,39 @@ class Js06CameraView(QDialog):
         uic.loadUi(ui_path, self)
 
         self._ctrl = controller
-        model = self._ctrl.get_camera_table_model()
-        self.tableView.setModel(model)
+        self._model = self._ctrl.get_camera_table_model()
+        self.tableView.setModel(self._model)
+
+        self.insertAbove.clicked.connect(self.insert_above)
+        self.insertBelow.clicked.connect(self.insert_below)
+        self.removeRows.clicked.connect(self.remove_rows)
+        self.accepted.connect(self.save_cameras)
     # end of __init__
+
+    def insert_above(self):
+        selected = self.tableView.selectedIndexes()
+        row = selected[0].row() if selected else 0
+        self._model.insertRows(row, 1, None)
+    # end of insert_above
+
+    def insert_below(self):
+        selected = self.tableView.selectedIndexes()
+        row = selected[-1].row() if selected else self._model.rowCount(None)
+        self._model.insertRows(row + 1, 1, None)
+    # end of insert_below
+
+    def remove_rows(self):
+        selected = self.tableView.selectedIndexes()
+        if selected:
+            self._model.removeRows(selected[0].row(), len(selected), None)
+    # end of remove_rows
+
+    def save_cameras(self):
+        cameras = self._model.get_data()
+        self._ctrl.update_cameras(cameras)
+    # end of save_cameras
+
+# end of Js06CameraView
 
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem

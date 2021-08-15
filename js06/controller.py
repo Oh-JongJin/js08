@@ -6,8 +6,6 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-from pymongo import MongoClient
-
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, pyqtSlot # pylint: disable=no-name-in-module
 
 from js06.model import Js06CameraTableModel, Js06Model, Js06Settings
@@ -86,13 +84,23 @@ class Js06MainCtrl(QObject):
     @pyqtSlot()
     def restore_defaults(self):
         Js06Settings.restore_defaults()
+    # end of restore_defaults
 
     @pyqtSlot(bool)
     def set_normal_shutdown(self):
          Js06Settings.set('normal_shutdown', True)
+    # end of set_normal_shutdown
 
     def get_cameras(self):
         return self._model.read_cameras()
+    # end of get_camearas
+
+    def update_cameras(self, cameras:list):
+        self._model.delete_all_cameras()
+        for cam in cameras:
+            self._model.insert_camera(cam)
+    # end of update_cameras
+
 # end of Js06MainCtrl
 
 # if __name__ == '__main__':

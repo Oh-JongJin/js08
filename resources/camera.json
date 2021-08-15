@@ -10,7 +10,8 @@
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp",
         "direction": 135,
-        "view_angle": 220
+        "view_angle": 220,
+        "selected": false
     },
     {
         "label": "dead",
@@ -23,7 +24,8 @@
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp",
         "direction": 0,
-        "view_angle": 79.8
+        "view_angle": 79.8,
+        "selected": false
     },
     {
         "label": "headquarters",
@@ -36,7 +38,8 @@
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
         "direction": 135,
-        "view_angle": 92.1
+        "view_angle": 92.1,
+        "selected": true
     },
     {
         "label": "fisheye",
@@ -49,7 +52,8 @@
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:4554/profile2/media.smp",
         "direction": 0,
-        "view_angle": 187
+        "view_angle": 187,
+        "selected": false
     },
     {
         "label": "indoor panorama",
@@ -62,6 +66,7 @@
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:5554/profile2/media.smp",
         "direction": 0,
-        "view_angle": 209
+        "view_angle": 209,
+        "selected": false
     }
 ]
