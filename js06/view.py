@@ -17,7 +17,7 @@
 
 import os
 
-from PyQt5.QtCore import QUrl, Qt, pyqtSignal, pyqtSlot # pylint: disable=no-name-in-module
+from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot # pylint: disable=no-name-in-module
 from PyQt5.QtGui import QCloseEvent, QPen
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem  # pylint: disable=no-name-in-module
@@ -37,7 +37,14 @@ class Js06CameraView(QDialog):
         self._ctrl = controller
         model = self._ctrl.get_camera_table_model()
         self.tableView.setModel(model)
+        self.buttonBox.accepted.connect(self.accepted)
     # end of __init__
+
+    def accepted(self):
+        index = self.tableView.currentIndex()
+        NewIndex = self.tableView.model().index(index.row(), 6)
+        add = NewIndex.data()
+        print(f"Select uri: [{add}]")
 
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
@@ -58,17 +65,17 @@ class Js06VideoWidget(QWidget):
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.graphicView)
-        # self.camera_name = None
+        self.uri = None
 
         # self.crop_imagelist100 = None
         # self.horizontal_flag = False
 
         # self.blank_lbl = QLabel(self)
 
-        # self.qtimer = QTimer()
-        # self.qtimer.setInterval(2000)
-        # self.qtimer.timeout.connect(self.inference_clicked)
-        # self.qtimer.start()
+        self.qtimer = QTimer()
+        self.qtimer.setInterval(2000)
+        self.qtimer.timeout.connect(self.inference_clicked)
+        self.qtimer.start()
 
     # end of __init__
 
@@ -90,6 +97,7 @@ class Js06VideoWidget(QWidget):
           point: the upper left point of ROI in canonical coordinates
           size: the width and height of ROI in canonical coordinates
         """
+        print(1)
         rectangle = QGraphicsRectItem(*point, *size, self._video_item)
         rectangle.setPen(QPen(Qt.blue))
     # end of draw_roi
@@ -105,6 +113,8 @@ class Js06VideoWidget(QWidget):
         print("DEBUG:", uri)
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
+        print(uri)
+
         # self.blank_lbl.paintEvent = self.paintEvent
         # self.blank_lbl.raise_()
 
@@ -195,10 +205,10 @@ class Js06VideoWidget(QWidget):
     #     del image
     # # end of crop_image
 
-    # def inference_clicked(self):
-    #     self.graphicView.fitInView(self.video_item)
-    #     self.blank_lbl.resize(self.graphicView.geometry().width(),
-    #                           self.graphicView.geometry().height())
+    def inference_clicked(self):
+        self.graphicView.fitInView(self._video_item)
+        # self.blank_lbl.resize(self.graphicView.geometry().width(),
+        #                       self.graphicView.geometry().height())
     # # end of inference_clicked
 
     # def coordinator(self):
@@ -222,6 +232,10 @@ class Js06VideoWidget(QWidget):
     #     """Convert float to the nearest int"""
     #     return int(num + 0.5)
     # # end of f2i
+    @property
+    def video_item(self):
+        return self._video_item
+
 
 # end of VideoWidget
 
@@ -251,7 +265,7 @@ class Js06MainView(QMainWindow):
         # self.setGeometry(400, 50, 1500, 1000)
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
 
-        # self.actionEdit_Target.triggered.connect(self.edit_target)
+        self.actionEdit_Target.triggered.connect(self.edit_target)
         # self.actionSelect_Camera.triggered.connect(self.select_camera_triggered)
 
         self.video_dock = QDockWidget("Video", self)
@@ -267,6 +281,7 @@ class Js06MainView(QMainWindow):
         # They should be changed to use canonical coordinates.
         self.video_widget.draw_roi((50, 50), (40, 40))
         self.video_widget.draw_roi((150, 150), (10, 10))
+        self.video_widget.draw_roi((1, 1), (10, 10))
 
         # self.qtimer = QTimer()
         # self.qtimer.setInterval(2000)
@@ -305,13 +320,20 @@ class Js06MainView(QMainWindow):
     # # end of select_cam
 
     def edit_target(self):
-        print("Edit")
+        print("Edit mode")
+        if self.actionEdit_Target.isChecked():
+            self.actionEdit_Target.setText("Playing Video")
+            self.video_widget.player.stop()
+        else:
+            self.actionEdit_Target.setText("Edit Target")
+            self.video_widget.player.play()
     # end of edit_target
 
     @pyqtSlot()
     def select_camera(self):
         dlg = Js06CameraView(self._ctrl)
         dlg.exec_()
+        self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
     # end of select_cameara
 
     def ask_restore_default(self):
@@ -319,7 +341,7 @@ class Js06MainView(QMainWindow):
         response = QMessageBox.question(
             self,
             'JS-06 Restore to defaults',
-            'The JS-06 exited abnormally. '
+            'The JS-06 exited abnormally.'
             'Do you want to restore the factory default?',
         )
         if response == QMessageBox.Yes:
@@ -337,7 +359,7 @@ class Js06MainView(QMainWindow):
         # self.target_plot_dock.setGeometry(self.width(), self.height() / 2, self.width() / 2, self.height() / 2)
         # self.web_dock_1.setGeometry(self.width() / 2, self.height() / 2, self.width() / 2, self.height() / 2)
         # print(self.video_dock.size())
-        self.video_widget.graphicView.fitInView(self.video_widget._video_item)
+        self.video_widget.graphicView.fitInView(self.video_widget.video_item)
 
     def target_mode(self):
         """Set target image modification mode"""

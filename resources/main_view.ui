@@ -70,7 +70,7 @@
      <x>0</x>
      <y>0</y>
      <width>789</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <property name="autoFillBackground">
@@ -145,6 +145,9 @@
    </property>
   </action>
   <action name="actionEdit_Target">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Edit &amp;Target</string>
    </property>

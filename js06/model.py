@@ -20,11 +20,11 @@ class Js06CameraTableModel(QAbstractTableModel):
         super().__init__()
         self._headers = [
             "_id",
-            "label", 
-            "manufacturer", 
-            "model", 
-            "serial_number", 
-            "resolution", 
+            "label",
+            "manufacturer",
+            "model",
+            "serial_number",
+            "resolution",
             "uri",
             "direction",
             "view_angle"

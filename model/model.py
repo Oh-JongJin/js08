@@ -210,7 +210,7 @@ class Js06Target(QObject):
         self.dist = target['distance']
         self.ordinal = Js06Ordinal.from_str(target['ordinal'])
         self.category = Js06TargetCategory.from_str(target['category'])
-        self.roi = target['roi'] 
+        self.roi = target['roi']
     # end of from_dict
 
     def to_dict(self):
@@ -351,7 +351,7 @@ if __name__ == '__main__':
 
     print('Js06Attribute with sample values:')
     pprint.pprint(js06_attr.to_dict())
-    
+
 
     js06_model.insert_attr(js06_attr)
     js06_attr_2 = js06_model.read_attr()
