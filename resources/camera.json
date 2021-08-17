@@ -14,7 +14,7 @@
         "selected": false
     },
     {
-        "label": "dead",
+        "label": "headquarters",
         "manufacturer": "Hanwha Techwin Co., Ltd.",
         "model": "QND-8020R",
         "serial_number": "",
@@ -42,7 +42,7 @@
         "selected": true
     },
     {
-        "label": "fisheye",
+        "label": "fisheye - dead",
         "manufacturer": "Hanwha Techwin Co., Ltd.",
         "model": "XNP-9010RV",
         "serial_number": "null",

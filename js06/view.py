@@ -46,6 +46,8 @@ class Js06CameraView(QDialog):
         add = NewIndex.data()
         print(f"Select uri: [{add}]")
 
+        self._ctrl.current_camera_changed.emit(add)
+
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
     """
@@ -97,7 +99,6 @@ class Js06VideoWidget(QWidget):
           point: the upper left point of ROI in canonical coordinates
           size: the width and height of ROI in canonical coordinates
         """
-        print(1)
         rectangle = QGraphicsRectItem(*point, *size, self._video_item)
         rectangle.setPen(QPen(Qt.blue))
     # end of draw_roi
@@ -106,6 +107,8 @@ class Js06VideoWidget(QWidget):
     def on_stateChanged(self, state):
         if state == QMediaPlayer.PlayingState:
             self.view.fitInView(self._video_item, Qt.KeepAspectRatio)
+            print("stateChanged")
+            # super(Js06VideoWidget, self).stop()
     # end of on_stateChanged
 
     @pyqtSlot(str)
@@ -114,6 +117,7 @@ class Js06VideoWidget(QWidget):
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
         print(uri)
+        print("*")
 
         # self.blank_lbl.paintEvent = self.paintEvent
         # self.blank_lbl.raise_()
@@ -206,9 +210,10 @@ class Js06VideoWidget(QWidget):
     # # end of crop_image
 
     def inference_clicked(self):
-        self.graphicView.fitInView(self._video_item)
+        # self.graphicView.fitInView(self._video_item)
         # self.blank_lbl.resize(self.graphicView.geometry().width(),
         #                       self.graphicView.geometry().height())
+        pass
     # # end of inference_clicked
 
     # def coordinator(self):
@@ -354,12 +359,8 @@ class Js06MainView(QMainWindow):
         # event.accept()
     # end of closeEvent
 
-    def inference(self):
-        # self.video_dock.setGeometry(0, 0, self.width(), self.height() / 2)
-        # self.target_plot_dock.setGeometry(self.width(), self.height() / 2, self.width() / 2, self.height() / 2)
-        # self.web_dock_1.setGeometry(self.width() / 2, self.height() / 2, self.width() / 2, self.height() / 2)
-        # print(self.video_dock.size())
-        self.video_widget.graphicView.fitInView(self.video_widget.video_item)
+    # def inference(self):
+    #     self.video_widget.graphicView.fitInView(self.video_widget.video_item)
 
     def target_mode(self):
         """Set target image modification mode"""
