@@ -74,10 +74,10 @@ class Js06VideoWidget(QWidget):
 
         # self.blank_lbl = QLabel(self)
 
-        self.qtimer = QTimer()
-        self.qtimer.setInterval(2000)
-        self.qtimer.timeout.connect(self.inference_clicked)
-        self.qtimer.start()
+        # self.qtimer = QTimer()
+        # self.qtimer.setInterval(2000)
+        # self.qtimer.timeout.connect(self.inference_clicked)
+        # self.qtimer.start()
 
     # end of __init__
 
