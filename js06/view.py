@@ -64,7 +64,6 @@ class Js06EditTarget(QDialog):
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/edit_target.ui")
         uic.loadUi(ui_path, self)
-        print(self.size(), self.image_label.size())
 
         cap = cv2.VideoCapture(uri)
         ret, frame = cap.read()
@@ -78,14 +77,13 @@ class Js06EditTarget(QDialog):
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         h, w, c = rgb_image.shape
         convert_to_Qt_format = QImage(rgb_image.data, w, h, w * c, QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height())
+        p = convert_to_Qt_format.scaled(self.width(), self.height(),
+                                        Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
 
-        print(f"h: {h}, w: {w}, c: {c}")
         return QPixmap.fromImage(p)
     # end of convert_cv
 
     def label_mousePressEvent(self, event):
-        print(self.size(), self.image_label.size())
         pass
 
 # end of Js06EditTarget
