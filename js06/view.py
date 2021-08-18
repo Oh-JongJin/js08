@@ -16,20 +16,25 @@
 #         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
 import os
+import numpy as np
 
-from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex  # pylint: disable=no-name-in-module
-from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QMoveEvent, QPixmap, QImage
+from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot, \
+    QPersistentModelIndex  # pylint: disable=no-name-in-module
+from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QMoveEvent, QPixmap, QImage, QPainter
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem  # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QApplication, QDialog, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QInputDialog, QVBoxLayout, QWidget, QLabel  # pylint: disable=no-name-in-module
+from PyQt5.QtWidgets import QApplication, QDialog, QGraphicsRectItem, QGraphicsScene, \
+    QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QInputDialog, QVBoxLayout, \
+    QWidget, QLabel, QSizePolicy  # pylint: disable=no-name-in-module
 from PyQt5 import uic
 
 import cv2
 
 from js06.controller import Js06MainCtrl
 
+
 class Js06CameraView(QDialog):
-    def __init__(self, controller:Js06MainCtrl):
+    def __init__(self, controller: Js06MainCtrl):
         super().__init__()
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -40,6 +45,7 @@ class Js06CameraView(QDialog):
         model = self._ctrl.get_camera_table_model()
         self.tableView.setModel(model)
         self.buttonBox.accepted.connect(self.accepted)
+
     # end of __init__
 
     def accepted(self):
@@ -55,6 +61,7 @@ class Js06CameraView(QDialog):
         self._ctrl.current_camera_changed.emit(add)
     # end of accepted
 
+
 # end of Js06CameraView
 
 class Js06EditTarget(QDialog):
@@ -64,33 +71,153 @@ class Js06EditTarget(QDialog):
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/edit_target.ui")
         uic.loadUi(ui_path, self)
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        sizePolicy.setHeightForWidth(True)
+        self.setSizePolicy(sizePolicy)
+
+        self.w = None
+        self.h = None
+
+        self.target = []
+        self.prime_x = []
+        self.prime_y = []
+        self.target_x = []
+        self.target_y = []
+        self.label_x = []
+        self.label_y = []
+        self.distance = []
+        self.oxlist = []
+        self.target_process = False
 
         cap = cv2.VideoCapture(uri)
-        ret, frame = cap.read()
-        img = self.convert_cv(frame)
+        ret, self.frame = cap.read()
+        img = self.convert_cv(self.frame)
         self.image_label.setPixmap(img)
 
-        self.image_label.mousePressEvent = self.label_mousePressEvent
+        self.blank_lbl = QLabel(self)
+
+        self.blank_lbl.paintEvent = self.blank_paintEvent
+        # self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
+        self.blank_lbl.mousePressEvent = self.img_mousePressEvent
+        self.blank_lbl.raise_()
+
     # end of __init__
 
     def convert_cv(self, cv_img):
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        h, w, c = rgb_image.shape
-        convert_to_Qt_format = QImage(rgb_image.data, w, h, w * c, QImage.Format_RGB888)
+        self.h, self.w, c = rgb_image.shape
+        convert_to_Qt_format = QImage(rgb_image.data, self.w, self.h, self.w * c, QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.width(), self.height(),
-                                        Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+                                        Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         return QPixmap.fromImage(p)
+
     # end of convert_cv
 
-    def label_mousePressEvent(self, event):
-        pass
+    def blank_paintEvent(self, event):
+        self.painter = QPainter(self.blank_lbl)
+        # self.draw_roi(self.painter)
+        for name, x, y in zip(self.target, self.label_x, self.label_y):
+            #         if self.oxlist[self.label_x.index(x)] == 0:
+            #             qp.setPen(QPen(Qt.red, 2))
+            #         else:
+            #             qp.setPen(QPen(Qt.green, 2))
+            self.painter.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
+            print(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
+            self.painter.drawText(x - 4, y - 10, f"{name}")
+        self.painter.drawRect(10, 10, 100, 100)
+        self.painter.drawRect(30, 30, 500, 500)
+        self.blank_lbl.setGeometry(self.image_label.geometry())
+
+
+        ##
+        # for name, x, y in zip(self.target, self.label_x, self.label_y):
+            #         if self.oxlist[self.label_x.index(x)] == 0:
+            #             qp.setPen(QPen(Qt.red, 2))
+            #         else:
+            #             qp.setPen(QPen(Qt.green, 2))
+
+        # qp.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
+        # qp.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
+
+            # qp.drawText(x - 4, y - 10, f"{name}")
+        ##
+
+        self.painter.end()
+
+    # end of paintEvent
+
+    def draw_roi(self, qp):
+        # if self.target_x:
+        for name, x, y in zip(self.target, self.label_x, self.label_y):
+            #         if self.oxlist[self.label_x.index(x)] == 0:
+            #             qp.setPen(QPen(Qt.red, 2))
+            #         else:
+            #             qp.setPen(QPen(Qt.green, 2))
+            self.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
+            qp.drawText(x - 4, y - 10, f"{name}")
+
+    def img_mousePressEvent(self, event):
+        x = int(event.pos().x() / self.width() * self.w)
+        y = int(event.pos().y() / self.height() * self.h)
+        print(self.target)
+
+        for i in range(len(self.target)):
+            self.target[i] = i + 1
+        for i in range(len(self.target)):
+            if self.target_x[i] - 25 < x < self.target_x[i] + 25 and \
+                    self.target_y[i] - 25 < y < self.target_y[i] + 25:
+                if self.oxlist[i] == 0:
+                    self.oxlist[i] = 1
+                else:
+                    self.oxlist[i] = 0
+        # if not self.target_process:
+        #     return
+        if event.buttons() == Qt.LeftButton:
+            text, ok = QInputDialog.getText(self, 'Add Target', 'Distance (km)')
+            if ok:
+                self.target_x.append(float(x))
+                self.target_y.append(float(y))
+                self.distance.append(float(text))
+                self.target.append(str(len(self.target_x)))
+                self.oxlist.append(0)
+                print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
+                # self.coordinator()
+                # self.save_target()
+                # self.get_target()
+
+        if event.buttons() == Qt.RightButton:
+            # pylint: disable=invalid-name
+            text, ok = QInputDialog.getText(self, 'Remove Target', 'Enter target number to remove')
+            text = int(text)
+            if ok:
+                if len(self.prime_x) >= 1:
+                    del self.target[text - 1]
+                    del self.prime_x[text - 1]
+                    del self.prime_y[text - 1]
+                    del self.label_x[text - 1]
+                    del self.label_y[text - 1]
+                    del self.distance[text - 1]
+                    del self.oxlist[text - 1]
+                    print(f"[Target {text}] remove.")
+
+    # end of label_mousePressEvent
+
+    def blank_mousePressEvent(self, event):
+        print("Hi~~~")
+
+    def heightForWidth(self, width):
+        return width * 1.5
+
+    # end of heightForWidth
+
 
 # end of Js06EditTarget
 
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
     """
+
     def __init__(self, parent=None):
         super().__init__()
 
@@ -109,18 +236,15 @@ class Js06VideoWidget(QWidget):
         layout.addWidget(self.graphicView)
         self.uri = None
         self.cam_name = None
+
     # end of __init__
 
     def mousePressEvent(self, event: QMouseEvent):
-        # print("------------")
-        # print(f"Camera Resolution: {self._video_item.nativeSize()}")
-        # print(f"Widget Resolution: {self._video_item.size()}")
-        # print(self.size())
-        # print("------------")
         self.graphicView.fitInView(self._video_item)
+
     # end of mousePressEvent
 
-    def draw_roi(self, point:tuple, size:tuple):
+    def draw_roi(self, point: tuple, size: tuple):
         """Draw a boundary rectangle of ROI
         Parameters:
           point: the upper left point of ROI in canonical coordinates
@@ -128,12 +252,14 @@ class Js06VideoWidget(QWidget):
         """
         rectangle = QGraphicsRectItem(*point, *size, self._video_item)
         rectangle.setPen(QPen(Qt.blue))
+
     # end of draw_roi
 
     @pyqtSlot(QMediaPlayer.State)
     def on_stateChanged(self, state):
         if state == QMediaPlayer.PlayingState:
             self.view.fitInView(self._video_item, Qt.KeepAspectRatio)
+
     # end of on_stateChanged
 
     @pyqtSlot(str)
@@ -156,7 +282,6 @@ class Js06VideoWidget(QWidget):
         # self.video_thread = VideoThread(url)
         # self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
         # self.video_thread.start()
-    # end of onCameraChange
 
     # def convert_cv_qt(self, cv_img):
     #     rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
@@ -240,6 +365,7 @@ class Js06VideoWidget(QWidget):
         # self.blank_lbl.resize(self.graphicView.geometry().width(),
         #                       self.graphicView.geometry().height())
         pass
+
     # # end of inference_clicked
 
     # def coordinator(self):
@@ -275,7 +401,7 @@ class Js06MainView(QMainWindow):
     main_view_closed = pyqtSignal()
     select_camera_requested = pyqtSignal()
 
-    def __init__(self, controller:Js06MainCtrl):
+    def __init__(self, controller: Js06MainCtrl):
         super().__init__()
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -312,31 +438,32 @@ class Js06MainView(QMainWindow):
         # They should be changed to use canonical coordinates.
         self.video_widget.draw_roi((50, 50), (40, 40))
         self.video_widget.draw_roi((150, 150), (10, 10))
+
     # end of __init__
 
-        # self.qtimer = QTimer()
-        # self.qtimer.setInterval(2000)
-        # self.qtimer.timeout.connect(self.video_widget.inference_clicked)
-        # self.qtimer.start()
+    # self.qtimer = QTimer()
+    # self.qtimer.setInterval(2000)
+    # self.qtimer.timeout.connect(self.video_widget.inference_clicked)
+    # self.qtimer.start()
 
-        # # target plot dock
-        # self.target_plot_dock = QDockWidget("Target plot", self)
-        # self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
-        # self.target_plot_dock.setFeatures(
-        #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        # self.target_plot_widget = Js06TargetPlotWidget2(self)
-        # self.target_plot_dock.setWidget(self.target_plot_widget)
+    # # target plot dock
+    # self.target_plot_dock = QDockWidget("Target plot", self)
+    # self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
+    # self.target_plot_dock.setFeatures(
+    #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+    # self.target_plot_widget = Js06TargetPlotWidget2(self)
+    # self.target_plot_dock.setWidget(self.target_plot_widget)
 
-        # # grafana dock 1
-        # self.web_dock_1 = QDockWidget("Grafana plot 1", self)
-        # self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
-        # self.web_dock_1.setFeatures(
-        #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        # self.web_view_1 = Js06TimeSeriesPlotWidget()
-        # self.web_dock_1.setWidget(self.web_view_1)
+    # # grafana dock 1
+    # self.web_dock_1 = QDockWidget("Grafana plot 1", self)
+    # self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
+    # self.web_dock_1.setFeatures(
+    #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+    # self.web_view_1 = Js06TimeSeriesPlotWidget()
+    # self.web_dock_1.setWidget(self.web_view_1)
 
-        # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
-        # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
+    # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
+    # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
     # end of __init__
 
     # def select_camera(self):
@@ -362,12 +489,14 @@ class Js06MainView(QMainWindow):
         dlg = Js06EditTarget(uri)
         dlg.exec_()
         self.video_widget.player.play()
+
     # end of edit_target
 
     @pyqtSlot()
     def select_camera(self):
         dlg = Js06CameraView(self._ctrl)
         dlg.exec_()
+
     # end of select_cameara
 
     def ask_restore_default(self):
@@ -380,12 +509,14 @@ class Js06MainView(QMainWindow):
         )
         if response == QMessageBox.Yes:
             self.restore_defaults_requested.emit()
+
     # end of ask_restore_default
 
     # TODO(kwchun): its better to emit signal and process at the controller
-    def closeEvent(self, event:QCloseEvent):
+    def closeEvent(self, event: QCloseEvent):
         self._ctrl.set_normal_shutdown()
         # event.accept()
+
     # end of closeEvent
 
     # def inference(self):
