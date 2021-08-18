@@ -17,12 +17,14 @@
 
 import os
 
-from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot # pylint: disable=no-name-in-module
-from PyQt5.QtGui import QCloseEvent, QPen
+from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex  # pylint: disable=no-name-in-module
+from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QMoveEvent, QPixmap, QImage
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem  # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QInputDialog, QVBoxLayout, QWidget  # pylint: disable=no-name-in-module
+from PyQt5.QtWidgets import QApplication, QDialog, QGraphicsRectItem, QGraphicsScene, QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QInputDialog, QVBoxLayout, QWidget, QLabel  # pylint: disable=no-name-in-module
 from PyQt5 import uic
+
+import cv2
 
 from js06.controller import Js06MainCtrl
 
@@ -45,8 +47,48 @@ class Js06CameraView(QDialog):
         NewIndex = self.tableView.model().index(index.row(), 6)
         add = NewIndex.data()
         print(f"Select uri: [{add}]")
+        index_list = []
+        for model_index in self.tableView.selectionModel().selectedRows():
+            index = QPersistentModelIndex(model_index)
+            index_list.append(index)
 
         self._ctrl.current_camera_changed.emit(add)
+    # end of accepted
+
+# end of Js06CameraView
+
+class Js06EditTarget(QDialog):
+    def __init__(self, uri: str):
+        super().__init__()
+
+        ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               "../resources/edit_target.ui")
+        uic.loadUi(ui_path, self)
+        print(self.size(), self.image_label.size())
+
+        cap = cv2.VideoCapture(uri)
+        ret, frame = cap.read()
+        img = self.convert_cv(frame)
+        self.image_label.setPixmap(img)
+
+        self.image_label.mousePressEvent = self.label_mousePressEvent
+    # end of __init__
+
+    def convert_cv(self, cv_img):
+        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+        h, w, c = rgb_image.shape
+        convert_to_Qt_format = QImage(rgb_image.data, w, h, w * c, QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(self.image_label.width(), self.image_label.height())
+
+        print(f"h: {h}, w: {w}, c: {c}")
+        return QPixmap.fromImage(p)
+    # end of convert_cv
+
+    def label_mousePressEvent(self, event):
+        print(self.size(), self.image_label.size())
+        pass
+
+# end of Js06EditTarget
 
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
@@ -68,30 +110,17 @@ class Js06VideoWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.graphicView)
         self.uri = None
-
-        # self.crop_imagelist100 = None
-        # self.horizontal_flag = False
-
-        # self.blank_lbl = QLabel(self)
-
-        # self.qtimer = QTimer()
-        # self.qtimer.setInterval(2000)
-        # self.qtimer.timeout.connect(self.inference_clicked)
-        # self.qtimer.start()
-
+        self.cam_name = None
     # end of __init__
 
-    # def paintEvent(self, event):
-    #     qp = QPainter(self.blank_lbl)
-    #     if self.target_x:
-    #         for name, x, y in zip(self.target, self.label_x, self.label_y):
-    #             if self.oxlist[self.label_x.index(x)] == 0:
-    #                 qp.setPen(QPen(Qt.red, 2))
-    #             else:
-    #                 qp.setPen(QPen(Qt.green, 2))
-    #             qp.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
-    #             qp.drawText(x - 4, y - 10, f"{int(name) - 1}")
-    # # end of paintEvent
+    def mousePressEvent(self, event: QMouseEvent):
+        # print("------------")
+        # print(f"Camera Resolution: {self._video_item.nativeSize()}")
+        # print(f"Widget Resolution: {self._video_item.size()}")
+        # print(self.size())
+        # print("------------")
+        self.graphicView.fitInView(self._video_item)
+    # end of mousePressEvent
 
     def draw_roi(self, point:tuple, size:tuple):
         """Draw a boundary rectangle of ROI
@@ -107,17 +136,16 @@ class Js06VideoWidget(QWidget):
     def on_stateChanged(self, state):
         if state == QMediaPlayer.PlayingState:
             self.view.fitInView(self._video_item, Qt.KeepAspectRatio)
-            print("stateChanged")
-            # super(Js06VideoWidget, self).stop()
     # end of on_stateChanged
 
     @pyqtSlot(str)
     def on_camera_change(self, uri):
         print("DEBUG:", uri)
+        self.uri = uri
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
-        print(uri)
-        print("*")
+
+        # self.graphicView.fitInView(self._video_item)
 
         # self.blank_lbl.paintEvent = self.paintEvent
         # self.blank_lbl.raise_()
@@ -286,7 +314,7 @@ class Js06MainView(QMainWindow):
         # They should be changed to use canonical coordinates.
         self.video_widget.draw_roi((50, 50), (40, 40))
         self.video_widget.draw_roi((150, 150), (10, 10))
-        self.video_widget.draw_roi((1, 1), (10, 10))
+    # end of __init__
 
         # self.qtimer = QTimer()
         # self.qtimer.setInterval(2000)
@@ -324,21 +352,24 @@ class Js06MainView(QMainWindow):
     #             self.video_widget.onCameraChange(SRC)
     # # end of select_cam
 
+    def moveEvent(self, event: QMoveEvent):
+        # print(self.geometry())
+        pass
+
     def edit_target(self):
-        print("Edit mode")
-        if self.actionEdit_Target.isChecked():
-            self.actionEdit_Target.setText("Playing Video")
-            self.video_widget.player.stop()
-        else:
-            self.actionEdit_Target.setText("Edit Target")
-            self.video_widget.player.play()
+        self.video_widget.player.stop()
+
+        uri = self._ctrl.get_current_camera_uri()
+
+        dlg = Js06EditTarget(uri)
+        dlg.exec_()
+        self.video_widget.player.play()
     # end of edit_target
 
     @pyqtSlot()
     def select_camera(self):
         dlg = Js06CameraView(self._ctrl)
         dlg.exec_()
-        self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
     # end of select_cameara
 
     def ask_restore_default(self):
