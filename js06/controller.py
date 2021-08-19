@@ -37,6 +37,10 @@ class Js06MainCtrl(QObject):
         return self._attr['camera']['uri']
     # end of get_current_camera_rui
 
+    def get_target(self):
+        return self._attr['targets']
+    # end of get_target
+
     def get_camera_table_model(self):
         cameras = self.get_cameras()
         table_model =  Js06CameraTableModel(cameras)

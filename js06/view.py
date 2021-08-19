@@ -16,8 +16,8 @@
 #         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
 import os
-# import numpy as np
-# import pandas as pd
+import numpy as np
+import pandas as pd
 
 from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot, \
     QPersistentModelIndex  # pylint: disable=no-name-in-module
@@ -29,7 +29,7 @@ from PyQt5.QtWidgets import QApplication, QDialog, QGraphicsRectItem, QGraphicsS
     QWidget, QLabel, QSizePolicy  # pylint: disable=no-name-in-module
 from PyQt5 import uic
 
-# import cv2
+import cv2
 
 from js06.controller import Js06MainCtrl
 
@@ -45,65 +45,38 @@ class Js06CameraView(QDialog):
         self._ctrl = controller
         self._model = self._ctrl.get_camera_table_model()
         self.tableView.setModel(self._model)
-<<<<<<< HEAD
-=======
-
->>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
         self.insertAbove.clicked.connect(self.insert_above)
         self.insertBelow.clicked.connect(self.insert_below)
         self.removeRows.clicked.connect(self.remove_rows)
         self.buttonBox.accepted.connect(self.save_cameras)
 
-<<<<<<< HEAD
-    # model = self._ctrl.get_camera_table_model()
-    # self.tableView.setModel(model)
-    # self.buttonBox.accepted.connect(self.accepted)
-=======
         # model = self._ctrl.get_camera_table_model()
         # self.tableView.setModel(model)
         # self.buttonBox.accepted.connect(self.accepted)
-
->>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
-    # end of __init__
+        # end of __init__
 
     def insert_above(self):
         selected = self.tableView.selectedIndexes()
         row = selected[0].row() if selected else 0
         self._model.insertRows(row, 1, None)
-<<<<<<< HEAD
         # end of insert_above
-=======
-    # end of insert_above
->>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
 
     def insert_below(self):
         selected = self.tableView.selectedIndexes()
         row = selected[-1].row() if selected else self._model.rowCount(None)
         self._model.insertRows(row + 1, 1, None)
-<<<<<<< HEAD
         # end of insert_below
-=======
-    # end of insert_below
->>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
 
     def remove_rows(self):
         selected = self.tableView.selectedIndexes()
         if selected:
             self._model.removeRows(selected[0].row(), len(selected), None)
-<<<<<<< HEAD
         # end of remove_rows
-=======
-    # end of remove_rows
->>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
 
     def save_cameras(self):
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
-<<<<<<< HEAD
         # end of save_cameras
-=======
-    # end of save_cameras
->>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
 
     def accepted(self):
         index = self.tableView.currentIndex()
@@ -118,15 +91,18 @@ class Js06CameraView(QDialog):
         self._ctrl.current_camera_changed.emit(add)
     # end of accepted
 
+
 # end of Js06CameraView
 
 class Js06EditTarget(QDialog):
-    def __init__(self, uri: str):
+    def __init__(self, uri: str, controller: Js06MainCtrl):
         super().__init__()
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/edit_target.ui")
         uic.loadUi(ui_path, self)
+        self._ctrl = controller
+        self._model = self._ctrl.get_target()
 
         self.w = None
         self.h = None
@@ -152,9 +128,45 @@ class Js06EditTarget(QDialog):
 
         self.blank_lbl.paintEvent = self.blank_paintEvent
         self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
+        self.buttonBox.accepted.connect(self.save_targets)
+        self.buttonBox.rejected.connect(self.rejected_btn)
+
+        self.numberCombo.currentIndexChanged.connect(self.combo_changed)
+
         self.blank_lbl.raise_()
+        self.get_target()
+        self.combo_changed()
 
     # end of __init__
+
+    def combo_changed(self):
+        targets = self._model
+        for i in range(len(targets)):
+            if self.numberCombo.currentText() == str(i + 1):
+                self.labelEdit.setText(str(targets[i]['label']))
+                self.ordinalEdit.setText(str(targets[i]['distance']))
+                self.categoryEdit.setText(str(targets[i]['category']))
+                self.distanceEdit.setText(str(targets[i]['distance']))
+                self.point_x_Edit.setText(str(targets[i]['roi']['point'][0]))
+                self.point_y_Edit.setText(str(targets[i]['roi']['point'][1]))
+            # self.point_x_Edit.setText(str(targets['point'][i]))
+            # self.labelEdit.setText(targets['label'][i])
+
+    def save_targets(self):
+        targets = self._model
+        self.close()
+
+    # end of accepted_btn
+
+    def save_cameras(self):
+        cameras = self._model.get_data()
+        self._ctrl.update_cameras(cameras)
+        # end of save_cameras
+
+    def rejected_btn(self):
+        self.close()
+
+    # end of rejected_btn
 
     def convert_cv(self, cv_img):
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
@@ -207,6 +219,19 @@ class Js06EditTarget(QDialog):
                 self.save_target()
                 self.get_target()
 
+                self.numberCombo.clear()
+                for i in range(len(self.target)):
+                    self.numberCombo.addItem(str(i + 1))
+                    self.numberCombo.setCurrentIndex(i)
+                    self.labelEdit.setText(f"t{i + 1}")
+                    self.coordinate_x_Edit.setText(str(round(self.prime_x[i], 2)))
+                    self.coordinate_y_Edit.setText(str(round(self.prime_y[i], 2)))
+                self.distanceEdit.setText(text)
+                self.ordinalEdit.setText("E")
+                self.categoryEdit.setText("single")
+                self.point_x_Edit.setText(str(x))
+                self.point_y_Edit.setText(str(y))
+
         if event.buttons() == Qt.RightButton:
             # pylint: disable=invalid-name
             text, ok = QInputDialog.getText(self, 'Remove Target', 'Enter target number to remove')
@@ -234,11 +259,13 @@ class Js06EditTarget(QDialog):
         self.target_x = [self.f2i((x + 1) * self.w / 2) for x in self.prime_x]
         self.target_y = [self.f2i(y * self.h) for y in self.prime_y]
 
+
     # end of restoration
 
     @staticmethod
     def f2i(num: float):
         return int(num + 0.5)
+
     # end of f2i
 
     def save_target(self):
@@ -252,24 +279,38 @@ class Js06EditTarget(QDialog):
             self.result["label_y"] = [round(y * self.height() / self.h, 3) for y in self.target_y]
             self.result["distance"] = self.distance
             self.result["discernment"] = self.oxlist
-            self.csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                         f"../resources/test.csv")
-            self.result.to_csv(self.csv_path, mode="w", index=False)
+
+            # Save Target Information in mongoDB
+            pass
 
     # end of save_target
 
     def get_target(self):
-        if os.path.isfile(self.csv_path):
-            result = pd.read_csv(self.csv_path)
-            self.target = result.target.tolist()
-            self.prime_x = result.x.tolist()
-            self.prime_y = result.y.tolist()
-            self.label_x = result.label_x.tolist()
-            self.label_y = result.label_y.tolist()
-            self.distance = result.distance.tolist()
-            self.oxlist = [0 for i in range(len(self.prime_x))]
-        else:
-            print("csv 파일을 불러올 수 없습니다.")
+        # result = self.result
+        # self.target = result.target.tolist()
+        # self.prime_x = result.x.tolist()
+        # self.prime_y = result.y.tolist()
+        # self.label_x = result.label_x.tolist()
+        # self.label_y = result.label_y.tolist()
+        # self.distance = result.distance.tolist()
+        # self.oxlist = [0 for i in range(len(self.prime_x))]
+
+        targets = self._model
+        for i in range(len(targets)):
+            # print(targets[i])
+            self.numberCombo.addItem(str(i + 1))
+        # print("currentText: ", self.numberCombo.currentText())
+
+            # if self.numberCombo.currentIndex[i] == str(i):
+            #     print("hi")
+            #     self.labelEdit.setText(targets['label'][i])
+                # self.coordinate_x_Edit.setText(str(round(self.prime_x[i], 2)))
+                # self.coordinate_y_Edit.setText(str(round(self.prime_y[i], 2)))
+                # self.distanceEdit.setText(text)
+                # self.ordinalEdit.setText("E")
+                # self.categoryEdit.setText("single")
+                # self.point_x_Edit.setText(str(x))
+                # self.point_y_Edit.setText(str(y))
 
     # end of get_target
 
@@ -498,7 +539,7 @@ class Js06MainView(QMainWindow):
 
         # The parameters in the following codes is for the test purposes. 
         # They should be changed to use canonical coordinates.
-        self.video_widget.draw_roi((50, 50), (40, 40))
+        # self.video_widget.draw_roi((50, 50), (40, 40))
 
     # end of __init__
 
@@ -547,7 +588,7 @@ class Js06MainView(QMainWindow):
 
         uri = self._ctrl.get_current_camera_uri()
 
-        dlg = Js06EditTarget(uri)
+        dlg = Js06EditTarget(uri, self._ctrl)
         dlg.exec_()
         self.video_widget.player.play()
 
