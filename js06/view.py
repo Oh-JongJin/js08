@@ -16,8 +16,8 @@
 #         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
 import os
-import numpy as np
-import pandas as pd
+# import numpy as np
+# import pandas as pd
 
 from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot, \
     QPersistentModelIndex  # pylint: disable=no-name-in-module
@@ -29,7 +29,7 @@ from PyQt5.QtWidgets import QApplication, QDialog, QGraphicsRectItem, QGraphicsS
     QWidget, QLabel, QSizePolicy  # pylint: disable=no-name-in-module
 from PyQt5 import uic
 
-import cv2
+# import cv2
 
 from js06.controller import Js06MainCtrl
 
@@ -43,11 +43,40 @@ class Js06CameraView(QDialog):
         uic.loadUi(ui_path, self)
 
         self._ctrl = controller
-        model = self._ctrl.get_camera_table_model()
-        self.tableView.setModel(model)
-        self.buttonBox.accepted.connect(self.accepted)
+        self._model = self._ctrl.get_camera_table_model()
+        self.tableView.setModel(self._model)
+        self.insertAbove.clicked.connect(self.insert_above)
+        self.insertBelow.clicked.connect(self.insert_below)
+        self.removeRows.clicked.connect(self.remove_rows)
+        self.buttonBox.accepted.connect(self.save_cameras)
 
+    # model = self._ctrl.get_camera_table_model()
+    # self.tableView.setModel(model)
+    # self.buttonBox.accepted.connect(self.accepted)
     # end of __init__
+
+    def insert_above(self):
+        selected = self.tableView.selectedIndexes()
+        row = selected[0].row() if selected else 0
+        self._model.insertRows(row, 1, None)
+        # end of insert_above
+
+    def insert_below(self):
+        selected = self.tableView.selectedIndexes()
+        row = selected[-1].row() if selected else self._model.rowCount(None)
+        self._model.insertRows(row + 1, 1, None)
+        # end of insert_below
+
+    def remove_rows(self):
+        selected = self.tableView.selectedIndexes()
+        if selected:
+            self._model.removeRows(selected[0].row(), len(selected), None)
+        # end of remove_rows
+
+    def save_cameras(self):
+        cameras = self._model.get_data()
+        self._ctrl.update_cameras(cameras)
+        # end of save_cameras
 
     def accepted(self):
         index = self.tableView.currentIndex()
@@ -444,8 +473,7 @@ class Js06MainView(QMainWindow):
 
         # The parameters in the following codes is for the test purposes. 
         # They should be changed to use canonical coordinates.
-        # self.video_widget.draw_roi((50, 50), (40, 40))
-        # self.video_widget.draw_roi((150, 150), (10, 10))
+        self.video_widget.draw_roi((50, 50), (40, 40))
 
     # end of __init__
 
