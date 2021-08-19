@@ -17,6 +17,7 @@
 
 import os
 import numpy as np
+import pandas as pd
 
 from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot, \
     QPersistentModelIndex  # pylint: disable=no-name-in-module
@@ -71,9 +72,6 @@ class Js06EditTarget(QDialog):
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/edit_target.ui")
         uic.loadUi(ui_path, self)
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        sizePolicy.setHeightForWidth(True)
-        self.setSizePolicy(sizePolicy)
 
         self.w = None
         self.h = None
@@ -88,6 +86,7 @@ class Js06EditTarget(QDialog):
         self.distance = []
         self.oxlist = []
         self.target_process = False
+        self.csv_path = None
 
         cap = cv2.VideoCapture(uri)
         ret, self.frame = cap.read()
@@ -97,8 +96,7 @@ class Js06EditTarget(QDialog):
         self.blank_lbl = QLabel(self)
 
         self.blank_lbl.paintEvent = self.blank_paintEvent
-        # self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
-        self.blank_lbl.mousePressEvent = self.img_mousePressEvent
+        self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
         self.blank_lbl.raise_()
 
     # end of __init__
@@ -116,51 +114,19 @@ class Js06EditTarget(QDialog):
 
     def blank_paintEvent(self, event):
         self.painter = QPainter(self.blank_lbl)
-        # self.draw_roi(self.painter)
-        for name, x, y in zip(self.target, self.label_x, self.label_y):
-            #         if self.oxlist[self.label_x.index(x)] == 0:
-            #             qp.setPen(QPen(Qt.red, 2))
-            #         else:
-            #             qp.setPen(QPen(Qt.green, 2))
-            self.painter.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
-            print(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
-            self.painter.drawText(x - 4, y - 10, f"{name}")
-        self.painter.drawRect(10, 10, 100, 100)
-        self.painter.drawRect(30, 30, 500, 500)
+        if self.target_x:
+            for name, x, y in zip(self.target, self.label_x, self.label_y):
+                self.painter.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
+                self.painter.drawText(x - 4, y - 10, f"{name}")
         self.blank_lbl.setGeometry(self.image_label.geometry())
-
-
-        ##
-        # for name, x, y in zip(self.target, self.label_x, self.label_y):
-            #         if self.oxlist[self.label_x.index(x)] == 0:
-            #             qp.setPen(QPen(Qt.red, 2))
-            #         else:
-            #             qp.setPen(QPen(Qt.green, 2))
-
-        # qp.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
-        # qp.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
-
-            # qp.drawText(x - 4, y - 10, f"{name}")
-        ##
 
         self.painter.end()
 
     # end of paintEvent
 
-    def draw_roi(self, qp):
-        # if self.target_x:
-        for name, x, y in zip(self.target, self.label_x, self.label_y):
-            #         if self.oxlist[self.label_x.index(x)] == 0:
-            #             qp.setPen(QPen(Qt.red, 2))
-            #         else:
-            #             qp.setPen(QPen(Qt.green, 2))
-            self.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
-            qp.drawText(x - 4, y - 10, f"{name}")
-
-    def img_mousePressEvent(self, event):
+    def blank_mousePressEvent(self, event):
         x = int(event.pos().x() / self.width() * self.w)
         y = int(event.pos().y() / self.height() * self.h)
-        print(self.target)
 
         for i in range(len(self.target)):
             self.target[i] = i + 1
@@ -175,16 +141,16 @@ class Js06EditTarget(QDialog):
         #     return
         if event.buttons() == Qt.LeftButton:
             text, ok = QInputDialog.getText(self, 'Add Target', 'Distance (km)')
-            if ok:
+            if ok and text:
                 self.target_x.append(float(x))
                 self.target_y.append(float(y))
                 self.distance.append(float(text))
                 self.target.append(str(len(self.target_x)))
                 self.oxlist.append(0)
                 print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
-                # self.coordinator()
-                # self.save_target()
-                # self.get_target()
+                self.coordinator()
+                self.save_target()
+                self.get_target()
 
         if event.buttons() == Qt.RightButton:
             # pylint: disable=invalid-name
@@ -203,13 +169,55 @@ class Js06EditTarget(QDialog):
 
     # end of label_mousePressEvent
 
-    def blank_mousePressEvent(self, event):
-        print("Hi~~~")
+    def coordinator(self):
+        self.prime_y = [y / self.h for y in self.target_y]
+        self.prime_x = [2 * x / self.w - 1 for x in self.target_x]
 
-    def heightForWidth(self, width):
-        return width * 1.5
+    # end of coordinator
 
-    # end of heightForWidth
+    def restoration(self):
+        self.target_x = [self.f2i((x + 1) * self.w / 2) for x in self.prime_x]
+        self.target_y = [self.f2i(y * self.h) for y in self.prime_y]
+
+    # end of restoration
+
+    @staticmethod
+    def f2i(num: float):
+        return int(num + 0.5)
+
+    # end of f2i
+
+    def save_target(self):
+        if self.prime_x:
+            col = ["target", "x", "y", "label_x", "label_y", "distance", "discernment"]
+            self.result = pd.DataFrame(columns=col)
+            self.result["target"] = self.target
+            self.result["x"] = self.prime_x
+            self.result["y"] = self.prime_y
+            self.result["label_x"] = [round(x * self.width() / self.w, 3) for x in self.target_x]
+            self.result["label_y"] = [round(y * self.height() / self.h, 3) for y in self.target_y]
+            self.result["distance"] = self.distance
+            self.result["discernment"] = self.oxlist
+            self.csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                         f"../resources/test.csv")
+            self.result.to_csv(self.csv_path, mode="w", index=False)
+
+    # end of save_target
+
+    def get_target(self):
+        if os.path.isfile(self.csv_path):
+            result = pd.read_csv(self.csv_path)
+            self.target = result.target.tolist()
+            self.prime_x = result.x.tolist()
+            self.prime_y = result.y.tolist()
+            self.label_x = result.label_x.tolist()
+            self.label_y = result.label_y.tolist()
+            self.distance = result.distance.tolist()
+            self.oxlist = [0 for i in range(len(self.prime_x))]
+        else:
+            print("csv 파일을 불러올 수 없습니다.")
+
+    # end of get_target
 
 
 # end of Js06EditTarget
@@ -436,8 +444,8 @@ class Js06MainView(QMainWindow):
 
         # The parameters in the following codes is for the test purposes. 
         # They should be changed to use canonical coordinates.
-        self.video_widget.draw_roi((50, 50), (40, 40))
-        self.video_widget.draw_roi((150, 150), (10, 10))
+        # self.video_widget.draw_roi((50, 50), (40, 40))
+        # self.video_widget.draw_roi((150, 150), (10, 10))
 
     # end of __init__
 
