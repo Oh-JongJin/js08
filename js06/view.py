@@ -45,38 +45,65 @@ class Js06CameraView(QDialog):
         self._ctrl = controller
         self._model = self._ctrl.get_camera_table_model()
         self.tableView.setModel(self._model)
+<<<<<<< HEAD
+=======
+
+>>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
         self.insertAbove.clicked.connect(self.insert_above)
         self.insertBelow.clicked.connect(self.insert_below)
         self.removeRows.clicked.connect(self.remove_rows)
         self.buttonBox.accepted.connect(self.save_cameras)
 
+<<<<<<< HEAD
     # model = self._ctrl.get_camera_table_model()
     # self.tableView.setModel(model)
     # self.buttonBox.accepted.connect(self.accepted)
+=======
+        # model = self._ctrl.get_camera_table_model()
+        # self.tableView.setModel(model)
+        # self.buttonBox.accepted.connect(self.accepted)
+
+>>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
     # end of __init__
 
     def insert_above(self):
         selected = self.tableView.selectedIndexes()
         row = selected[0].row() if selected else 0
         self._model.insertRows(row, 1, None)
+<<<<<<< HEAD
         # end of insert_above
+=======
+    # end of insert_above
+>>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
 
     def insert_below(self):
         selected = self.tableView.selectedIndexes()
         row = selected[-1].row() if selected else self._model.rowCount(None)
         self._model.insertRows(row + 1, 1, None)
+<<<<<<< HEAD
         # end of insert_below
+=======
+    # end of insert_below
+>>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
 
     def remove_rows(self):
         selected = self.tableView.selectedIndexes()
         if selected:
             self._model.removeRows(selected[0].row(), len(selected), None)
+<<<<<<< HEAD
         # end of remove_rows
+=======
+    # end of remove_rows
+>>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
 
     def save_cameras(self):
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
+<<<<<<< HEAD
         # end of save_cameras
+=======
+    # end of save_cameras
+>>>>>>> ada957c18648a0a8aed71753b2702b76994109d7
 
     def accepted(self):
         index = self.tableView.currentIndex()
@@ -90,7 +117,6 @@ class Js06CameraView(QDialog):
 
         self._ctrl.current_camera_changed.emit(add)
     # end of accepted
-
 
 # end of Js06CameraView
 
@@ -213,7 +239,6 @@ class Js06EditTarget(QDialog):
     @staticmethod
     def f2i(num: float):
         return int(num + 0.5)
-
     # end of f2i
 
     def save_target(self):

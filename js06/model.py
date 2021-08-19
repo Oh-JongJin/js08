@@ -10,7 +10,7 @@ import os
 import platform
 import pymongo
 
-from PyQt5.QtCore import QAbstractTableModel, QRunnable, Qt, QSettings, pyqtSlot # pylint: disable=no-name-in-module
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QRunnable, Qt, QSettings, pyqtSlot # pylint: disable=no-name-in-module
 
 Js06TargetCategory = ['single', 'compound']
 Js06Ordinal = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
@@ -20,11 +20,12 @@ class Js06CameraTableModel(QAbstractTableModel):
         super().__init__()
         self._headers = [
             "_id",
-            "label",
-            "manufacturer",
-            "model",
-            "serial_number",
-            "resolution",
+            "selected",
+            "label", 
+            "manufacturer", 
+            "model", 
+            "serial_number", 
+            "resolution", 
             "uri",
             "direction",
             "view_angle"
@@ -36,25 +37,73 @@ class Js06CameraTableModel(QAbstractTableModel):
             self._data.append(row)
     # end of __init__
 
-    def data(self, index, role):
-        if role == Qt.DisplayRole:
+    def data(self, index:QModelIndex, role:int):
+        if role in (Qt.DisplayRole, Qt.EditRole):
             return str(self._data[index.row()][index.column()])
     # end of data
 
-    def rowCount(self, index):
+    def rowCount(self, index:QModelIndex):
         return len(self._data)
     # end of rowCount
 
-    def columnCount(self, index):
+    def columnCount(self, index:QModelIndex):
         return len(self._headers)
     # end of columnCount
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section:int, orientation:Qt.Orientation, role:int):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self._headers[section]
         else:
             return super().headerData(section, orientation, role)
     # end of headerData
+
+    # TODO(Kyungwon): It may need to keep read-only indexes
+    def flags(self, index:QModelIndex):
+        if index.column() == 0:
+            return super().flags(index)
+        else:
+            return super().flags(index) | Qt.ItemIsEditable
+    # end of flags
+
+    def setData(self, index:QModelIndex, value:object, role:int):
+        if index.isValid() and role == Qt.EditRole:
+            self._data[index.row()][index.column()] = value
+            self.dataChanged.emit(index, index, [role])
+            return True
+        else:
+            return False
+    # end of setData
+
+    def insertRows(self, position:int, rows:int, parent:object):
+        self.beginInsertRows(
+            parent or QModelIndex(),
+            position,
+            position + rows - 1
+        )
+        for i in range(rows):
+            default_row = [''] * len(self._headers)
+            self._data.insert(position, default_row)
+        self.endInsertRows()
+    # end of insertRows
+
+    def removeRows(self, position:int, rows:int, parent:object):
+        self.beginRemoveRows(
+            parent or QModelIndex(),
+            position,
+            position + rows - 1
+        )
+        for i in range(rows):
+            del(self._data[position])
+        self.endRemoveRows()
+    # end of removeRows
+
+    def get_data(self):
+        data_dict = []
+        for row in self._data:
+            doc = {col: row[i] for i, col in enumerate(self._headers)}
+            data_dict.append(doc)
+        return data_dict
+    # end of save_data
 
 # end of Js06CameraTableModel
 
@@ -106,6 +155,11 @@ class Js06Model:
         )
         return response
     # end of delete_camera
+
+    def delete_all_cameras(self):
+        response = self.db.camera.delete_many({})
+        return response
+    # end of delete_all_cameras
 
     def read_cameras(self):
         cameras = []
