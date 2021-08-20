@@ -10,7 +10,7 @@ import os
 import platform
 import pymongo
 
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QRunnable, Qt, QSettings, pyqtSlot # pylint: disable=no-name-in-module
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QRunnable, Qt, QSettings, pyqtSlot
 
 Js06TargetCategory = ['single', 'compound']
 Js06Ordinal = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']

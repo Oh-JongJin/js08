@@ -32,6 +32,7 @@ def main():
     view.setWindowIcon(app_icon)
     # Execute calculator's main loop
     sys.exit(app.exec_())
+# end of main
 
 if __name__ == "__main__":
     main()

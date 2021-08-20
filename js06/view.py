@@ -16,20 +16,15 @@
 #         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
 import os
-# import numpy as np
-# import pandas as pd
 
-from PyQt5.QtCore import QTimer, QUrl, Qt, pyqtSignal, pyqtSlot, \
-    QPersistentModelIndex  # pylint: disable=no-name-in-module
+from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex  
 from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QMoveEvent, QPixmap, QImage, QPainter
-from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
-from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem  # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QApplication, QDialog, QGraphicsRectItem, QGraphicsScene, \
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
+from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
+from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
     QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QInputDialog, QVBoxLayout, \
-    QWidget, QLabel, QSizePolicy  # pylint: disable=no-name-in-module
+    QWidget, QLabel
 from PyQt5 import uic
-
-# import cv2
 
 from js06.controller import Js06MainCtrl
 
@@ -50,11 +45,6 @@ class Js06CameraView(QDialog):
         self.insertBelow.clicked.connect(self.insert_below)
         self.removeRows.clicked.connect(self.remove_rows)
         self.buttonBox.accepted.connect(self.save_cameras)
-
-        # model = self._ctrl.get_camera_table_model()
-        # self.tableView.setModel(model)
-        # self.buttonBox.accepted.connect(self.accepted)
-
     # end of __init__
 
     def insert_above(self):
@@ -96,7 +86,7 @@ class Js06CameraView(QDialog):
 # end of Js06CameraView
 
 class Js06EditTarget(QDialog):
-    def __init__(self, uri: str):
+    def __init__(self, image: QImage):
         super().__init__()
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -118,29 +108,14 @@ class Js06EditTarget(QDialog):
         self.target_process = False
         self.csv_path = None
 
-        cap = cv2.VideoCapture(uri)
-        ret, self.frame = cap.read()
-        img = self.convert_cv(self.frame)
-        self.image_label.setPixmap(img)
+        self.image_label.setPixmap(QPixmap.fromImage(image))
 
         self.blank_lbl = QLabel(self)
 
         self.blank_lbl.paintEvent = self.blank_paintEvent
         self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
         self.blank_lbl.raise_()
-
     # end of __init__
-
-    def convert_cv(self, cv_img):
-        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        self.h, self.w, c = rgb_image.shape
-        convert_to_Qt_format = QImage(rgb_image.data, self.w, self.h, self.w * c, QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.width(), self.height(),
-                                        Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-        return QPixmap.fromImage(p)
-
-    # end of convert_cv
 
     def blank_paintEvent(self, event):
         self.painter = QPainter(self.blank_lbl)
@@ -151,7 +126,6 @@ class Js06EditTarget(QDialog):
         self.blank_lbl.setGeometry(self.image_label.geometry())
 
         self.painter.end()
-
     # end of paintEvent
 
     def blank_mousePressEvent(self, event):
@@ -196,25 +170,17 @@ class Js06EditTarget(QDialog):
                     del self.distance[text - 1]
                     del self.oxlist[text - 1]
                     print(f"[Target {text}] remove.")
-
     # end of label_mousePressEvent
 
     def coordinator(self):
         self.prime_y = [y / self.h for y in self.target_y]
         self.prime_x = [2 * x / self.w - 1 for x in self.target_x]
-
     # end of coordinator
 
     def restoration(self):
-        self.target_x = [self.f2i((x + 1) * self.w / 2) for x in self.prime_x]
-        self.target_y = [self.f2i(y * self.h) for y in self.prime_y]
-
+        self.target_x = [round((x + 1) * self.w / 2) for x in self.prime_x]
+        self.target_y = [round(y * self.h) for y in self.prime_y]
     # end of restoration
-
-    @staticmethod
-    def f2i(num: float):
-        return int(num + 0.5)
-    # end of f2i
 
     def save_target(self):
         if self.prime_x:
@@ -230,7 +196,6 @@ class Js06EditTarget(QDialog):
             self.csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                          f"../resources/test.csv")
             self.result.to_csv(self.csv_path, mode="w", index=False)
-
     # end of save_target
 
     def get_target(self):
@@ -245,17 +210,16 @@ class Js06EditTarget(QDialog):
             self.oxlist = [0 for i in range(len(self.prime_x))]
         else:
             print("csv 파일을 불러올 수 없습니다.")
-
     # end of get_target
-
 
 # end of Js06EditTarget
 
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
     """
+    grabImage = pyqtSignal(QImage)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QObject):
         super().__init__()
 
         self.scene = QGraphicsScene(self)
@@ -274,11 +238,18 @@ class Js06VideoWidget(QWidget):
         self.uri = None
         self.cam_name = None
 
+        self.probe = QVideoProbe(self)
+        self.probe.videoFrameProbed.connect(self.on_videoFrameProbed)
+        self.probe.setSource(self.player)
     # end of __init__
+
+    @pyqtSlot(QVideoFrame)
+    def on_videoFrameProbed(self, frame:QVideoFrame):
+        self.grabImage.emit(frame.image())
+    # end of on_videoFrameProbed
 
     def mousePressEvent(self, event: QMouseEvent):
         self.graphicView.fitInView(self._video_item)
-
     # end of mousePressEvent
 
     def draw_roi(self, point: tuple, size: tuple):
@@ -289,14 +260,12 @@ class Js06VideoWidget(QWidget):
         """
         rectangle = QGraphicsRectItem(*point, *size, self._video_item)
         rectangle.setPen(QPen(Qt.blue))
-
     # end of draw_roi
 
     @pyqtSlot(QMediaPlayer.State)
     def on_stateChanged(self, state):
         if state == QMediaPlayer.PlayingState:
             self.view.fitInView(self._video_item, Qt.KeepAspectRatio)
-
     # end of on_stateChanged
 
     @pyqtSlot(str)
@@ -319,6 +288,7 @@ class Js06VideoWidget(QWidget):
         # self.video_thread = VideoThread(url)
         # self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
         # self.video_thread.start()
+    # end of on_camera_change
 
     # def convert_cv_qt(self, cv_img):
     #     rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
@@ -402,8 +372,7 @@ class Js06VideoWidget(QWidget):
         # self.blank_lbl.resize(self.graphicView.geometry().width(),
         #                       self.graphicView.geometry().height())
         pass
-
-    # # end of inference_clicked
+    # end of inference_clicked
 
     # def coordinator(self):
     #     self.prime_x = [2 * x / self.video_item.nativeSize().width() - 1 for x in self.target_x]
@@ -413,23 +382,17 @@ class Js06VideoWidget(QWidget):
     # def restoration(self):
     #     try:
     #         if self.target:
-    #             self.target_x = [self.f2i((x + 1) * self.video_item.nativeSize().width() / 2) for x in self.prime_x]
-    #             self.target_y = [self.f2i(y * self.video_item.nativeSize().height()) for y in self.prime_y]
+    #             self.target_x = [round((x + 1) * self.video_item.nativeSize().width() / 2) for x in self.prime_x]
+    #             self.target_y = [round(y * self.video_item.nativeSize().height()) for y in self.prime_y]
     #     except:
     #         print(traceback.format_exc())
     #         sys.exit()
+    # # end of restoration
 
-    # end of restoration
-
-    # @staticmethod
-    # def f2i(num: float):
-    #     """Convert float to the nearest int"""
-    #     return int(num + 0.5)
-    # # end of f2i
     @property
     def video_item(self):
         return self._video_item
-
+    # end of video_item
 
 # end of VideoWidget
 
@@ -449,7 +412,7 @@ class Js06MainView(QMainWindow):
         # Connect signals and slots
         self.restore_defaults_requested.connect(self._ctrl.restore_defaults)
         self.actionSelect_Camera.triggered.connect(self.select_camera)
-
+        
         # Check the exit status
         normal_exit = self._ctrl.check_exit_status()
         if not normal_exit:
@@ -467,7 +430,7 @@ class Js06MainView(QMainWindow):
         self.video_widget = Js06VideoWidget(self)
         self.video_dock.setWidget(self.video_widget)
         self.setCentralWidget(self.video_dock)
-
+        self.video_widget.grabImage.connect(self._ctrl.update_image)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
 
@@ -475,7 +438,6 @@ class Js06MainView(QMainWindow):
         # They should be changed to use canonical coordinates.
         # self.video_widget.draw_roi((50, 50), (40, 40))
         # self.video_widget.draw_roi((150, 150), (10, 10))
-
     # end of __init__
 
     # self.qtimer = QTimer()
@@ -517,23 +479,22 @@ class Js06MainView(QMainWindow):
     def moveEvent(self, event: QMoveEvent):
         # print(self.geometry())
         pass
+    # end of moveEvent
 
     def edit_target(self):
         self.video_widget.player.stop()
 
         uri = self._ctrl.get_current_camera_uri()
 
-        dlg = Js06EditTarget(uri)
+        dlg = Js06EditTarget(self._ctrl.image)
         dlg.exec_()
         self.video_widget.player.play()
-
     # end of edit_target
 
     @pyqtSlot()
     def select_camera(self):
         dlg = Js06CameraView(self._ctrl)
         dlg.exec_()
-
     # end of select_cameara
 
     def ask_restore_default(self):
@@ -546,14 +507,12 @@ class Js06MainView(QMainWindow):
         )
         if response == QMessageBox.Yes:
             self.restore_defaults_requested.emit()
-
     # end of ask_restore_default
 
     # TODO(kwchun): its better to emit signal and process at the controller
     def closeEvent(self, event: QCloseEvent):
         self._ctrl.set_normal_shutdown()
         # event.accept()
-
     # end of closeEvent
 
     # def inference(self):
@@ -564,13 +523,13 @@ class Js06MainView(QMainWindow):
         # self.save_target()
         if self.target_process:
             print(self.target_process)
+    # end of target_mode
 
     def open_with_rtsp(self):
         text, ok = QInputDialog.getText(self, "Input RTSP", "Only Hanwha Camera")
         if ok:
             print(text)
-
-    # end of closeEvent
+    # end of open_with_rtsp
 
 # end of Js06MainView
 

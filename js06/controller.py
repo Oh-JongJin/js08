@@ -6,7 +6,8 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, pyqtSlot # pylint: disable=no-name-in-module
+from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QImage # pylint: disable=no-name-in-module
 
 from js06.model import Js06CameraTableModel, Js06Model, Js06Settings
 
@@ -14,12 +15,14 @@ class Js06MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
     current_camera_changed = pyqtSignal(str)
 
-    def __init__(self, model:Js06Model):
+    def __init__(self, model: Js06Model):
         super().__init__()
 
         self.thread_pool = QThreadPool.globalInstance()
 
         self._model = model
+
+        self.image = None
 
         self.init()
     # end of __init__
@@ -32,6 +35,10 @@ class Js06MainCtrl(QObject):
 
         self._attr = self._model.read_attr()
     # end of init
+
+    def update_image(self, image: QImage):
+        self.image = image
+    # end of update_image
 
     def get_current_camera_uri(self):
         return self._attr['camera']['uri']
@@ -54,7 +61,7 @@ class Js06MainCtrl(QObject):
         return normal_exit
     # end of check_exit_stauts
 
-    def update_cameras(self, cameras:list):
+    def update_cameras(self, cameras: list):
         for cam in cameras:
             self._model.update_camera(cam, upsert=True)
     # end of update_cameras
@@ -64,16 +71,16 @@ class Js06MainCtrl(QObject):
         Js06Settings.set('normal_shutdown', True)
     # end of close_process
 
-    def get_attr(self, model):
+    def get_attr(self, model: dict):
         if self.attr.count_documents({}):
             attr_doc = list(self.attr.find().sort("_id", -1).limit(1))[0]
         else:
-            attr_doc = model.to_dict()
+            attr_doc = model
         return attr_doc
     # end of get_attr
     
-    def set_attr(self, model):
-        self.attr.insert_one(model.to_dict())
+    def set_attr(self, model: dict):
+        self.attr.insert_one(model)
     # end of set_attr
 
     # @pyqtSlot(int)
@@ -95,7 +102,7 @@ class Js06MainCtrl(QObject):
         return self._model.read_cameras()
     # end of get_camearas
 
-    def update_cameras(self, cameras:list):
+    def update_cameras(self, cameras: list):
         self._model.delete_all_cameras()
         for cam in cameras:
             self._model.insert_camera(cam)
