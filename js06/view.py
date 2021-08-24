@@ -66,6 +66,8 @@ class Js06CameraView(QDialog):
     def save_cameras(self):
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
+        self._ctrl.update_current_camera(cameras)
+        self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
     # end of save_cameras
 
     def accepted(self):
@@ -333,7 +335,6 @@ class Js06VideoWidget(QWidget):
 
     @pyqtSlot(str)
     def on_camera_change(self, uri):
-        print("DEBUG:", uri)
         self.uri = uri
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()

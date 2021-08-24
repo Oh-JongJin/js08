@@ -23,7 +23,8 @@
             ],
             "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
             "direction": 135,
-            "view_angle": 92.1
+            "view_angle": 92.1,
+            "selected": true
         },
         "targets": [
             {
