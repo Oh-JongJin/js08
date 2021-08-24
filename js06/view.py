@@ -17,8 +17,8 @@
 
 import os
 
-from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex  
-from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QMoveEvent, QPixmap, QImage, QPainter
+from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex
+from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QMoveEvent, QPixmap, QImage, QPainter, QTransform
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
@@ -95,9 +95,6 @@ class Js06EditTarget(QDialog):
         self._ctrl = controller
         self._model = self._ctrl.get_target()
 
-        self.w = None
-        self.h = None
-
         self.target = []
         self.prime_x = []
         self.prime_y = []
@@ -107,11 +104,17 @@ class Js06EditTarget(QDialog):
         self.label_y = []
         self.distance = []
         self.oxlist = []
+        self.result = []
         self.target_process = False
         self.csv_path = None
 
-        image = self._ctrl.image
-        self.image_label.setPixmap(QPixmap.fromImage(image))
+        transform = QTransform().rotate(-180)
+        image = self._ctrl.image.mirrored(True, False)
+        self.image_label.setPixmap(QPixmap.fromImage(image.transformed(transform)))
+        self.image_label.setMaximumSize(self.width(), self.height())
+
+        self.w = image.width()
+        self.h = image.height()
 
         self.blank_lbl = QLabel(self)
 
@@ -135,10 +138,10 @@ class Js06EditTarget(QDialog):
                 self.ordinalEdit.setText(str(targets[i]['distance']))
                 self.categoryEdit.setText(str(targets[i]['category']))
                 self.distanceEdit.setText(str(targets[i]['distance']))
-                self.point_x_Edit.setText(str(targets[i]['roi']['point'][0]))
-                self.point_y_Edit.setText(str(targets[i]['roi']['point'][1]))
-            # self.point_x_Edit.setText(str(targets['point'][i]))
-            # self.labelEdit.setText(targets['label'][i])
+                self.coordinate_x_Edit.setText(str(targets[i]['roi']['point'][0]))
+                self.coordinate_y_Edit.setText(str(targets[i]['roi']['point'][1]))
+                # self.point_x_Edit.setText(targets['point'])
+                # self.point_y_Edit.setText(str(targets['point'][i]))
     # end of combo_changed
 
     def save_targets(self):
@@ -157,7 +160,7 @@ class Js06EditTarget(QDialog):
 
     def blank_paintEvent(self, event):
         self.painter = QPainter(self.blank_lbl)
-        if self.target_x:
+        if self.target:
             for name, x, y in zip(self.target, self.label_x, self.label_y):
                 self.painter.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
                 self.painter.drawText(x - 4, y - 10, f"{name}")
@@ -172,16 +175,17 @@ class Js06EditTarget(QDialog):
 
         for i in range(len(self.target)):
             self.target[i] = i + 1
-        for i in range(len(self.target)):
-            if self.target_x[i] - 25 < x < self.target_x[i] + 25 and \
-                    self.target_y[i] - 25 < y < self.target_y[i] + 25:
-                if self.oxlist[i] == 0:
-                    self.oxlist[i] = 1
-                else:
-                    self.oxlist[i] = 0
+        # for i in range(len(self.target)):
+        #     if self.target_x[i] - 25 < x < self.target_x[i] + 25 and \
+        #             self.target_y[i] - 25 < y < self.target_y[i] + 25:
+        #         if self.oxlist[i] == 0:
+        #             self.oxlist[i] = 1
+        #         else:
+        #             self.oxlist[i] = 0
         # if not self.target_process:
         #     return
         if event.buttons() == Qt.LeftButton:
+            self.target = []
             text, ok = QInputDialog.getText(self, 'Add Target', 'Distance (km)')
             if ok and text:
                 self.target_x.append(float(x))
@@ -190,29 +194,31 @@ class Js06EditTarget(QDialog):
                 self.target.append(str(len(self.target_x)))
                 self.oxlist.append(0)
                 print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
-                self.coordinator()
+                # self.coordinator()
                 self.save_target()
                 self.get_target()
 
                 self.numberCombo.clear()
                 for i in range(len(self.target)):
+                    print(i)
                     self.numberCombo.addItem(str(i + 1))
                     self.numberCombo.setCurrentIndex(i)
                     self.labelEdit.setText(f"t{i + 1}")
-                    self.coordinate_x_Edit.setText(str(round(self.prime_x[i], 2)))
-                    self.coordinate_y_Edit.setText(str(round(self.prime_y[i], 2)))
+                    # self.coordinate_x_Edit.setText(str(round(self.prime_x[i], 2)))
+                    # self.coordinate_y_Edit.setText(str(round(self.prime_y[i], 2)))
                 self.distanceEdit.setText(text)
                 self.ordinalEdit.setText("E")
                 self.categoryEdit.setText("single")
-                self.point_x_Edit.setText(str(x))
-                self.point_y_Edit.setText(str(y))
+                self.coordinate_x_Edit.setText(str(x))
+                self.coordinate_y_Edit.setText(str(y))
+            print(self.result)
 
         if event.buttons() == Qt.RightButton:
             # pylint: disable=invalid-name
             text, ok = QInputDialog.getText(self, 'Remove Target', 'Enter target number to remove')
-            text = int(text)
-            if ok:
-                if len(self.prime_x) >= 1:
+            if ok and text:
+                if len(self.target) >= 1:
+                    text = int(text)
                     del self.target[text - 1]
                     del self.prime_x[text - 1]
                     del self.prime_y[text - 1]
@@ -229,52 +235,39 @@ class Js06EditTarget(QDialog):
     # end of coordinator
 
     def restoration(self):
-        self.target_x = [round((x + 1) * self.w / 2) for x in self.prime_x]
-        self.target_y = [round(y * self.h) for y in self.prime_y]
+        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime_x]
+        self.target_y = [int(y * self.h) for y in self.prime_y]
     # end of restoration
 
     def save_target(self):
-        if self.prime_x:
-            col = ["target", "x", "y", "label_x", "label_y", "distance", "discernment"]
-            self.result = pd.DataFrame(columns=col)
-            self.result["target"] = self.target
-            self.result["x"] = self.prime_x
-            self.result["y"] = self.prime_y
-            self.result["label_x"] = [round(x * self.width() / self.w, 3) for x in self.target_x]
-            self.result["label_y"] = [round(y * self.height() / self.h, 3) for y in self.target_y]
-            self.result["distance"] = self.distance
-            self.result["discernment"] = self.oxlist
+        if self.target:
+            for i in range(len(self.target)):
+                self.result[i]['label'] = self.target[i]
+                self.result[i]['label_x'] = [int(x * self.width() / self.w) for x in self.target_x][i]
+                self.result[i]['label_y'] = [int(y * self.height() / self.h) for y in self.target_y][i]
+                self.result[i]["distance"] = self.distance
 
             # Save Target Information in mongoDB
-            pass
     # end of save_target
 
     def get_target(self):
-        # result = self.result
-        # self.target = result.target.tolist()
-        # self.prime_x = result.x.tolist()
-        # self.prime_y = result.y.tolist()
-        # self.label_x = result.label_x.tolist()
-        # self.label_y = result.label_y.tolist()
-        # self.distance = result.distance.tolist()
-        # self.oxlist = [0 for i in range(len(self.prime_x))]
-
         targets = self._model
-        for i in range(len(targets)):
-            # print(targets[i])
-            self.numberCombo.addItem(str(i + 1))
-        # print("currentText: ", self.numberCombo.currentText())
 
-            # if self.numberCombo.currentIndex[i] == str(i):
-            #     print("hi")
-            #     self.labelEdit.setText(targets['label'][i])
-                # self.coordinate_x_Edit.setText(str(round(self.prime_x[i], 2)))
-                # self.coordinate_y_Edit.setText(str(round(self.prime_y[i], 2)))
-                # self.distanceEdit.setText(text)
-                # self.ordinalEdit.setText("E")
-                # self.categoryEdit.setText("single")
-                # self.point_x_Edit.setText(str(x))
-                # self.point_y_Edit.setText(str(y))
+        self.numberCombo.clear()
+        for i in range(len(targets)):
+            self.numberCombo.addItem(str(i + 1))
+        self.result = targets
+
+        for i in range(len(targets)):
+            self.target.append(self.result[i]['label'])
+            self.label_x.append(self.result[i]['roi']['point'][0])
+            self.label_y.append(self.result[i]['roi']['point'][1])
+            self.distance.append(self.result[i]['distance'])
+        print(f"target: {self.target}")
+        print(f"label_x: {self.label_x}")
+        print(f"label_y: {self.label_y}")
+        print(f"distance: {self.distance}")
+
     # end of get_target
 
 # end of Js06EditTarget
@@ -353,86 +346,6 @@ class Js06VideoWidget(QWidget):
         # self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
         # self.video_thread.start()
     # end of on_camera_change
-
-    # def get_target(self):
-    #     if os.path.isfile(f"target/{self.camera_name}.csv"):
-    #         result = pd.read_csv(f"target/{self.camera_name}.csv")
-    #         self.target = result.target.tolist()
-    #         self.prime_x = result.x.tolist()
-    #         self.prime_y = result.y.tolist()
-    #         self.label_x = result.label_x.tolist()
-    #         self.label_y = result.label_y.tolist()
-    #         self.distance = result.distance.tolist()
-    #         self.oxlist = [0 for i in range(len(self.prime_x))]
-    #         print("영상목표를 불러옵니다.")
-    #     else:
-    #         print("csv 파일을 불러올 수 없습니다.")
-    # # end of get_target
-
-    # def save_target(self):
-    #     if self.prime_x:
-    #         col = ["target", "x", "y", "label_x", "label_y", "distance", "discernment"]
-    #         self.result = pd.DataFrame(columns=col)
-    #         self.result["target"] = self.target
-    #         self.result["x"] = self.prime_x
-    #         self.result["y"] = self.prime_y
-    #         self.result["label_x"] = [round(x * self.graphicView.geometry().width() /
-    #                                         self.video_item.nativeSize().width(), 3) for x in self.target_x]
-    #         self.result["label_y"] = [round(y * self.graphicView.geometry().height() /
-    #                                         self.video_item.nativeSize().height(), 3) for y in self.target_y]
-    #         self.result["distance"] = self.distance
-    #         self.result["discernment"] = self.oxlist
-    #         self.result.to_csv(f"{self.filepath}/{self.camera_name}.csv", mode="w", index=False)
-    # # end of save_target
-
-    # def save_frame(self, image: np.ndarray, epoch: str):
-    #     image_path = os.path.join(self.filepath, "image", f"{self.camera_name}", f"{epoch[2:6]}")
-    #     file_name = f"{epoch}"
-    #     if not os.path.isdir(image_path):
-    #         os.makedirs(image_path)
-    #     if not os.path.isfile(f"{image_path}/{file_name}.jpg"):
-    #         cv2.imwrite(f"{image_path}/{file_name}.jpg", image)
-    #     del image
-    #     del image_path
-    #     cv2.destroyAllWindows()
-    # # end of save_frame
-
-    # def save_target_frame(self, epoch: str):
-    #     for i in range(len(self.target_x)):
-    #         image_path = os.path.join(self.filepath, "image", "100x100", f"target{i + 1}")
-    #         if not os.path.isdir(image_path):
-    #             os.makedirs(image_path)
-    #         if not os.path.isfile(f"{image_path}/target_{i + 1}_{epoch}.jpg"):
-    #             b, g, r = cv2.split(self.crop_imagelist100[i])
-    #             if self.oxlist[i] == 1:
-    #                 cv2.imwrite(f"{image_path}/target_{i + 1}_{epoch}_Y.jpg", cv2.merge([r, g, b]))
-    #             else:
-    #                 cv2.imwrite(f"{image_path}/target_{i + 1}_{epoch}_N.jpg", cv2.merge([r, g, b]))
-    #     del self.crop_imagelist100
-    #     cv2.destroyAllWindows()
-    # # end of save_target_frame
-
-    # def crop_image(self, image: np.ndarray):
-    #     new_crop_image = []
-    #     for i in range(len(self.target_x)):
-    #         crop_img = image[int(self.target_y[i] - 50): int(self.target_y[i] + 50),
-    #                         int(self.target_x[i] - 50): int(self.target_x[i] + 50)]
-    #         new_crop_image.append(crop_img)
-    #     self.crop_imagelist100 = new_crop_image
-    #     del image
-    # # end of crop_image
-
-    def inference_clicked(self):
-        # self.graphicView.fitInView(self._video_item)
-        # self.blank_lbl.resize(self.graphicView.geometry().width(),
-        #                       self.graphicView.geometry().height())
-        pass
-    # end of inference_clicked
-
-    # def coordinator(self):
-    #     self.prime_x = [2 * x / self.video_item.nativeSize().width() - 1 for x in self.target_x]
-    #     self.prime_y = [y / self.video_item.nativeSize().height() for y in self.target_y]
-    # # end of coordinator
 
     # def restoration(self):
     #     try:
