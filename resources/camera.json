@@ -5,8 +5,8 @@
         "model": "PNM-9030V",
         "serial_number": "",
         "resolution": [
-            7744,
-            1936
+            6096,
+            2540
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp",
         "direction": 135,

@@ -153,6 +153,9 @@
    </property>
   </action>
   <action name="actionSelect_Camera">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Select &amp;Camera</string>
    </property>

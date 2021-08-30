@@ -33,7 +33,7 @@ class Js06MainCtrl(QObject):
         db_name = Js06Settings.get('db_name')
         self._model.connect_to_db(db_host, db_port, db_name)
 
-        # self._attr = self._model.read_attr()
+        self._attr = self._model.read_attr()
     # end of init
 
     def update_image(self, image: QImage):
@@ -41,18 +41,19 @@ class Js06MainCtrl(QObject):
     # end of update_image
 
     def get_current_camera_uri(self):
-        attr = self._model.read_attr()
-        return attr['camera']['uri']
+        return self._attr['camera']['uri']
     # end of get_current_camera_rui
 
+    def get_camera_list(self):
+        return self._attr['camera']['model']
+
     def get_target(self):
-        attr = self._model.read_attr()
-        return attr['targets']
+        return self._attr['targets']
     # end of get_target
 
     def get_camera_table_model(self):
         cameras = self.get_cameras()
-        table_model = Js06CameraTableModel(cameras)
+        table_model =  Js06CameraTableModel(cameras)
         return table_model
     # end of get_camera_table_model
 
@@ -71,17 +72,6 @@ class Js06MainCtrl(QObject):
         for cam in cameras:
             self._model.update_camera(cam, upsert=True)
     # end of update_cameras
-
-    def update_current_camera(self, cameras: list):
-        attr = self._model.read_attr()
-        for cam in cameras:
-            # A band-aid solution,
-            # cam.selected should be boolean.
-            if cam['selected'] == 'True':
-                attr['camera'] = cam
-        attr.pop('_id')
-        self._model.insert_attr(attr)
-    # end of update_current_camera
 
     @pyqtSlot()
     def close_process(self):

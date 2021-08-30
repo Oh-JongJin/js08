@@ -18,7 +18,7 @@
 import os
 
 from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex
-from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QMoveEvent, QPixmap, QImage, QPainter, QTransform
+from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QPixmap, QImage, QPainter, QTransform
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
@@ -27,6 +27,8 @@ from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
 from PyQt5 import uic
 
 from js06.controller import Js06MainCtrl
+# from views.target_plot_widget_2 import Js06TargetPlotWidget2
+# from views.time_series_plot_widget import Js06TimeSeriesPlotWidget
 
 class Js06CameraView(QDialog):
     def __init__(self, controller: Js06MainCtrl):
@@ -42,7 +44,7 @@ class Js06CameraView(QDialog):
         self.insertAbove.clicked.connect(self.insert_above)
         self.insertBelow.clicked.connect(self.insert_below)
         self.removeRows.clicked.connect(self.remove_rows)
-        self.buttonBox.accepted.connect(self.save_cameras)
+        self.buttonBox.accepted.connect(self.accepted)
     # end of __init__
 
     def insert_above(self):
@@ -66,13 +68,11 @@ class Js06CameraView(QDialog):
     def save_cameras(self):
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
-        self._ctrl.update_current_camera(cameras)
-        self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
     # end of save_cameras
 
     def accepted(self):
         index = self.tableView.currentIndex()
-        NewIndex = self.tableView.model().index(index.row(), 6)
+        NewIndex = self.tableView.model().index(index.row(), 7)
         add = NewIndex.data()
         print(f"Select uri: [{add}]")
         index_list = []
@@ -94,6 +94,7 @@ class Js06EditTarget(QDialog):
         uic.loadUi(ui_path, self)
         self._ctrl = controller
         self._model = self._ctrl.get_target()
+        self.cam_name = []
 
         self.target = []
         self.prime_x = []
@@ -105,16 +106,15 @@ class Js06EditTarget(QDialog):
         self.distance = []
         self.oxlist = []
         self.result = []
-        self.target_process = False
-        self.csv_path = None
 
+        # Rotate Edit
         transform = QTransform().rotate(-180)
-        image = self._ctrl.image.mirrored(True, False)
-        self.image_label.setPixmap(QPixmap.fromImage(image.transformed(transform)))
+        self.image = self._ctrl.image.mirrored(True, False)
+        self.image_label.setPixmap(QPixmap.fromImage(self.image.transformed(transform)))
         self.image_label.setMaximumSize(self.width(), self.height())
 
-        self.w = image.width()
-        self.h = image.height()
+        self.w = self.image.width()
+        self.h = self.image.height()
 
         self.blank_lbl = QLabel(self)
 
@@ -123,25 +123,40 @@ class Js06EditTarget(QDialog):
         self.buttonBox.accepted.connect(self.save_targets)
         self.buttonBox.rejected.connect(self.rejected_btn)
 
-        self.numberCombo.currentIndexChanged.connect(self.combo_changed)
+        for i in range(len(self._ctrl.get_cameras())):
+            self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
+        self.cameraCombo.addItems(self.cam_name)
+        if self._ctrl.get_camera_list() in self.cam_name:
+            self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_list()))
 
-        self.blank_lbl.raise_()
+        self.numberCombo.currentIndexChanged.connect(self.combo_changed)
+        self.cameraCombo.currentTextChanged.connect(self.camera_changed)
+
+        # self.blank_lbl.raise_()
         self.get_target()
         self.combo_changed()
     # end of __init__
 
+    def camera_changed(self):
+        for i in range(len(self._ctrl.get_cameras())):
+            if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
+                add = self._ctrl.get_cameras()[i]['uri']
+        self._ctrl.current_camera_changed.emit(add)
+        self._ctrl.update_image
+    # end of camera_changed
+
     def combo_changed(self):
         targets = self._model
+        current_cam = self._ctrl.get_camera_list()
         for i in range(len(targets)):
             if self.numberCombo.currentText() == str(i + 1):
                 self.labelEdit.setText(str(targets[i]['label']))
-                self.ordinalEdit.setText(str(targets[i]['distance']))
-                self.categoryEdit.setText(str(targets[i]['category']))
                 self.distanceEdit.setText(str(targets[i]['distance']))
-                self.coordinate_x_Edit.setText(str(targets[i]['roi']['point'][0]))
-                self.coordinate_y_Edit.setText(str(targets[i]['roi']['point'][1]))
-                # self.point_x_Edit.setText(targets['point'])
-                # self.point_y_Edit.setText(str(targets['point'][i]))
+                self.point_x_Edit.setText(str(targets[i]['roi']['point'][0]))
+                self.point_y_Edit.setText(str(targets[i]['roi']['point'][1]))
+                self.size_x_Edit.setText(str(targets[i]['roi']['size'][0]))
+                self.size_y_Edit.setText(str(targets[i]['roi']['size'][1]))
+        # self.cameraCombo.
     # end of combo_changed
 
     def save_targets(self):
@@ -182,36 +197,32 @@ class Js06EditTarget(QDialog):
         #             self.oxlist[i] = 1
         #         else:
         #             self.oxlist[i] = 0
-        # if not self.target_process:
-        #     return
         if event.buttons() == Qt.LeftButton:
-            self.target = []
+            # self.target = []
             text, ok = QInputDialog.getText(self, 'Add Target', 'Distance (km)')
             if ok and text:
-                self.target_x.append(float(x))
-                self.target_y.append(float(y))
-                self.distance.append(float(text))
-                self.target.append(str(len(self.target_x)))
-                self.oxlist.append(0)
-                print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
-                # self.coordinator()
-                self.save_target()
-                self.get_target()
-
-                self.numberCombo.clear()
-                for i in range(len(self.target)):
-                    print(i)
-                    self.numberCombo.addItem(str(i + 1))
-                    self.numberCombo.setCurrentIndex(i)
-                    self.labelEdit.setText(f"t{i + 1}")
-                    # self.coordinate_x_Edit.setText(str(round(self.prime_x[i], 2)))
-                    # self.coordinate_y_Edit.setText(str(round(self.prime_y[i], 2)))
-                self.distanceEdit.setText(text)
-                self.ordinalEdit.setText("E")
-                self.categoryEdit.setText("single")
-                self.coordinate_x_Edit.setText(str(x))
-                self.coordinate_y_Edit.setText(str(y))
-            print(self.result)
+                print(f"test: {text}")
+                # self.target_x.append(float(x))
+                # self.target_y.append(float(y))
+                # self.distance.append(float(text))
+                # self.target.append(str(len(self.target_x)))
+                # self.oxlist.append(0)
+                # print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
+                # # self.coordinator()
+                # self.save_target()
+                # self.get_target()
+                #
+                # # self.numberCombo.clear()
+                # self.numberCombo.update()
+                # for i in range(len(self.target)):
+                #     self.numberCombo.addItem(str(i + 1))
+                #     self.numberCombo.setCurrentIndex(i)
+                #     self.labelEdit.setText(f"t{i + 1}")
+                # self.distanceEdit.setText(text)
+                # self.ordinalEdit.setText("E")
+                # self.categoryEdit.setText("single")
+                # self.coordinate_x_Edit.setText(str(x))
+                # self.coordinate_y_Edit.setText(str(y))
 
         if event.buttons() == Qt.RightButton:
             # pylint: disable=invalid-name
@@ -246,8 +257,6 @@ class Js06EditTarget(QDialog):
                 self.result[i]['label_x'] = [int(x * self.width() / self.w) for x in self.target_x][i]
                 self.result[i]['label_y'] = [int(y * self.height() / self.h) for y in self.target_y][i]
                 self.result[i]["distance"] = self.distance
-
-            # Save Target Information in mongoDB
     # end of save_target
 
     def get_target(self):
@@ -263,14 +272,10 @@ class Js06EditTarget(QDialog):
             self.label_x.append(self.result[i]['roi']['point'][0])
             self.label_y.append(self.result[i]['roi']['point'][1])
             self.distance.append(self.result[i]['distance'])
-        print(f"target: {self.target}")
-        print(f"label_x: {self.label_x}")
-        print(f"label_y: {self.label_y}")
-        print(f"distance: {self.distance}")
-
     # end of get_target
 
 # end of Js06EditTarget
+
 
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
@@ -293,8 +298,6 @@ class Js06VideoWidget(QWidget):
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.graphicView)
-        self.uri = None
-        self.cam_name = None
 
         self.probe = QVideoProbe(self)
         self.probe.videoFrameProbed.connect(self.on_videoFrameProbed)
@@ -302,7 +305,7 @@ class Js06VideoWidget(QWidget):
     # end of __init__
 
     @pyqtSlot(QVideoFrame)
-    def on_videoFrameProbed(self, frame:QVideoFrame):
+    def on_videoFrameProbed(self, frame: QVideoFrame):
         self.grabImage.emit(frame.image())
     # end of on_videoFrameProbed
 
@@ -328,34 +331,10 @@ class Js06VideoWidget(QWidget):
 
     @pyqtSlot(str)
     def on_camera_change(self, uri):
-        self.uri = uri
+        print("DEBUG:", uri)
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
-
-        # self.graphicView.fitInView(self._video_item)
-
-        # self.blank_lbl.paintEvent = self.paintEvent
-        # self.blank_lbl.raise_()
-
-        # if url == VIDEO_SRC3:
-        #     self.camera_name = "XNO-8080R"
-        # print(self.camera_name)
-        # self.get_target()
-
-        # self.video_thread = VideoThread(url)
-        # self.video_thread.update_pixmap_signal.connect(self.convert_cv_qt)
-        # self.video_thread.start()
     # end of on_camera_change
-
-    # def restoration(self):
-    #     try:
-    #         if self.target:
-    #             self.target_x = [round((x + 1) * self.video_item.nativeSize().width() / 2) for x in self.prime_x]
-    #             self.target_y = [round(y * self.video_item.nativeSize().height()) for y in self.prime_y]
-    #     except:
-    #         print(traceback.format_exc())
-    #         sys.exit()
-    # # end of restoration
 
     @property
     def video_item(self):
@@ -380,18 +359,15 @@ class Js06MainView(QMainWindow):
         # Connect signals and slots
         self.restore_defaults_requested.connect(self._ctrl.restore_defaults)
         self.actionSelect_Camera.triggered.connect(self.select_camera)
-        
+
         # Check the exit status
         normal_exit = self._ctrl.check_exit_status()
         if not normal_exit:
             self.ask_restore_default()
 
-        # self.showFullScreen()
-        # self.setGeometry(400, 50, 1500, 1000)
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
 
         self.actionEdit_Target.triggered.connect(self.edit_target)
-        # self.actionSelect_Camera.triggered.connect(self.select_camera_triggered)
 
         self.video_dock = QDockWidget("Video", self)
         self.video_dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
@@ -401,57 +377,34 @@ class Js06MainView(QMainWindow):
         self.video_widget.grabImage.connect(self._ctrl.update_image)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
+        self.video_dock.setMinimumSize(self.width(), self.height() / 2)
 
-        # The parameters in the following codes is for the test purposes. 
+        # The parameters in the following codes is for the test purposes.
         # They should be changed to use canonical coordinates.
         # self.video_widget.draw_roi((50, 50), (40, 40))
+
+        # # target plot dock
+        # self.target_plot_dock = QDockWidget("Target plot", self)
+        # self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
+        # self.target_plot_dock.setFeatures(
+        #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        # self.target_plot_widget = Js06TargetPlotWidget2(self)
+        # self.target_plot_dock.setWidget(self.target_plot_widget)
+        #
+        # # grafana dock 1
+        # self.web_dock_1 = QDockWidget("Grafana plot 1", self)
+        # self.addDockWidget(Qt.BottomDockWidgetArea, self.web_dock_1)
+        # self.web_dock_1.setFeatures(
+        #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        # self.web_view_1 = Js06TimeSeriesPlotWidget()
+        # self.web_dock_1.setWidget(self.web_view_1)
+
+        # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
+        # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
     # end of __init__
-
-    # self.qtimer = QTimer()
-    # self.qtimer.setInterval(2000)
-    # self.qtimer.timeout.connect(self.video_widget.inference_clicked)
-    # self.qtimer.start()
-
-    # # target plot dock
-    # self.target_plot_dock = QDockWidget("Target plot", self)
-    # self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
-    # self.target_plot_dock.setFeatures(
-    #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-    # self.target_plot_widget = Js06TargetPlotWidget2(self)
-    # self.target_plot_dock.setWidget(self.target_plot_widget)
-
-    # # grafana dock 1
-    # self.web_dock_1 = QDockWidget("Grafana plot 1", self)
-    # self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
-    # self.web_dock_1.setFeatures(
-    #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-    # self.web_view_1 = Js06TimeSeriesPlotWidget()
-    # self.web_dock_1.setWidget(self.web_view_1)
-
-    # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
-    # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
-    # end of __init__
-
-    # def select_camera(self):
-    #     text, ok = QInputDialog.getItem(self, "Select Camera",
-    #                                     "Select Camera Manufacturer", ["H", "C", "F"], 0, False)
-    #     text1, ok1 = QInputDialog.getText(self, "Select Camera", "Input Camera URI")
-    #     print(text1)
-    #     if ok and ok1:
-    #         if text == "H" and text1 is not None:
-    #             SRC = f"rtsp://admin:sijung5520@{text1}/profile2/media.smp"
-    #             self.video_widget.onCameraChange(SRC)
-    # # end of select_cam
-
-    def moveEvent(self, event: QMoveEvent):
-        # print(self.geometry())
-        pass
-    # end of moveEvent
 
     def edit_target(self):
         self.video_widget.player.stop()
-
-        uri = self._ctrl.get_current_camera_uri()
 
         dlg = Js06EditTarget(self._ctrl)
         dlg.exec_()
@@ -462,7 +415,7 @@ class Js06MainView(QMainWindow):
     def select_camera(self):
         dlg = Js06CameraView(self._ctrl)
         dlg.exec_()
-    # end of select_cameara
+    # end of select_camera
 
     def ask_restore_default(self):
         # Check the last shutdown status
@@ -479,34 +432,18 @@ class Js06MainView(QMainWindow):
     # TODO(kwchun): its better to emit signal and process at the controller
     def closeEvent(self, event: QCloseEvent):
         self._ctrl.set_normal_shutdown()
-        # event.accept()
     # end of closeEvent
-
-    # def inference(self):
-    #     self.video_widget.graphicView.fitInView(self.video_widget.video_item)
-
-    def target_mode(self):
-        """Set target image modification mode"""
-        # self.save_target()
-        if self.target_process:
-            print(self.target_process)
-    # end of target_mode
-
-    def open_with_rtsp(self):
-        text, ok = QInputDialog.getText(self, "Input RTSP", "Only Hanwha Camera")
-        if ok:
-            print(text)
-    # end of open_with_rtsp
 
 # end of Js06MainView
 
-# if __name__ == '__main__':
-#     import sys
-#     from PyQt5.QtWidgets import QApplication  # pylint: disable=no-name-in-module
 
-#     app = QApplication(sys.argv)
-#     window = Js06MainView()
-#     window.show()
-#     sys.exit(app.exec_())
+if __name__ == '__main__':
+    import sys
+    from PyQt5.QtWidgets import QApplication  # pylint: disable=no-name-in-module
+
+    app = QApplication(sys.argv)
+    window = Js06MainView()
+    window.show()
+    sys.exit(app.exec_())
 
 # end of view.py
