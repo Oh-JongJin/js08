@@ -126,7 +126,10 @@ class Js06EditTarget(QDialog):
         for i in range(len(self._ctrl.get_cameras())):
             self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
         self.cameraCombo.addItems(self.cam_name)
-        if self._ctrl.get_camera_list() in self.cam_name:
+
+        if Js06MainView.current_camera_model is not None and self._ctrl.get_camera_list() in self.cam_name:
+            self.cameraCombo.setCurrentIndex(self.cam_name.index(Js06MainView.current_camera_model))
+        elif self._ctrl.get_camera_list() in self.cam_name:
             self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_list()))
 
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
@@ -142,12 +145,16 @@ class Js06EditTarget(QDialog):
             if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
                 add = self._ctrl.get_cameras()[i]['uri']
         self._ctrl.current_camera_changed.emit(add)
-        self._ctrl.update_image
+        # self.image_label.setText("color: #7FFFD4")
+        Js06MainView.current_camera_model = self.cameraCombo.currentText()
+
     # end of camera_changed
 
     def combo_changed(self):
         targets = self._model
-        current_cam = self._ctrl.get_camera_list()
+        ordinalItems = [self.ordinalCombo.itemText(i) for i in range(self.ordinalCombo.count())]
+        categoryItems = [self.categoryCombo.itemText(i) for i in range(self.categoryCombo.count())]
+
         for i in range(len(targets)):
             if self.numberCombo.currentText() == str(i + 1):
                 self.labelEdit.setText(str(targets[i]['label']))
@@ -156,11 +163,18 @@ class Js06EditTarget(QDialog):
                 self.point_y_Edit.setText(str(targets[i]['roi']['point'][1]))
                 self.size_x_Edit.setText(str(targets[i]['roi']['size'][0]))
                 self.size_y_Edit.setText(str(targets[i]['roi']['size'][1]))
-        # self.cameraCombo.
+
+                if targets[i]['ordinal'] in ordinalItems:
+                    self.ordinalCombo.setCurrentIndex(ordinalItems.index(targets[i]['ordinal']))
+
+                if targets[i]['category'] in categoryItems:
+                    self.categoryCombo.setCurrentIndex(categoryItems.index(targets[i]['category']))
+
     # end of combo_changed
 
     def save_targets(self):
         targets = self._model
+        print("Save")
         self.close()
     # end of save_targets
 
@@ -343,10 +357,12 @@ class Js06VideoWidget(QWidget):
 
 # end of VideoWidget
 
+
 class Js06MainView(QMainWindow):
     restore_defaults_requested = pyqtSignal()
     main_view_closed = pyqtSignal()
     select_camera_requested = pyqtSignal()
+    current_camera_model = None
 
     def __init__(self, controller: Js06MainCtrl):
         super().__init__()
@@ -405,7 +421,6 @@ class Js06MainView(QMainWindow):
 
     def edit_target(self):
         self.video_widget.player.stop()
-
         dlg = Js06EditTarget(self._ctrl)
         dlg.exec_()
         self.video_widget.player.play()
