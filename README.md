@@ -26,26 +26,22 @@ JS-06 is being developed on the following target platforms.
   - Windows
 ```bash
   git config --global core.autocrlf true
-  ```
+```
   - Linux and MacOS
 ```bash
   git config --global core.autocrlf input
-  ```
-  
+```
+
 - Anaconda Python 3.7 64-bit or less
 
 - Required Python packages that can be installed using `conda`:
-  - binascii
   - os
-  - serial
-  - struct
+  - json
+  - platform
   - sys
-  - OpenCV
-  - NumPy
-  - Pandas
   - PyQt5
-  - InfluxDB
-  
+  - PyMongo
+
 - To execute TensorFlow Lite models with Python, TensorFlow Lite interpreter is required to execute TensorFlow Lite models:
   - If you're running Debian Linux or a derivative of Debian (including Raspberry Pi OS)
 ```bash
@@ -92,4 +88,3 @@ pip3 install --index-url https://google-coral.github.io/py-repo/ tflite_runtime
   sudo service influxdb start
   sudo service grafana-server start
   ```
-  
