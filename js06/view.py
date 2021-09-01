@@ -196,56 +196,45 @@ class Js06EditTarget(QDialog):
         x = int(event.pos().x() / self.width() * self.w)
         y = int(event.pos().y() / self.height() * self.h)
 
-        for i in range(len(self.target)):
-            self.target[i] = i + 1
         # for i in range(len(self.target)):
-        #     if self.target_x[i] - 25 < x < self.target_x[i] + 25 and \
-        #             self.target_y[i] - 25 < y < self.target_y[i] + 25:
-        #         if self.oxlist[i] == 0:
-        #             self.oxlist[i] = 1
-        #         else:
-        #             self.oxlist[i] = 0
-        # if event.buttons() == Qt.LeftButton:
-        #     # self.target = []
-        #     text, ok = QInputDialog.getText(self, 'Add Target', 'Distance (km)')
-        #     if ok and text:
-        #         print(f"test: {text}")
-        #         # self.target_x.append(float(x))
-        #         # self.target_y.append(float(y))
-        #         # self.distance.append(float(text))
-        #         # self.target.append(str(len(self.target_x)))
-        #         # self.oxlist.append(0)
-        #         # print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
-        #         # # self.coordinator()
-        #         # self.save_target()
-        #         # self.get_target()
-        #         #
-        #         # # self.numberCombo.clear()
-        #         # self.numberCombo.update()
-        #         # for i in range(len(self.target)):
-        #         #     self.numberCombo.addItem(str(i + 1))
-        #         #     self.numberCombo.setCurrentIndex(i)
-        #         #     self.labelEdit.setText(f"t{i + 1}")
-        #         # self.distanceEdit.setText(text)
-        #         # self.ordinalEdit.setText("E")
-        #         # self.categoryEdit.setText("single")
-        #         # self.coordinate_x_Edit.setText(str(x))
-        #         # self.coordinate_y_Edit.setText(str(y))
+        #     self.target[i] = i + 1
+
+        if event.buttons() == Qt.LeftButton:
+            print("LeftButton")
+            maxVal = max(self.target)
+            self.numberCombo.addItem(str(maxVal + 1))
+            self.numberCombo.setCurrentIndex(maxVal)
+
+            self.target_x.append(float(x))
+            self.target_y.append(float(y))
+            self.target.append(str(len(self.target_x)))
+            self.combo_changed()
 
         if event.buttons() == Qt.RightButton:
-            # pylint: disable=invalid-name
-            text, ok = QInputDialog.getText(self, 'Remove Target', 'Enter target number to remove')
-            if ok and text:
-                if len(self.target) >= 1:
-                    text = int(text)
-                    del self.target[text - 1]
-                    del self.prime_x[text - 1]
-                    del self.prime_y[text - 1]
-                    del self.label_x[text - 1]
-                    del self.label_y[text - 1]
-                    del self.distance[text - 1]
-                    del self.oxlist[text - 1]
-                    print(f"[Target {text}] remove.")
+            print("RightButton")
+            maxVal = max(self.target)
+            self.numberCombo.removeItem(maxVal)
+            self.numberCombo.setCurrentIndex(maxVal - 1)
+
+            del self.target_x[maxVal - 1]
+            del self.target_y[maxVal - 1]
+            del self.target[maxVal - 1]
+            self.combo_changed()
+
+        # if event.buttons() == Qt.RightButton:
+        #     # pylint: disable=invalid-name
+        #     text, ok = QInputDialog.getText(self, 'Remove Target', 'Enter target number to remove')
+        #     if ok and text:
+        #         if len(self.target) >= 1:
+        #             text = int(text)
+        #             del self.target[text - 1]
+        #             del self.prime_x[text - 1]
+        #             del self.prime_y[text - 1]
+        #             del self.label_x[text - 1]
+        #             del self.label_y[text - 1]
+        #             del self.distance[text - 1]
+        #             del self.oxlist[text - 1]
+        #             print(f"[Target {text}] remove.")
     # end of label_mousePressEvent
 
     def coordinator(self):
