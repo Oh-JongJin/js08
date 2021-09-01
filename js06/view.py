@@ -17,8 +17,8 @@
 
 import os
 
-from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex
-from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QPixmap, QImage, QPainter, QTransform
+from PyQt5.QtCore import QObject, QSize, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex
+from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QPixmap, QImage, QPainter, QResizeEvent, QTransform
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
@@ -318,14 +318,32 @@ class Js06VideoWidget(QWidget):
         self.probe.setSource(self.player)
     # end of __init__
 
+    ############
+    ## Events ##
+    ############
+    def resizeEvent(self, a0: QResizeEvent) -> None:
+        self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
+        return super().resizeEvent(a0)
+    # end of resizeEvent
+
+    # end of events
+
+    ###########
+    ## Slots ##
+    ###########
     @pyqtSlot(QVideoFrame)
     def on_videoFrameProbed(self, frame: QVideoFrame):
         self.grabImage.emit(frame.image())
     # end of on_videoFrameProbed
 
-    def mousePressEvent(self, event: QMouseEvent):
-        self.graphicView.fitInView(self._video_item)
-    # end of mousePressEvent
+    @pyqtSlot(str)
+    def on_camera_change(self, uri):
+        print("DEBUG:", uri)
+        self.player.setMedia(QMediaContent(QUrl(uri)))
+        self.player.play()
+    # end of on_camera_change
+
+    # end of slots
 
     def draw_roi(self, point: tuple, size: tuple):
         """Draw a boundary rectangle of ROI
@@ -336,20 +354,7 @@ class Js06VideoWidget(QWidget):
         rectangle = QGraphicsRectItem(*point, *size, self._video_item)
         rectangle.setPen(QPen(Qt.blue))
     # end of draw_roi
-
-    @pyqtSlot(QMediaPlayer.State)
-    def on_stateChanged(self, state):
-        if state == QMediaPlayer.PlayingState:
-            self.view.fitInView(self._video_item, Qt.KeepAspectRatio)
-    # end of on_stateChanged
-
-    @pyqtSlot(str)
-    def on_camera_change(self, uri):
-        print("DEBUG:", uri)
-        self.player.setMedia(QMediaContent(QUrl(uri)))
-        self.player.play()
-    # end of on_camera_change
-
+    
     @property
     def video_item(self):
         return self._video_item
