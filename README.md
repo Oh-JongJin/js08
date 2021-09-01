@@ -16,6 +16,7 @@ JS-08 is being developed on the following target platforms.
 ## Camera Supports
 - IP cameras
   - [Hanwha PNM-9030V](https://www.hanwha-security.com/en/products/camera/network/multi-sensor/PNM-9030V/overview/)
+  - [Hanwha PNM-9022V](https://www.hanwha-security.com/en/products/camera/network/multi-sensor/PNM-9022V/overview/)
   - [Hanwha XNO-8080R](https://www.hanwha-security.com/en/products/camera/network/bullet/XNO-8080R/overview/)
 
 ## Setting Up Development Environment
