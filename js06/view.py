@@ -133,20 +133,11 @@ class Js06EditTarget(QDialog):
             self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_list()))
 
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
-        self.cameraCombo.currentTextChanged.connect(self.camera_changed)
 
         # self.blank_lbl.raise_()
         self.get_target()
         self.combo_changed()
     # end of __init__
-
-    def camera_changed(self):
-        for i in range(len(self._ctrl.get_cameras())):
-            if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
-                add = self._ctrl.get_cameras()[i]['uri']
-        self._ctrl.current_camera_changed.emit(add)
-        # self.image_label.setText("color: #7FFFD4")
-        Js06MainView.current_camera_model = self.cameraCombo.currentText()
 
     # end of camera_changed
 
@@ -173,8 +164,11 @@ class Js06EditTarget(QDialog):
     # end of combo_changed
 
     def save_targets(self):
-        targets = self._model
         print("Save")
+        for i in range(len(self._ctrl.get_cameras())):
+            if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
+                add = self._ctrl.get_cameras()[i]['uri']
+        self._ctrl.current_camera_changed.emit(add)
         self.close()
     # end of save_targets
 
@@ -211,32 +205,32 @@ class Js06EditTarget(QDialog):
         #             self.oxlist[i] = 1
         #         else:
         #             self.oxlist[i] = 0
-        if event.buttons() == Qt.LeftButton:
-            # self.target = []
-            text, ok = QInputDialog.getText(self, 'Add Target', 'Distance (km)')
-            if ok and text:
-                print(f"test: {text}")
-                # self.target_x.append(float(x))
-                # self.target_y.append(float(y))
-                # self.distance.append(float(text))
-                # self.target.append(str(len(self.target_x)))
-                # self.oxlist.append(0)
-                # print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
-                # # self.coordinator()
-                # self.save_target()
-                # self.get_target()
-                #
-                # # self.numberCombo.clear()
-                # self.numberCombo.update()
-                # for i in range(len(self.target)):
-                #     self.numberCombo.addItem(str(i + 1))
-                #     self.numberCombo.setCurrentIndex(i)
-                #     self.labelEdit.setText(f"t{i + 1}")
-                # self.distanceEdit.setText(text)
-                # self.ordinalEdit.setText("E")
-                # self.categoryEdit.setText("single")
-                # self.coordinate_x_Edit.setText(str(x))
-                # self.coordinate_y_Edit.setText(str(y))
+        # if event.buttons() == Qt.LeftButton:
+        #     # self.target = []
+        #     text, ok = QInputDialog.getText(self, 'Add Target', 'Distance (km)')
+        #     if ok and text:
+        #         print(f"test: {text}")
+        #         # self.target_x.append(float(x))
+        #         # self.target_y.append(float(y))
+        #         # self.distance.append(float(text))
+        #         # self.target.append(str(len(self.target_x)))
+        #         # self.oxlist.append(0)
+        #         # print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
+        #         # # self.coordinator()
+        #         # self.save_target()
+        #         # self.get_target()
+        #         #
+        #         # # self.numberCombo.clear()
+        #         # self.numberCombo.update()
+        #         # for i in range(len(self.target)):
+        #         #     self.numberCombo.addItem(str(i + 1))
+        #         #     self.numberCombo.setCurrentIndex(i)
+        #         #     self.labelEdit.setText(f"t{i + 1}")
+        #         # self.distanceEdit.setText(text)
+        #         # self.ordinalEdit.setText("E")
+        #         # self.categoryEdit.setText("single")
+        #         # self.coordinate_x_Edit.setText(str(x))
+        #         # self.coordinate_y_Edit.setText(str(y))
 
         if event.buttons() == Qt.RightButton:
             # pylint: disable=invalid-name
@@ -301,6 +295,7 @@ class Js06VideoWidget(QWidget):
 
         self.scene = QGraphicsScene(self)
         self.graphicView = QGraphicsView(self.scene)
+        self.graphicView.setStyleSheet("background: #000000")
         self.graphicView.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.graphicView.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self._video_item = QGraphicsVideoItem()
@@ -321,9 +316,9 @@ class Js06VideoWidget(QWidget):
     ############
     ## Events ##
     ############
-    def resizeEvent(self, a0: QResizeEvent) -> None:
-        self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
-        return super().resizeEvent(a0)
+    # def resizeEvent(self, a0: QResizeEvent) -> None:
+    #     self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
+    #     return super().resizeEvent(a0)
     # end of resizeEvent
 
     # end of events
@@ -334,6 +329,7 @@ class Js06VideoWidget(QWidget):
     @pyqtSlot(QVideoFrame)
     def on_videoFrameProbed(self, frame: QVideoFrame):
         self.grabImage.emit(frame.image())
+        self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
     # end of on_videoFrameProbed
 
     @pyqtSlot(str)
