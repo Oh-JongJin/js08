@@ -70,7 +70,7 @@
      <x>0</x>
      <y>0</y>
      <width>789</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="autoFillBackground">
@@ -154,10 +154,10 @@
   </action>
   <action name="actionSelect_Camera">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
-    <string>Select &amp;Camera</string>
+    <string>Edit &amp;Camera Info</string>
    </property>
   </action>
  </widget>
