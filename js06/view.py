@@ -338,9 +338,11 @@ class Js06VideoWidget(QWidget):
 
     @pyqtSlot(str)
     def on_camera_change(self, uri):
-        print("DEBUG:", uri)
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
+
+        # TODO(Kyungwon): Video resize does not work when app starts.
+        self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
     # end of on_camera_change
 
     # end of slots
@@ -398,7 +400,7 @@ class Js06MainView(QMainWindow):
         self.video_widget.grabImage.connect(self._ctrl.update_image)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
-        self.video_dock.setMinimumSize(self.width(), self.height() / 2)
+        # self.video_dock.setMinimumSize(self.width(), self.height() / 2)
 
         # The parameters in the following codes is for the test purposes.
         # They should be changed to use canonical coordinates.
