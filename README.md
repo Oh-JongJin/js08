@@ -53,16 +53,25 @@ sudo apt-get install python3-tflite-runtime
 pip3 install --index-url https://google-coral.github.io/py-repo/ tflite_runtime
 ```
 
+- Install MongoDB
+
+  - For Windows
+
+    - MongoDB: https://www.mongodb.com/try/download/community
+
+      Create **js06** database, **attr**, **camera**, **target** Document through **MongoDBCompass** and add data resources/attr.json
+
 - Video Codecs
+  
   - For Windows, DirectShow filters are required to play RTSP video streams. Download the one of the following filter packs:
     - LAV Filter: https://github.com/Nevcairiel/LAVFilters/releases
     - K-Lite:: https://files3.codecguide.com/K-Lite_Codec_Pack_1625_Basic.exe
-
+  
   - For Linux, install GStreamer: 
     ```bash
     sudo apt install gstreamer1.0-libav ubuntu-restricted-extras
     ```
-
+  
 - Install Grafana
   - For Windows
     - Grafana: https://dl.grafana.com/oss/release/grafana-8.0.2.windows-amd64.msi
