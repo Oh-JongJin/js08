@@ -82,7 +82,7 @@ class Js06MainCtrl(QObject):
     # end of get_attr
     
     def set_attr(self, model: dict):
-        self.attr.insert_one(model)
+        self._model.update_attr(model)
     # end of set_attr
 
     @pyqtSlot()

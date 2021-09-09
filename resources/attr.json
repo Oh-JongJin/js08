@@ -1,15 +1,15 @@
 [
     {
         "label": "dev",
-        "model": "JS-06",
+        "model": "JS-08",
         "version": "0.1",
-        "platform": "",
+        "platform": "Window",
         "serial_number": "H30S62FR5WNO",
         "location": {
             "type": "Point",
             "coordinates": [
-                127.3947501,
-                36.4322411
+                36.4322411,
+                127.3947501
             ]
         },
         "camera": {

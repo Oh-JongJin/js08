@@ -20,7 +20,8 @@ import ast
 import time
 
 from PyQt5.QtCore import QObject, QSize, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex
-from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QPixmap, QImage, QPainter, QResizeEvent, QTransform
+from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QPixmap, QImage, QPainter, \
+    QPaintEvent, QResizeEvent, QTransform
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
@@ -123,7 +124,10 @@ class Js06EditTarget(QDialog):
         self.oxlist = []
         self.result = []
 
-        self.painter = None
+        #######
+        self.flag = 0
+        #######
+
         self.get_target()
 
         # Rotate Edit
@@ -137,9 +141,7 @@ class Js06EditTarget(QDialog):
 
         self.blank_lbl = QLabel(self)
 
-        self.blank_lbl.paintEvent = self.blank_paintEvent
         self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
-
         self.buttonBox.accepted.connect(self.save_btn)
         self.buttonBox.rejected.connect(self.rejected_btn)
 
@@ -158,8 +160,11 @@ class Js06EditTarget(QDialog):
 
     # end of __init__
 
+    # end of camera_changed
+
     def combo_changed(self):
-        targets = self._model
+        self.blank_lbl.paintEvent = self.blank_paintEvent
+        # targets = self._model
         ordinalItems = [self.ordinalCombo.itemText(i) for i in range(self.ordinalCombo.count())]
         categoryItems = [self.categoryCombo.itemText(i) for i in range(self.categoryCombo.count())]
 
@@ -210,7 +215,11 @@ class Js06EditTarget(QDialog):
                                'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())],
                                'size': [float(self.size_x_Edit.text()), float(self.size_y_Edit.text())]
                            }})
-        print(result)
+        # print(result)
+
+        # Save Target through controller
+        self._ctrl.set_attr(result)
+
         self.close()
 
     # end of save_targets
@@ -226,21 +235,29 @@ class Js06EditTarget(QDialog):
 
     # end of rejected_btn
 
-    def blank_paintEvent(self, event):
+    def blank_paintEvent(self, event: QPaintEvent):
         self.painter = QPainter(self.blank_lbl)
-        self.painter.setPen(QPen(Qt.red, 2))
 
-        if self.target:
-            for name, x, y in zip(self.target, self.point_x, self.point_y):
-                self.painter.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
-                self.painter.drawText(x - 4, y - 10, f"{name}")
+        ############################
+        self.painter.setPen(QPen(Qt.black, 1, Qt.DotLine))
+        self.painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
+                              self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
+
+        self.painter.setPen(QPen(Qt.red, 2))
+        for name, x, y in zip(self.target, self.point_x, self.point_y):
+            self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
+            self.painter.drawText(x - 4, y - 10, f"{name}")
         self.blank_lbl.setGeometry(self.image_label.geometry())
+        ############################
 
         self.painter.end()
 
     # end of paintEvent
 
     def blank_mousePressEvent(self, event):
+        self.flag = self.flag + 1
+        self.update()
+
         x = int(event.pos().x() / self.width() * self.w)
         y = int(event.pos().y() / self.height() * self.h)
 
@@ -263,6 +280,8 @@ class Js06EditTarget(QDialog):
             self.category.append("Single")
 
             self.combo_changed()
+
+            print("mousePressEvent - ", len(self.target))
             # self.save_target()
             # self.get_target()
 
@@ -448,6 +467,7 @@ class Js06MainView(QMainWindow):
 
         self.video_dock = QDockWidget("Video", self)
         self.video_dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
+        # self.video_dock.setWindowFlag(Qt.Window, Qt.FramelessWindowHint)
         self.video_widget = Js06VideoWidget(self)
         self.video_dock.setWidget(self.video_widget)
         self.setCentralWidget(self.video_dock)
@@ -479,13 +499,21 @@ class Js06MainView(QMainWindow):
         # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
         # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
 
+        self.i = 0
+
     # end of __init__
 
+    # def paintEvent(self, a0: QPaintEvent) -> None:
+    #     print("Paint~~!@~!@", self.i)
+    #     self.i = self.i + 1
+    #     if self.i > 10:
+    #         self.i = 0
+
     def edit_target(self):
-        self.video_widget.player.stop()
+        # self.video_widget.player.stop()
         dlg = Js06EditTarget(self._ctrl)
         dlg.exec_()
-        self.video_widget.player.play()
+        # self.video_widget.player.play()
 
     # end of edit_target
 
@@ -523,7 +551,7 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication  # pylint: disable=no-name-in-module
 
     app = QApplication(sys.argv)
-    window = Js06MainView()
+    window = Js06MainView(Js06MainCtrl)
     window.show()
     sys.exit(app.exec_())
 
