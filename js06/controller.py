@@ -7,7 +7,7 @@
 #     5jx2oh@gmail.com (Jongjin Oh)
 
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QImage # pylint: disable=no-name-in-module
+from PyQt5.QtMultimedia import QVideoFrame # pylint: disable=no-name-in-module
 
 from js06.model import Js06CameraTableModel, Js06Model, Js06Settings
 
@@ -22,7 +22,7 @@ class Js06MainCtrl(QObject):
 
         self._model = model
 
-        self.image = None
+        self.video_frame = None
 
         self.init()
     # end of __init__
@@ -36,9 +36,9 @@ class Js06MainCtrl(QObject):
         self._attr = self._model.read_attr()
     # end of init
 
-    def update_image(self, image: QImage):
-        self.image = image
-    # end of update_image
+    def update_video_frame(self, video_frame: QVideoFrame):
+        self.video_frame = video_frame
+    # end of update_video_frame
 
     def get_current_camera_uri(self):
         return self._attr['camera']['uri']

@@ -17,8 +17,8 @@
 
 import os
 
-from PyQt5.QtCore import QObject, QSize, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex
-from PyQt5.QtGui import QCloseEvent, QPen, QMouseEvent, QPixmap, QImage, QPainter, QResizeEvent, QTransform
+from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex
+from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QResizeEvent, QTransform
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
@@ -109,7 +109,7 @@ class Js06EditTarget(QDialog):
 
         # Rotate Edit
         transform = QTransform().rotate(-180)
-        self.image = self._ctrl.image.mirrored(True, False)
+        self.image = self._ctrl.video_frame.image().mirrored(True, False)
         self.image_label.setPixmap(QPixmap.fromImage(self.image.transformed(transform)))
         self.image_label.setMaximumSize(self.width(), self.height())
 
@@ -294,7 +294,7 @@ class Js06EditTarget(QDialog):
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
     """
-    grabImage = pyqtSignal(QImage)
+    grabVideoFrame = pyqtSignal(QVideoFrame)
 
     def __init__(self, parent: QObject):
         super().__init__()
@@ -333,7 +333,7 @@ class Js06VideoWidget(QWidget):
     ###########
     @pyqtSlot(QVideoFrame)
     def on_videoFrameProbed(self, frame: QVideoFrame):
-        self.grabImage.emit(frame.image())
+        self.grabVideoFrame.emit(frame)
     # end of on_videoFrameProbed
 
     @pyqtSlot(str)
@@ -397,7 +397,7 @@ class Js06MainView(QMainWindow):
         self.video_widget = Js06VideoWidget(self)
         self.video_dock.setWidget(self.video_widget)
         self.setCentralWidget(self.video_dock)
-        self.video_widget.grabImage.connect(self._ctrl.update_image)
+        self.video_widget.grabVideoFrame.connect(self._ctrl.update_video_frame)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
         # self.video_dock.setMinimumSize(self.width(), self.height() / 2)
