@@ -364,8 +364,10 @@ class Js06VideoWidget(QWidget):
     ############
     ## Events ##
     ############
-
-    # end of events
+    def resizeEvent(self, a0: QResizeEvent) -> None:
+        self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
+        return super().resizeEvent(a0)
+    # end of resizeEvent
 
     ###########
     ## Slots ##
