@@ -20,7 +20,7 @@ class Js06CameraTableModel(QAbstractTableModel):
         super().__init__()
         self._headers = [
             "_id",
-            "selected",
+            "placement",
             "label",
             "manufacturer",
             "model",
@@ -143,13 +143,13 @@ class Js06Model:
 
     def update_camera(self, camera: dict, upsert: bool = False):
         response = self.db.camera.update_one(
-            {"_id": camera._id},
+            {"_id": camera["_id"]},
             {"$set": camera}
         )
         return response
     # end of update_camera
 
-    def delete_camera(self, _id: object):
+    def delete_camera(self, _id: str):
         response = self.db.camera.delete_one(
             {"_id": _id}
         )

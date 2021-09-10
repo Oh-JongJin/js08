@@ -40,15 +40,16 @@ class Js06MainCtrl(QObject):
         self.video_frame = video_frame
     # end of update_video_frame
 
-    def get_current_camera_uri(self):
+    def get_current_camera_uris(self):
         return self._attr['camera']['uri']
-    # end of get_current_camera_rui
+    # end of get_current_camera_ruis
 
-    def get_camera_list(self):
+    def get_camera_models(self):
         return self._attr['camera']['model']
+    # end of get_camera_models
 
     def get_target(self):
-        return self._attr['targets']
+        return self._attr['camera']['targets']
     # end of get_target
 
     def get_camera_table_model(self):
@@ -64,6 +65,14 @@ class Js06MainCtrl(QObject):
     # end of check_exit_stauts
 
     def update_cameras(self, cameras: list):
+        # Remove deleted cameras
+        cam_id_in_db = [cam["_id"] for cam in self._model.read_cameras()]
+        cam_id_in_arg = [cam["_id"] for cam in cameras]
+        for cam_id in cam_id_in_db:
+            if cam_id not in cam_id_in_arg:
+                self._model.delete_camera(cam_id)
+
+        # Update existing camera or Insert new cameras
         for cam in cameras:
             self._model.update_camera(cam, upsert=True)
     # end of update_cameras

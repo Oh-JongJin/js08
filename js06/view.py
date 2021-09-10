@@ -17,8 +17,8 @@
 
 import os
 
-from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex
-from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QTransform
+from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent, QTransform
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
@@ -65,22 +65,28 @@ class Js06CameraView(QDialog):
             self._model.removeRows(selected[0].row(), len(selected), None)
     # end of remove_rows
 
-    def save_cameras(self):
-        cameras = self._model.get_data()
-        self._ctrl.update_cameras(cameras)
-    # end of save_cameras
+    # def save_cameras(self):
+    #     cameras = self._model.get_data()
+    #     self._ctrl.update_cameras(cameras)
+    # # end of save_cameras
 
     def accepted(self):
-        index = self.tableView.currentIndex()
-        NewIndex = self.tableView.model().index(index.row(), 7)
-        add = NewIndex.data()
-        print(f"Select uri: [{add}]")
-        index_list = []
-        for model_index in self.tableView.selectionModel().selectedRows():
-            index = QPersistentModelIndex(model_index)
-            index_list.append(index)
+        # index = self.tableView.currentIndex()
+        # NewIndex = self.tableView.model().index(index.row(), 7)
+        # add = NewIndex.data()
+        # index_list = []
+        # for model_index in self.tableView.selectionModel().selectedRows():
+        #     index = QPersistentModelIndex(model_index)
+        #     index_list.append(index)
+        
+        # Update camera db
+        cameras = self._model.get_data()
+        self._ctrl.update_cameras(cameras)
 
-        self._ctrl.current_camera_changed.emit(add)
+        for cam in cameras:
+            if cam['placement'] == 'front':
+                uri = cam['uri']
+        self._ctrl.current_camera_changed.emit(uri)
     # end of accepted
 
 # end of Js06CameraView
@@ -136,10 +142,10 @@ class Js06TargetView(QDialog):
             self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
         self.cameraCombo.addItems(self.cam_name)
 
-        if Js06MainView.current_camera_model is not None and self._ctrl.get_camera_list() in self.cam_name:
+        if Js06MainView.current_camera_model is not None and self._ctrl.get_camera_models() in self.cam_name:
             self.cameraCombo.setCurrentIndex(self.cam_name.index(Js06MainView.current_camera_model))
-        elif self._ctrl.get_camera_list() in self.cam_name:
-            self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_list()))
+        elif self._ctrl.get_camera_models() in self.cam_name:
+            self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_models()))
 
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
         self.combo_changed()
@@ -433,7 +439,7 @@ class Js06MainView(QMainWindow):
         self.setCentralWidget(self.video_dock)
         self.video_widget.grabVideoFrame.connect(self._ctrl.update_video_frame)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
-        self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
+        self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uris())
         # self.video_dock.setMinimumSize(self.width(), self.height() / 2)
 
         # The parameters in the following codes is for the test purposes.
