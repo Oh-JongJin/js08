@@ -1,15 +1,15 @@
 [
     {
         "label": "dev",
-        "model": "JS-06",
+        "model": "JS-08",
         "version": "0.1",
-        "platform": "",
+        "platform": "Window",
         "serial_number": "H30S62FR5WNO",
         "location": {
             "type": "Point",
             "coordinates": [
-                127.3947501,
-                36.4322411
+                36.4322411,
+                127.3947501
             ]
         },
         "camera": {
@@ -23,19 +23,18 @@
             ],
             "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
             "direction": 135,
-            "view_angle": 92.1,
-            "selected": true
+            "view_angle": 92.1
         },
         "targets": [
             {
-                "label": "t1",
+                "label": "1",
                 "distance": 4,
                 "ordinal": "E",
                 "category": "single",
                 "roi": {
                     "point": [
-                        -0.31,
-                        0.43
+                        437,
+                        288
                     ],
                     "size": [
                         0.3,
@@ -44,14 +43,30 @@
                 }
             },
             {
-                "label": "t2",
+                "label": "2",
                 "distance": 5,
                 "ordinal": "S",
+                "category": "compound",
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        0.3,
+                        0.3
+                    ]
+                }
+            },
+            {
+                "label": "3",
+                "distance": 1,
+                "ordinal": "W",
                 "category": "single",
                 "roi": {
                     "point": [
-                        0.09,
-                        0.43
+                        560,
+                        349
                     ],
                     "size": [
                         0.3,

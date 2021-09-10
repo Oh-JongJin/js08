@@ -186,6 +186,10 @@ class Js06Model:
         return response
     # end of insert_attr
 
+    def update_attr(self, attr: dict):
+        self.db.attr.update({'model': 'JS-08'}, {'$set': {'targets': attr}})
+    # end of update_attr
+
 # end of Js06Model
 
 class Js06InferenceRunner(QRunnable):

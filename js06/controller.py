@@ -57,11 +57,6 @@ class Js06MainCtrl(QObject):
         return table_model
     # end of get_camera_table_model
 
-    # def select_camera(self):
-    #     cameras = self._model.read_cameras()
-
-    # end of select_camera
-    #     
     def check_exit_status(self):
         normal_exit = Js06Settings.get('normal_shutdown')
         Js06Settings.set('normal_shutdown', False)
@@ -87,13 +82,8 @@ class Js06MainCtrl(QObject):
     # end of get_attr
     
     def set_attr(self, model: dict):
-        self.attr.insert_one(model)
+        self._model.update_attr(model)
     # end of set_attr
-
-    # @pyqtSlot(int)
-    # def set_current_camera(self, num:int):
-    #     Js06Settings.set('camera', num)
-    # # end of set_curent_camera
 
     @pyqtSlot()
     def restore_defaults(self):
@@ -108,12 +98,6 @@ class Js06MainCtrl(QObject):
     def get_cameras(self):
         return self._model.read_cameras()
     # end of get_camearas
-
-    def update_cameras(self, cameras: list):
-        self._model.delete_all_cameras()
-        for cam in cameras:
-            self._model.insert_camera(cam)
-    # end of update_cameras
 
 # end of Js06MainCtrl
 

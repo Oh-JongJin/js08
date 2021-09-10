@@ -16,17 +16,18 @@
 #         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
 import os
+import time
 
 from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex
-from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QResizeEvent, QTransform
+from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QTransform
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
-    QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QInputDialog, QVBoxLayout, \
-    QWidget, QLabel
+    QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QVBoxLayout, QWidget, QLabel
 from PyQt5 import uic
 
 from js06.controller import Js06MainCtrl
+
 # from views.target_plot_widget_2 import Js06TargetPlotWidget2
 # from views.time_series_plot_widget import Js06TimeSeriesPlotWidget
 
@@ -45,29 +46,34 @@ class Js06CameraView(QDialog):
         self.insertBelow.clicked.connect(self.insert_below)
         self.removeRows.clicked.connect(self.remove_rows)
         self.buttonBox.accepted.connect(self.accepted)
+
     # end of __init__
 
     def insert_above(self):
         selected = self.tableView.selectedIndexes()
         row = selected[0].row() if selected else 0
         self._model.insertRows(row, 1, None)
+
     # end of insert_above
 
     def insert_below(self):
         selected = self.tableView.selectedIndexes()
         row = selected[-1].row() if selected else self._model.rowCount(None)
         self._model.insertRows(row + 1, 1, None)
+
     # end of insert_below
 
     def remove_rows(self):
         selected = self.tableView.selectedIndexes()
         if selected:
             self._model.removeRows(selected[0].row(), len(selected), None)
+
     # end of remove_rows
 
     def save_cameras(self):
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
+
     # end of save_cameras
 
     def accepted(self):
@@ -83,6 +89,7 @@ class Js06CameraView(QDialog):
         self._ctrl.current_camera_changed.emit(add)
     # end of accepted
 
+
 # end of Js06CameraView
 
 class Js06EditTarget(QDialog):
@@ -97,20 +104,30 @@ class Js06EditTarget(QDialog):
         self.cam_name = []
 
         self.target = []
-        self.prime_x = []
-        self.prime_y = []
+        # self.prime_x = []
+        # self.prime_y = []
         self.target_x = []
         self.target_y = []
-        self.label_x = []
-        self.label_y = []
+        self.point_x = []
+        self.point_y = []
+        self.size_x = []
+        self.size_y = []
+        self.ordinal = []
+        self.category = []
+        # self.label_x = []
+        # self.label_y = []
         self.distance = []
         self.oxlist = []
         self.result = []
 
-        # Rotate Edit
-        transform = QTransform().rotate(-180)
-        self.image = self._ctrl.video_frame.image().mirrored(True, False)
-        self.image_label.setPixmap(QPixmap.fromImage(self.image.transformed(transform)))
+        #######
+        self.flag = 0
+        #######
+
+        self.get_target()
+
+        self.image = self._ctrl.video_frame.image().mirrored(False, True)
+        self.image_label.setPixmap(QPixmap.fromImage(self.image))
         self.image_label.setMaximumSize(self.width(), self.height())
 
         self.w = self.image.width()
@@ -118,9 +135,8 @@ class Js06EditTarget(QDialog):
 
         self.blank_lbl = QLabel(self)
 
-        self.blank_lbl.paintEvent = self.blank_paintEvent
         self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
-        self.buttonBox.accepted.connect(self.save_targets)
+        self.buttonBox.accepted.connect(self.save_btn)
         self.buttonBox.rejected.connect(self.rejected_btn)
 
         for i in range(len(self._ctrl.get_cameras())):
@@ -133,144 +149,180 @@ class Js06EditTarget(QDialog):
             self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_list()))
 
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
-        self.cameraCombo.currentTextChanged.connect(self.camera_changed)
-
-        # self.blank_lbl.raise_()
-        self.get_target()
         self.combo_changed()
-    # end of __init__
+        self.blank_lbl.raise_()
 
-    def camera_changed(self):
-        for i in range(len(self._ctrl.get_cameras())):
-            if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
-                add = self._ctrl.get_cameras()[i]['uri']
-        self._ctrl.current_camera_changed.emit(add)
-        # self.image_label.setText("color: #7FFFD4")
-        Js06MainView.current_camera_model = self.cameraCombo.currentText()
+    # end of __init__
 
     # end of camera_changed
 
     def combo_changed(self):
-        targets = self._model
+        self.blank_lbl.paintEvent = self.blank_paintEvent
+        # targets = self._model
         ordinalItems = [self.ordinalCombo.itemText(i) for i in range(self.ordinalCombo.count())]
         categoryItems = [self.categoryCombo.itemText(i) for i in range(self.categoryCombo.count())]
 
-        for i in range(len(targets)):
+        for i in range(len(self.target)):
             if self.numberCombo.currentText() == str(i + 1):
-                self.labelEdit.setText(str(targets[i]['label']))
-                self.distanceEdit.setText(str(targets[i]['distance']))
-                self.point_x_Edit.setText(str(targets[i]['roi']['point'][0]))
-                self.point_y_Edit.setText(str(targets[i]['roi']['point'][1]))
-                self.size_x_Edit.setText(str(targets[i]['roi']['size'][0]))
-                self.size_y_Edit.setText(str(targets[i]['roi']['size'][1]))
+                self.labelEdit.setText(str(self.target[i]))
+                self.distanceEdit.setText(str(self.distance[i]))
+                self.point_x_Edit.setText(str(self.point_x[i]))
+                self.point_y_Edit.setText(str(self.point_y[i]))
+                self.size_x_Edit.setText(str(self.size_x[i]))
+                self.size_y_Edit.setText(str(self.size_y[i]))
 
-                if targets[i]['ordinal'] in ordinalItems:
-                    self.ordinalCombo.setCurrentIndex(ordinalItems.index(targets[i]['ordinal']))
-
-                if targets[i]['category'] in categoryItems:
-                    self.categoryCombo.setCurrentIndex(categoryItems.index(targets[i]['category']))
+                # if targets[i]['ordinal'] in ordinalItems:
+                #     self.ordinalCombo.setCurrentIndex(ordinalItems.index(targets[i]['ordinal']))
+                # if targets[i]['category'] in categoryItems:
+                #     self.categoryCombo.setCurrentIndex(categoryItems.index(targets[i]['category']))
+                if self.ordinal[i] in ordinalItems:
+                    self.ordinalCombo.setCurrentIndex(ordinalItems.index(self.ordinal[i]))
+                if self.category[i] in categoryItems:
+                    self.categoryCombo.setCurrentIndex(categoryItems.index(self.category[i]))
+                break
+            else:
+                self.labelEdit.setText("")
+                self.distanceEdit.setText("")
+                self.point_x_Edit.setText("")
+                self.point_y_Edit.setText("")
+                self.size_x_Edit.setText("")
+                self.size_y_Edit.setText("")
+                self.ordinalCombo.setCurrentIndex(-1)
+                self.categoryCombo.setCurrentIndex(-1)
 
     # end of combo_changed
 
-    def save_targets(self):
-        targets = self._model
-        print("Save")
+    def save_btn(self):
+        result = []
+        for i in range(len(self._ctrl.get_cameras())):
+            if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
+                add = self._ctrl.get_cameras()[i]['uri']
+        self._ctrl.current_camera_changed.emit(add)
+
+        for i in range(self.numberCombo.count()):
+            self.numberCombo.setCurrentIndex(i)
+            result.append({'label': f'{self.labelEdit.text()}',
+                           'distance': f'{float(self.distanceEdit.text())}',
+                           'ordinal': f'{self.ordinalCombo.currentText()}',
+                           'category': f'{self.categoryCombo.currentText()}',
+                           'roi': {
+                               'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())],
+                               'size': [float(self.size_x_Edit.text()), float(self.size_y_Edit.text())]
+                           }})
+        # print(result)
+
+        # Save Target through controller
+        self._ctrl.set_attr(result)
+
         self.close()
+
     # end of save_targets
 
     def save_cameras(self):
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
+
     # end of save_cameras
 
     def rejected_btn(self):
         self.close()
+
     # end of rejected_btn
 
-    def blank_paintEvent(self, event):
+    def blank_paintEvent(self, event: QPaintEvent):
         self.painter = QPainter(self.blank_lbl)
-        if self.target:
-            for name, x, y in zip(self.target, self.label_x, self.label_y):
-                self.painter.drawRect(x - (25 / 4), y - (25 / 4), 25 / 2, 25 / 2)
-                self.painter.drawText(x - 4, y - 10, f"{name}")
+
+        ############################
+        self.painter.setPen(QPen(Qt.black, 1, Qt.DotLine))
+        self.painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
+                              self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
+
+        self.painter.setPen(QPen(Qt.red, 2))
+        for name, x, y in zip(self.target, self.point_x, self.point_y):
+            self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
+            self.painter.drawText(x - 4, y - 10, f"{name}")
         self.blank_lbl.setGeometry(self.image_label.geometry())
+        ############################
 
         self.painter.end()
+
     # end of paintEvent
 
     def blank_mousePressEvent(self, event):
+        self.flag = self.flag + 1
+        self.update()
+
         x = int(event.pos().x() / self.width() * self.w)
         y = int(event.pos().y() / self.height() * self.h)
 
         for i in range(len(self.target)):
             self.target[i] = i + 1
-        # for i in range(len(self.target)):
-        #     if self.target_x[i] - 25 < x < self.target_x[i] + 25 and \
-        #             self.target_y[i] - 25 < y < self.target_y[i] + 25:
-        #         if self.oxlist[i] == 0:
-        #             self.oxlist[i] = 1
-        #         else:
-        #             self.oxlist[i] = 0
+
         if event.buttons() == Qt.LeftButton:
-            # self.target = []
-            text, ok = QInputDialog.getText(self, 'Add Target', 'Distance (km)')
-            if ok and text:
-                print(f"test: {text}")
-                # self.target_x.append(float(x))
-                # self.target_y.append(float(y))
-                # self.distance.append(float(text))
-                # self.target.append(str(len(self.target_x)))
-                # self.oxlist.append(0)
-                # print(f"Target position: {self.target_x[-1]}, {self.target_y[-1]}")
-                # # self.coordinator()
-                # self.save_target()
-                # self.get_target()
-                #
-                # # self.numberCombo.clear()
-                # self.numberCombo.update()
-                # for i in range(len(self.target)):
-                #     self.numberCombo.addItem(str(i + 1))
-                #     self.numberCombo.setCurrentIndex(i)
-                #     self.labelEdit.setText(f"t{i + 1}")
-                # self.distanceEdit.setText(text)
-                # self.ordinalEdit.setText("E")
-                # self.categoryEdit.setText("single")
-                # self.coordinate_x_Edit.setText(str(x))
-                # self.coordinate_y_Edit.setText(str(y))
+            maxVal = max(self.target)
+
+            self.numberCombo.addItem(str(maxVal + 1))
+            self.numberCombo.setCurrentIndex(maxVal)
+
+            self.point_x.append(int(x))
+            self.point_y.append(int(y))
+            self.size_x.append(0.3)
+            self.size_y.append(0.3)
+            self.target.append(len(self.point_x))
+            self.distance.append(0)
+            self.ordinal.append("E")
+            self.category.append("Single")
+
+            self.combo_changed()
+
+            print("mousePressEvent - ", len(self.target))
+            # self.save_target()
+            # self.get_target()
 
         if event.buttons() == Qt.RightButton:
-            # pylint: disable=invalid-name
-            text, ok = QInputDialog.getText(self, 'Remove Target', 'Enter target number to remove')
-            if ok and text:
-                if len(self.target) >= 1:
-                    text = int(text)
-                    del self.target[text - 1]
-                    del self.prime_x[text - 1]
-                    del self.prime_y[text - 1]
-                    del self.label_x[text - 1]
-                    del self.label_y[text - 1]
-                    del self.distance[text - 1]
-                    del self.oxlist[text - 1]
-                    print(f"[Target {text}] remove.")
-    # end of label_mousePressEvent
+            deleteIndex = self.numberCombo.currentIndex() + 1
+            reply = QMessageBox.question(self, "Delete Target",
+                                         f"Are you sure delete target [{deleteIndex}] ?")
+            if reply == QMessageBox.Yes:
+                self.numberCombo.removeItem(deleteIndex - 1)
+                self.numberCombo.setCurrentIndex(deleteIndex - 2)
+
+                del self.point_x[deleteIndex - 1]
+                del self.point_y[deleteIndex - 1]
+                del self.target[deleteIndex - 1]
+                self.combo_changed()
+
+    # end of blank_mousePressEvent
 
     def coordinator(self):
         self.prime_y = [y / self.h for y in self.target_y]
         self.prime_x = [2 * x / self.w - 1 for x in self.target_x]
+
     # end of coordinator
 
     def restoration(self):
         self.target_x = [int((x + 1) * self.w / 2) for x in self.prime_x]
         self.target_y = [int(y * self.h) for y in self.prime_y]
+
     # end of restoration
 
     def save_target(self):
+        targets = self._model
+
         if self.target:
             for i in range(len(self.target)):
-                self.result[i]['label'] = self.target[i]
-                self.result[i]['label_x'] = [int(x * self.width() / self.w) for x in self.target_x][i]
-                self.result[i]['label_y'] = [int(y * self.height() / self.h) for y in self.target_y][i]
-                self.result[i]["distance"] = self.distance
+                pass
+                # self.result[i]['label'] = self.target
+                # # self.result[i]['label_x'] = [int(x * self.width() / self.w) for x in self.target_x][i]
+                # # self.result[i]['label_y'] = [int(y * self.height() / self.h) for y in self.target_y][i]
+                # self.result[i]['roi']['point'][0] = self.label_x
+                # self.result[i]['roi']['point'][1] = self.label_y
+                # self.result[i]["distance"] = self.distance
+                # # print(self.target[i])
+                # # print(self.label_x[i])
+                # # print(self.label_y[i])
+                # # print(self.distance[i])
+
     # end of save_target
 
     def get_target(self):
@@ -283,10 +335,16 @@ class Js06EditTarget(QDialog):
 
         for i in range(len(targets)):
             self.target.append(self.result[i]['label'])
-            self.label_x.append(self.result[i]['roi']['point'][0])
-            self.label_y.append(self.result[i]['roi']['point'][1])
+            self.point_x.append(self.result[i]['roi']['point'][0])
+            self.point_y.append(self.result[i]['roi']['point'][1])
+            self.size_x.append(self.result[i]['roi']['size'][0])
+            self.size_y.append(self.result[i]['roi']['size'][1])
             self.distance.append(self.result[i]['distance'])
+            self.ordinal.append(self.result[i]['ordinal'])
+            self.category.append(self.result[i]['category'])
+
     # end of get_target
+
 
 # end of Js06EditTarget
 
@@ -301,6 +359,7 @@ class Js06VideoWidget(QWidget):
 
         self.scene = QGraphicsScene(self)
         self.graphicView = QGraphicsView(self.scene)
+        self.graphicView.setStyleSheet("background: #000000")
         self.graphicView.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.graphicView.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self._video_item = QGraphicsVideoItem()
@@ -316,15 +375,12 @@ class Js06VideoWidget(QWidget):
         self.probe = QVideoProbe(self)
         self.probe.videoFrameProbed.connect(self.on_videoFrameProbed)
         self.probe.setSource(self.player)
+
     # end of __init__
 
     ############
     ## Events ##
     ############
-    def resizeEvent(self, a0: QResizeEvent) -> None:
-        self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
-        return super().resizeEvent(a0)
-    # end of resizeEvent
 
     # end of events
 
@@ -343,6 +399,7 @@ class Js06VideoWidget(QWidget):
 
         # TODO(Kyungwon): Video resize does not work when app starts.
         self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
+
     # end of on_camera_change
 
     # end of slots
@@ -355,12 +412,14 @@ class Js06VideoWidget(QWidget):
         """
         rectangle = QGraphicsRectItem(*point, *size, self._video_item)
         rectangle.setPen(QPen(Qt.blue))
+
     # end of draw_roi
-    
-    @property
-    def video_item(self):
-        return self._video_item
+
+    # @property
+    # def video_item(self):
+    #     return self._video_item
     # end of video_item
+
 
 # end of VideoWidget
 
@@ -381,7 +440,7 @@ class Js06MainView(QMainWindow):
 
         # Connect signals and slots
         self.restore_defaults_requested.connect(self._ctrl.restore_defaults)
-        self.actionSelect_Camera.triggered.connect(self.select_camera)
+        # self.actionSelect_Camera.triggered.connect(self.select_camera)
 
         # Check the exit status
         normal_exit = self._ctrl.check_exit_status()
@@ -394,6 +453,7 @@ class Js06MainView(QMainWindow):
 
         self.video_dock = QDockWidget("Video", self)
         self.video_dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
+        # self.video_dock.setWindowFlag(Qt.Window, Qt.FramelessWindowHint)
         self.video_widget = Js06VideoWidget(self)
         self.video_dock.setWidget(self.video_widget)
         self.setCentralWidget(self.video_dock)
@@ -424,19 +484,30 @@ class Js06MainView(QMainWindow):
 
         # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
         # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
+
+        self.i = 0
+
     # end of __init__
 
+    # def paintEvent(self, a0: QPaintEvent) -> None:
+    #     print("Paint~~!@~!@", self.i)
+    #     self.i = self.i + 1
+    #     if self.i > 10:
+    #         self.i = 0
+
     def edit_target(self):
-        self.video_widget.player.stop()
+        # self.video_widget.player.stop()
         dlg = Js06EditTarget(self._ctrl)
         dlg.exec_()
-        self.video_widget.player.play()
+        # self.video_widget.player.play()
+
     # end of edit_target
 
     @pyqtSlot()
     def select_camera(self):
         dlg = Js06CameraView(self._ctrl)
         dlg.exec_()
+
     # end of select_camera
 
     def ask_restore_default(self):
@@ -449,12 +520,14 @@ class Js06MainView(QMainWindow):
         )
         if response == QMessageBox.Yes:
             self.restore_defaults_requested.emit()
+
     # end of ask_restore_default
 
     # TODO(kwchun): its better to emit signal and process at the controller
     def closeEvent(self, event: QCloseEvent):
         self._ctrl.set_normal_shutdown()
     # end of closeEvent
+
 
 # end of Js06MainView
 
@@ -464,7 +537,7 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication  # pylint: disable=no-name-in-module
 
     app = QApplication(sys.argv)
-    window = Js06MainView()
+    window = Js06MainView(Js06MainCtrl)
     window.show()
     sys.exit(app.exec_())
 
