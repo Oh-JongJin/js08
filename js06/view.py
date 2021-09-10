@@ -16,7 +16,6 @@
 #         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 
 import os
-import time
 
 from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot, QPersistentModelIndex
 from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QTransform
@@ -46,34 +45,29 @@ class Js06CameraView(QDialog):
         self.insertBelow.clicked.connect(self.insert_below)
         self.removeRows.clicked.connect(self.remove_rows)
         self.buttonBox.accepted.connect(self.accepted)
-
     # end of __init__
 
     def insert_above(self):
         selected = self.tableView.selectedIndexes()
         row = selected[0].row() if selected else 0
         self._model.insertRows(row, 1, None)
-
     # end of insert_above
 
     def insert_below(self):
         selected = self.tableView.selectedIndexes()
         row = selected[-1].row() if selected else self._model.rowCount(None)
         self._model.insertRows(row + 1, 1, None)
-
     # end of insert_below
 
     def remove_rows(self):
         selected = self.tableView.selectedIndexes()
         if selected:
             self._model.removeRows(selected[0].row(), len(selected), None)
-
     # end of remove_rows
 
     def save_cameras(self):
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
-
     # end of save_cameras
 
     def accepted(self):
@@ -89,10 +83,9 @@ class Js06CameraView(QDialog):
         self._ctrl.current_camera_changed.emit(add)
     # end of accepted
 
-
 # end of Js06CameraView
 
-class Js06EditTarget(QDialog):
+class Js06TargetView(QDialog):
     def __init__(self, controller: Js06MainCtrl):
         super().__init__()
 
@@ -151,10 +144,7 @@ class Js06EditTarget(QDialog):
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
         self.combo_changed()
         self.blank_lbl.raise_()
-
     # end of __init__
-
-    # end of camera_changed
 
     def combo_changed(self):
         self.blank_lbl.paintEvent = self.blank_paintEvent
@@ -189,7 +179,6 @@ class Js06EditTarget(QDialog):
                 self.size_y_Edit.setText("")
                 self.ordinalCombo.setCurrentIndex(-1)
                 self.categoryCombo.setCurrentIndex(-1)
-
     # end of combo_changed
 
     def save_btn(self):
@@ -215,18 +204,15 @@ class Js06EditTarget(QDialog):
         self._ctrl.set_attr(result)
 
         self.close()
-
     # end of save_targets
 
     def save_cameras(self):
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
-
     # end of save_cameras
 
     def rejected_btn(self):
         self.close()
-
     # end of rejected_btn
 
     def blank_paintEvent(self, event: QPaintEvent):
@@ -245,7 +231,6 @@ class Js06EditTarget(QDialog):
         ############################
 
         self.painter.end()
-
     # end of paintEvent
 
     def blank_mousePressEvent(self, event):
@@ -291,19 +276,16 @@ class Js06EditTarget(QDialog):
                 del self.point_y[deleteIndex - 1]
                 del self.target[deleteIndex - 1]
                 self.combo_changed()
-
     # end of blank_mousePressEvent
 
     def coordinator(self):
         self.prime_y = [y / self.h for y in self.target_y]
         self.prime_x = [2 * x / self.w - 1 for x in self.target_x]
-
     # end of coordinator
 
     def restoration(self):
         self.target_x = [int((x + 1) * self.w / 2) for x in self.prime_x]
         self.target_y = [int(y * self.h) for y in self.prime_y]
-
     # end of restoration
 
     def save_target(self):
@@ -322,7 +304,6 @@ class Js06EditTarget(QDialog):
                 # # print(self.label_x[i])
                 # # print(self.label_y[i])
                 # # print(self.distance[i])
-
     # end of save_target
 
     def get_target(self):
@@ -342,12 +323,9 @@ class Js06EditTarget(QDialog):
             self.distance.append(self.result[i]['distance'])
             self.ordinal.append(self.result[i]['ordinal'])
             self.category.append(self.result[i]['category'])
-
     # end of get_target
 
-
-# end of Js06EditTarget
-
+# end of Js06TargetView
 
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
@@ -375,7 +353,6 @@ class Js06VideoWidget(QWidget):
         self.probe = QVideoProbe(self)
         self.probe.videoFrameProbed.connect(self.on_videoFrameProbed)
         self.probe.setSource(self.player)
-
     # end of __init__
 
     ############
@@ -399,7 +376,6 @@ class Js06VideoWidget(QWidget):
 
         # TODO(Kyungwon): Video resize does not work when app starts.
         self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
-
     # end of on_camera_change
 
     # end of slots
@@ -412,7 +388,6 @@ class Js06VideoWidget(QWidget):
         """
         rectangle = QGraphicsRectItem(*point, *size, self._video_item)
         rectangle.setPen(QPen(Qt.blue))
-
     # end of draw_roi
 
     # @property
@@ -420,9 +395,7 @@ class Js06VideoWidget(QWidget):
     #     return self._video_item
     # end of video_item
 
-
 # end of VideoWidget
-
 
 class Js06MainView(QMainWindow):
     restore_defaults_requested = pyqtSignal()
@@ -486,7 +459,6 @@ class Js06MainView(QMainWindow):
         # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
 
         self.i = 0
-
     # end of __init__
 
     # def paintEvent(self, a0: QPaintEvent) -> None:
@@ -497,17 +469,15 @@ class Js06MainView(QMainWindow):
 
     def edit_target(self):
         # self.video_widget.player.stop()
-        dlg = Js06EditTarget(self._ctrl)
+        dlg = Js06TargetView(self._ctrl)
         dlg.exec_()
         # self.video_widget.player.play()
-
     # end of edit_target
 
     @pyqtSlot()
     def select_camera(self):
         dlg = Js06CameraView(self._ctrl)
         dlg.exec_()
-
     # end of select_camera
 
     def ask_restore_default(self):
@@ -520,7 +490,6 @@ class Js06MainView(QMainWindow):
         )
         if response == QMessageBox.Yes:
             self.restore_defaults_requested.emit()
-
     # end of ask_restore_default
 
     # TODO(kwchun): its better to emit signal and process at the controller
@@ -528,9 +497,7 @@ class Js06MainView(QMainWindow):
         self._ctrl.set_normal_shutdown()
     # end of closeEvent
 
-
 # end of Js06MainView
-
 
 if __name__ == '__main__':
     import sys
@@ -540,5 +507,4 @@ if __name__ == '__main__':
     window = Js06MainView(Js06MainCtrl)
     window.show()
     sys.exit(app.exec_())
-
 # end of view.py
