@@ -90,7 +90,7 @@ class Js06TargetView(QDialog):
         super().__init__()
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               "../resources/edit_target.ui")
+                               "../resources/target_view.ui")
         uic.loadUi(ui_path, self)
         self._ctrl = controller
         self._model = self._ctrl.get_target()
