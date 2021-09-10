@@ -83,7 +83,7 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
-    <addaction name="actionSelect_Camera"/>
+    <addaction name="actionEdit_Camera"/>
     <addaction name="actionEdit_Target"/>
     <addaction name="actionExit"/>
    </widget>
@@ -152,7 +152,7 @@
     <string>Edit &amp;Target</string>
    </property>
   </action>
-  <action name="actionSelect_Camera">
+  <action name="actionEdit_Camera">
    <property name="enabled">
     <bool>true</bool>
    </property>

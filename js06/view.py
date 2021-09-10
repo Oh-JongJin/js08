@@ -422,6 +422,7 @@ class Js06MainView(QMainWindow):
 
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
 
+        self.actionEdit_Camera.triggered.connect(self.edit_camera)
         self.actionEdit_Target.triggered.connect(self.edit_target)
 
         self.video_dock = QDockWidget("Video", self)
@@ -475,10 +476,10 @@ class Js06MainView(QMainWindow):
     # end of edit_target
 
     @pyqtSlot()
-    def select_camera(self):
+    def edit_camera(self):
         dlg = Js06CameraView(self._ctrl)
         dlg.exec_()
-    # end of select_camera
+    # end of edit_camera
 
     def ask_restore_default(self):
         # Check the last shutdown status
