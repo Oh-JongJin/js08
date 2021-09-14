@@ -510,7 +510,7 @@ class Js06MainView(QMainWindow):
 
 if __name__ == '__main__':
     import sys
-    from PyQt5.QtWidgets import QApplication  # pylint: disable=no-name-in-module
+    from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
     window = Js06MainView(Js06MainCtrl)
