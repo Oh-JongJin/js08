@@ -7,7 +7,7 @@
 #     5jx2oh@gmail.com (Jongjin Oh)
 
 from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, pyqtSlot
-from PyQt5.QtMultimedia import QVideoFrame # pylint: disable=no-name-in-module
+from PyQt5.QtMultimedia import QVideoFrame
 
 from js06.model import Js06CameraTableModel, Js06Model, Js06Settings
 
