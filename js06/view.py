@@ -183,8 +183,7 @@ class Js06TargetView(QDialog):
                                'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())],
                                'size': [int(self.size_x_Edit.text()), int(self.size_y_Edit.text())]
                            }})
-        # print(result)
-
+                           
         # Save Target through controller
         self._ctrl.set_attr(result)
 
