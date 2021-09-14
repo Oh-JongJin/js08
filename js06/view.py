@@ -8,7 +8,7 @@
 
 import os
 
-from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QObject, QTimer, QUrl, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
@@ -61,7 +61,6 @@ class Js06CameraView(QDialog):
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
 
-        # Update attr db and video stream
         for cam in cameras:
             if cam['placement'] == 'front':
                 uri = cam['uri']
@@ -166,12 +165,13 @@ class Js06TargetView(QDialog):
                 self.categoryCombo.setCurrentIndex(-1)
     # end of combo_changed
 
+    @pyqtSlot()
     def save_btn(self):
         result = []
         for i in range(len(self._ctrl.get_cameras())):
             if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
-                add = self._ctrl.get_cameras()[i]['uri']
-        self._ctrl.current_camera_changed.emit(add)
+                address = self._ctrl.get_cameras()[i]['uri']
+        self._ctrl.current_camera_changed.emit(address)
 
         for i in range(self.numberCombo.count()):
             self.numberCombo.setCurrentIndex(i)
@@ -183,7 +183,9 @@ class Js06TargetView(QDialog):
                                'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())],
                                'size': [int(self.size_x_Edit.text()), int(self.size_y_Edit.text())]
                            }})
-                           
+
+        # TODO(Kyungwon): update camera db only, the current camera selection is 
+        # performed at camera view
         # Save Target through controller
         self._ctrl.set_attr(result)
 
@@ -339,11 +341,15 @@ class Js06VideoWidget(QWidget):
         self.probe.setSource(self.player)
     # end of __init__
 
+    def fit_in_view(self):
+        self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
+    # end of fit_in_view
+
     ############
     ## Events ##
     ############
     def resizeEvent(self, a0: QResizeEvent) -> None:
-        self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
+        self.fit_in_view()
         return super().resizeEvent(a0)
     # end of resizeEvent
 
@@ -360,8 +366,9 @@ class Js06VideoWidget(QWidget):
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
 
-        # TODO(Kyungwon): Video resize does not work when app starts.
-        self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
+        # Wait till the video stream arrives before fitting the video
+        for i in [500, 1000, 1500, 2000, 2500]:
+            QTimer.singleShot(i, self.fit_in_view)
     # end of on_camera_change
 
     # end of slots
@@ -443,7 +450,6 @@ class Js06MainView(QMainWindow):
 
         # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
         # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
-
         self.show()
     # end of __init__
 
