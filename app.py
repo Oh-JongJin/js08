@@ -8,8 +8,8 @@
 
 import sys
 
-from PyQt5.QtGui import QIcon # pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import QApplication # pylint: disable=no-name-in-module
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QApplication
 
 from js06.view import Js06MainView
 from js06.model import Js06Model
