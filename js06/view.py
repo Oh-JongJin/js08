@@ -56,28 +56,18 @@ class Js06CameraView(QDialog):
             self._model.removeRows(selected[0].row(), len(selected), None)
     # end of remove_rows
 
-    # def save_cameras(self):
-    #     cameras = self._model.get_data()
-    #     self._ctrl.update_cameras(cameras)
-    # # end of save_cameras
-
     def accepted(self):
-        # index = self.tableView.currentIndex()
-        # NewIndex = self.tableView.model().index(index.row(), 7)
-        # add = NewIndex.data()
-        # index_list = []
-        # for model_index in self.tableView.selectionModel().selectedRows():
-        #     index = QPersistentModelIndex(model_index)
-        #     index_list.append(index)
-        
         # Update camera db
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
 
+        # Update attr db and video stream
         for cam in cameras:
             if cam['placement'] == 'front':
                 uri = cam['uri']
+                break
         self._ctrl.current_camera_changed.emit(uri)
+        self._ctrl.set_attr(cam)
     # end of accepted
 
 # end of Js06CameraView
@@ -133,9 +123,7 @@ class Js06TargetView(QDialog):
             self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
         self.cameraCombo.addItems(self.cam_name)
 
-        if Js06MainView.current_camera_model is not None and self._ctrl.get_camera_models() in self.cam_name:
-            self.cameraCombo.setCurrentIndex(self.cam_name.index(Js06MainView.current_camera_model))
-        elif self._ctrl.get_camera_models() in self.cam_name:
+        if self._ctrl.get_camera_models() in self.cam_name:
             self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_models()))
 
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
@@ -193,7 +181,7 @@ class Js06TargetView(QDialog):
                            'category': f'{self.categoryCombo.currentText()}',
                            'roi': {
                                'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())],
-                               'size': [float(self.size_x_Edit.text()), float(self.size_y_Edit.text())]
+                               'size': [int(self.size_x_Edit.text()), int(self.size_y_Edit.text())]
                            }})
         # print(result)
 
