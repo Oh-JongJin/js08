@@ -468,6 +468,7 @@ class Js06MainView(QMainWindow):
         # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
 
         self.i = 0
+        self.show()
     # end of __init__
 
     # def paintEvent(self, a0: QPaintEvent) -> None:

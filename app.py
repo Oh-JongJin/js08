@@ -26,12 +26,11 @@ def main():
     ctrl = Js06MainCtrl(model)
     # Show GUI of JS-06
     view = Js06MainView(ctrl)
-    view.show()
     # Set icon of the app
     app_icon = QIcon(":icon/logo.png")
     view.setWindowIcon(app_icon)
     # Execute calculator's main loop
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 # end of main
 
 if __name__ == "__main__":
