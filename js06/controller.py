@@ -40,9 +40,9 @@ class Js06MainCtrl(QObject):
         self.video_frame = video_frame
     # end of update_video_frame
 
-    def get_current_camera_uris(self):
+    def get_current_camera_uri(self):
         return self._attr['camera']['uri']
-    # end of get_current_camera_ruis
+    # end of get_current_camera_rui
 
     def get_camera_models(self):
         return self._attr['camera']['model']

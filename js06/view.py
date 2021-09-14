@@ -6,19 +6,10 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-# # Set up backends of matplotlib
-# from matplotlib.backends.qt_compat import QtCore
-# if QtCore.qVersion() >= "5.":
-#     from matplotlib.backends.backend_qt5agg import (
-#         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
-# else:
-#     from matplotlib.backends.backend_qt4agg import (
-#         FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
-
 import os
 
 from PyQt5.QtCore import QObject, QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent, QTransform
+from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
@@ -339,7 +330,7 @@ class Js06VideoWidget(QWidget):
     grabVideoFrame = pyqtSignal(QVideoFrame)
 
     def __init__(self, parent: QObject):
-        super().__init__()
+        super().__init__(parent)
 
         self.scene = QGraphicsScene(self)
         self.graphicView = QGraphicsView(self.scene)
@@ -409,7 +400,6 @@ class Js06MainView(QMainWindow):
     restore_defaults_requested = pyqtSignal()
     main_view_closed = pyqtSignal()
     select_camera_requested = pyqtSignal()
-    current_camera_model = None
 
     def __init__(self, controller: Js06MainCtrl):
         super().__init__()
@@ -441,7 +431,7 @@ class Js06MainView(QMainWindow):
         self.setCentralWidget(self.video_dock)
         self.video_widget.grabVideoFrame.connect(self._ctrl.update_video_frame)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
-        self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uris())
+        self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
         # self.video_dock.setMinimumSize(self.width(), self.height() / 2)
 
         # The parameters in the following codes is for the test purposes.
@@ -467,21 +457,12 @@ class Js06MainView(QMainWindow):
         # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
         # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
 
-        self.i = 0
         self.show()
     # end of __init__
 
-    # def paintEvent(self, a0: QPaintEvent) -> None:
-    #     print("Paint~~!@~!@", self.i)
-    #     self.i = self.i + 1
-    #     if self.i > 10:
-    #         self.i = 0
-
     def edit_target(self):
-        # self.video_widget.player.stop()
         dlg = Js06TargetView(self._ctrl)
         dlg.exec_()
-        # self.video_widget.player.play()
     # end of edit_target
 
     @pyqtSlot()
@@ -515,6 +496,5 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     window = Js06MainView(Js06MainCtrl)
-    window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 # end of view.py

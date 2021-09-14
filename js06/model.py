@@ -186,6 +186,7 @@ class Js06Model:
         return response
     # end of insert_attr
 
+    # TODO(Kyungwon): target attribute was moved into camera attribute.
     def update_attr(self, attr: dict):
         self.db.attr.update({'model': 'JS-08'}, {'$set': {'targets': attr}})
     # end of update_attr
