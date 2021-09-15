@@ -18,18 +18,15 @@ from PyQt5 import uic
 
 from js06.controller import Js06MainCtrl
 
-# from views.target_plot_widget_2 import Js06TargetPlotWidget2
-# from views.time_series_plot_widget import Js06TimeSeriesPlotWidget
-
 class Js06CameraView(QDialog):
-    def __init__(self, controller: Js06MainCtrl):
-        super().__init__()
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/camera_view.ui")
         uic.loadUi(ui_path, self)
 
-        self._ctrl = controller
+        self._ctrl = parent._ctrl
         self._model = self._ctrl.get_camera_table_model()
         self.tableView.setModel(self._model)
         self.insertAbove.clicked.connect(self.insert_above)
@@ -72,13 +69,13 @@ class Js06CameraView(QDialog):
 # end of Js06CameraView
 
 class Js06TargetView(QDialog):
-    def __init__(self, controller: Js06MainCtrl):
-        super().__init__()
+    def __init__(self, parent: QWidget):
+        super().__init__(parent)
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/target_view.ui")
         uic.loadUi(ui_path, self)
-        self._ctrl = controller
+        self._ctrl = parent._ctrl
         self._model = self._ctrl.get_target()
         self.cam_name = []
 
@@ -454,13 +451,13 @@ class Js06MainView(QMainWindow):
     # end of __init__
 
     def edit_target(self):
-        dlg = Js06TargetView(self._ctrl)
+        dlg = Js06TargetView(self)
         dlg.exec_()
     # end of edit_target
 
     @pyqtSlot()
     def edit_camera(self):
-        dlg = Js06CameraView(self._ctrl)
+        dlg = Js06CameraView(self)
         dlg.exec_()
     # end of edit_camera
 
