@@ -316,7 +316,7 @@ class Js06TargetView(QDialog):
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
     """
-    grabVideoFrame = pyqtSignal(QVideoFrame)
+    video_frame_prepared = pyqtSignal(QVideoFrame)
 
     def __init__(self, parent: QObject):
         super().__init__(parent)
@@ -358,7 +358,7 @@ class Js06VideoWidget(QWidget):
     ###########
     @pyqtSlot(QVideoFrame)
     def on_videoFrameProbed(self, frame: QVideoFrame):
-        self.grabVideoFrame.emit(frame)
+        self.video_frame_prepared.emit(frame)
     # end of on_videoFrameProbed
 
     @pyqtSlot(str)
@@ -423,7 +423,7 @@ class Js06MainView(QMainWindow):
         self.video_widget = Js06VideoWidget(self)
         self.video_dock.setWidget(self.video_widget)
         self.setCentralWidget(self.video_dock)
-        self.video_widget.grabVideoFrame.connect(self._ctrl.update_video_frame)
+        self.video_widget.video_frame_prepared.connect(self._ctrl.update_video_frame)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
         # self.video_dock.setMinimumSize(self.width(), self.height() / 2)
