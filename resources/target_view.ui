@@ -268,12 +268,12 @@
            <widget class="QComboBox" name="categoryCombo">
             <item>
              <property name="text">
-              <string>Single</string>
+              <string>single</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>Compound</string>
+              <string>compound</string>
              </property>
             </item>
            </widget>
