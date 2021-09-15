@@ -21,6 +21,7 @@ from js06.controller import Js06MainCtrl
 # from views.target_plot_widget_2 import Js06TargetPlotWidget2
 # from views.time_series_plot_widget import Js06TimeSeriesPlotWidget
 
+
 class Js06CameraView(QDialog):
     def __init__(self, controller: Js06MainCtrl):
         super().__init__()
@@ -71,6 +72,7 @@ class Js06CameraView(QDialog):
 
 # end of Js06CameraView
 
+
 class Js06TargetView(QDialog):
     def __init__(self, controller: Js06MainCtrl):
         super().__init__()
@@ -83,8 +85,6 @@ class Js06TargetView(QDialog):
         self.cam_name = []
 
         self.target = []
-        # self.prime_x = []
-        # self.prime_y = []
         self.target_x = []
         self.target_y = []
         self.point_x = []
@@ -93,15 +93,9 @@ class Js06TargetView(QDialog):
         self.size_y = []
         self.ordinal = []
         self.category = []
-        # self.label_x = []
-        # self.label_y = []
         self.distance = []
         self.oxlist = []
         self.result = []
-
-        #######
-        self.flag = 0
-        #######
 
         self.get_target()
 
@@ -132,7 +126,6 @@ class Js06TargetView(QDialog):
 
     def combo_changed(self):
         self.blank_lbl.paintEvent = self.blank_paintEvent
-        # targets = self._model
         ordinalItems = [self.ordinalCombo.itemText(i) for i in range(self.ordinalCombo.count())]
         categoryItems = [self.categoryCombo.itemText(i) for i in range(self.categoryCombo.count())]
 
@@ -145,10 +138,6 @@ class Js06TargetView(QDialog):
                 self.size_x_Edit.setText(str(self.size_x[i]))
                 self.size_y_Edit.setText(str(self.size_y[i]))
 
-                # if targets[i]['ordinal'] in ordinalItems:
-                #     self.ordinalCombo.setCurrentIndex(ordinalItems.index(targets[i]['ordinal']))
-                # if targets[i]['category'] in categoryItems:
-                #     self.categoryCombo.setCurrentIndex(categoryItems.index(targets[i]['category']))
                 if self.ordinal[i] in ordinalItems:
                     self.ordinalCombo.setCurrentIndex(ordinalItems.index(self.ordinal[i]))
                 if self.category[i] in categoryItems:
@@ -204,7 +193,6 @@ class Js06TargetView(QDialog):
     def blank_paintEvent(self, event: QPaintEvent):
         self.painter = QPainter(self.blank_lbl)
 
-        ############################
         self.painter.setPen(QPen(Qt.black, 1, Qt.DotLine))
         self.painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
                               self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
@@ -214,13 +202,11 @@ class Js06TargetView(QDialog):
             self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
             self.painter.drawText(x - 4, y - 10, f"{name}")
         self.blank_lbl.setGeometry(self.image_label.geometry())
-        ############################
 
         self.painter.end()
     # end of paintEvent
 
     def blank_mousePressEvent(self, event):
-        self.flag = self.flag + 1
         self.update()
 
         x = int(event.pos().x() / self.width() * self.w)
@@ -275,7 +261,7 @@ class Js06TargetView(QDialog):
     # end of restoration
 
     def save_target(self):
-        targets = self._model
+        # targets = self._model
 
         if self.target:
             for i in range(len(self.target)):
@@ -312,6 +298,7 @@ class Js06TargetView(QDialog):
     # end of get_target
 
 # end of Js06TargetView
+
 
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
@@ -353,6 +340,8 @@ class Js06VideoWidget(QWidget):
         return super().resizeEvent(a0)
     # end of resizeEvent
 
+    # end of events
+
     ###########
     ## Slots ##
     ###########
@@ -383,12 +372,8 @@ class Js06VideoWidget(QWidget):
         rectangle.setPen(QPen(Qt.blue))
     # end of draw_roi
 
-    # @property
-    # def video_item(self):
-    #     return self._video_item
-    # end of video_item
-
 # end of VideoWidget
+
 
 class Js06MainView(QMainWindow):
     restore_defaults_requested = pyqtSignal()
@@ -405,7 +390,6 @@ class Js06MainView(QMainWindow):
 
         # Connect signals and slots
         self.restore_defaults_requested.connect(self._ctrl.restore_defaults)
-        # self.actionSelect_Camera.triggered.connect(self.select_camera)
 
         # Check the exit status
         normal_exit = self._ctrl.check_exit_status()
@@ -419,14 +403,12 @@ class Js06MainView(QMainWindow):
 
         self.video_dock = QDockWidget("Video", self)
         self.video_dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
-        # self.video_dock.setWindowFlag(Qt.Window, Qt.FramelessWindowHint)
         self.video_widget = Js06VideoWidget(self)
         self.video_dock.setWidget(self.video_widget)
         self.setCentralWidget(self.video_dock)
         self.video_widget.grabVideoFrame.connect(self._ctrl.update_video_frame)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
-        # self.video_dock.setMinimumSize(self.width(), self.height() / 2)
 
         # The parameters in the following codes is for the test purposes.
         # They should be changed to use canonical coordinates.
@@ -455,6 +437,7 @@ class Js06MainView(QMainWindow):
 
     def edit_target(self):
         dlg = Js06TargetView(self._ctrl)
+        dlg.resize(self.width(), self.height())
         dlg.exec_()
     # end of edit_target
 
@@ -483,6 +466,7 @@ class Js06MainView(QMainWindow):
 
 # end of Js06MainView
 
+
 if __name__ == '__main__':
     import sys
     from PyQt5.QtWidgets import QApplication
@@ -490,4 +474,5 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Js06MainView(Js06MainCtrl)
     sys.exit(app.exec())
+
 # end of view.py
