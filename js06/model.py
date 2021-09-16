@@ -8,9 +8,10 @@
 import json
 import os
 import platform
+from PyQt5.QtGui import QImage
 import pymongo
 
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QRunnable, Qt, QSettings, pyqtSlot
+from PyQt5.QtCore import QAbstractTableModel, QDateTime, QModelIndex, QRunnable, QStandardPaths, Qt, QSettings, pyqtSlot
 
 Js06TargetCategory = ['single', 'compound']
 Js06Ordinal = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
@@ -191,30 +192,27 @@ class Js06Model:
         self.db.attr.update({'model': 'JS-08'}, {'$set': {'targets': attr}})
     # end of update_attr
 
+    def write_discernment_result(self, epoch: int, id: int, discernment: bool):
+        # self.db.disc.
+        pass
+    # end of write_discerment_result
+
 # end of Js06Model
-
-class Js06InferenceRunner(QRunnable):
-    def __init__(self, i):
-        super().__init__()
-        self.i = i
-        self.setAutoDelete(True)
-    # end of __init__
-
-    @pyqtSlot()
-    def run(self):
-        print(f"{self.i}: Sleeping 3 seconds")
-        import time
-        time.sleep(3)
-    # end of run
-
-# end of Js06InferenceRunner
 
 class Js06Settings:
     settings = QSettings('sijung', 'js06')
 
     defaults = {
-        'camera': 3,
+        'observation_period': 1, # in minute
         'normal_shutdown': False,
+        'save_vista': True,
+        'save_image_patch': True,
+        'image_base_path': os.path.join(
+            QStandardPaths.writableLocation(QStandardPaths.PicturesLocation),
+            'js06'
+        ),
+        # 'window_size': [800, 600],
+        'thread_count': 2,
         'db_host': 'localhost',
         'db_port': 27017,
         'db_name': 'js06',
@@ -245,6 +243,40 @@ class Js06Settings:
     # end of restore_defaults
 
 # end of Js06Settings
+
+class Js06InferenceRunner(QRunnable):
+    def __init__(self, model: Js06Model, epoch: int, id: int, image: QImage):
+        super().__init__()
+        self.setAutoDelete(True)
+
+        self.model = model
+        self.epoch = epoch
+        self.id = id
+        self.image = image
+    # end of __init__
+
+    def run(self):
+        discernment = True
+        self.model.write_discernment_result(self.epoch, self.id, discernment)
+    # end of run
+
+# end of Js06InferenceRunner
+
+class Js06IoRunner(QRunnable):
+    def __init__(self, path: str, image: QImage):
+        super().__init__()
+        self.setAutoDelete(True)
+
+        self.path = path
+        self.image = image
+    # end of __init__
+
+    def run(self):
+        print(f'DEBUG: {self.path}')
+        self.image.save(self.path)
+    # end of run
+
+# end of Js06IoRunner
 
 if __name__ == '__main__':
     import faker

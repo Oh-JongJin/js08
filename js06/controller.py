@@ -6,10 +6,12 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-from PyQt5.QtCore import QObject, QThreadPool, pyqtSignal, pyqtSlot
+import os
+from PyQt5.QtCore import QDate, QDateTime, QDir, QObject, QRect, QThreadPool, QTime, QTimer, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QImage
 from PyQt5.QtMultimedia import QVideoFrame
 
-from js06.model import Js06CameraTableModel, Js06Model, Js06Settings
+from js06.model import Js06CameraTableModel, Js06InferenceRunner, Js06IoRunner, Js06Model, Js06Settings
 
 class Js06MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
@@ -18,14 +20,26 @@ class Js06MainCtrl(QObject):
     def __init__(self, model: Js06Model):
         super().__init__()
 
-        self.thread_pool = QThreadPool.globalInstance()
+        self.inference_pool = QThreadPool.globalInstance()
+        self.set_max_inference_thread()
+
+        self.io_pool = QThreadPool.globalInstance()
+        self.io_pool.setMaxThreadCount(1)
 
         self._model = model
 
         self.video_frame = None
 
         self.init()
+
+        self.timer = QTimer()
+        self.current_camera_changed.connect(self.start_timer)
     # end of __init__
+
+    def set_max_inference_thread(self):
+        threads = Js06Settings.get('thread_count')
+        self.inference_pool.setMaxThreadCount(threads)
+    # end of set_max_inference_thread
 
     def init(self):
         db_host = Js06Settings.get('db_host')
@@ -35,6 +49,67 @@ class Js06MainCtrl(QObject):
 
         self._attr = self._model.read_attr()
     # end of init
+
+    @pyqtSlot(str)
+    def start_timer(self, _:str) -> None:
+        print('DEBUG:', QTime.currentTime().toString())
+        observation_period = Js06Settings.get('observation_period')
+        self.timer.setInterval(observation_period * 60 * 1000)
+        self.timer.timeout.connect(self.job_broker)
+
+        # Start repeating timer on time        
+        now = QTime.currentTime()
+        minute_left = observation_period - (now.minute() % observation_period) - 1
+        second_left = 60 - now.second()
+        timeout_in_sec = minute_left * 60 + second_left
+        QTimer.singleShot(timeout_in_sec * 1000, self.timer.start)
+    # end of start_timer
+
+    def stop_timer(self) -> None:
+        self.timer.stop()
+    # end of stop_timer
+
+    def job_broker(self) -> None:
+        # print('DEBUG: Inside of job_broker')
+        if self.video_frame == None:
+            return
+        
+        epoch = QDateTime.currentSecsSinceEpoch()
+        # print('DEBUG:', now.toString())
+        image = self.get_image()
+            
+        if Js06Settings.get('save_vista'):
+            basepath = Js06Settings.get('image_base_path')
+            print(f'DEBUG: {basepath}')
+            now = QDateTime.fromSecsSinceEpoch(epoch)
+            dir = os.path.join(basepath, 'vista', now.toString("yyyy-MM-dd"))
+            filename = f'vista-{now.toString("yyyy-MM-dd-hh-mm")}.png'
+            self.save_image(dir, filename, image)
+
+        targets = self.get_target()
+        # print('DEBUG:', type(targets))
+        for i, tg in enumerate(targets):
+            id = i # key
+            point = tg['roi']['point']
+            size = tg['roi']['size']
+            rect = QRect(*point, *size)
+            patch = image.copy(rect) # key
+            inf_runner = Js06InferenceRunner(self._model, epoch, id, patch)
+            self.inference_pool.start(inf_runner)
+    # end of job_broker
+
+    def save_image(self, dir: str, filename: str, image: QImage):
+        os.makedirs(dir, exist_ok=True)
+        path = QDir.cleanPath(os.path.join(dir, filename))
+        runner = Js06IoRunner(path, image)
+        self.io_pool.start(runner)
+    # end of save_image
+
+    def get_image(self) -> QImage:
+        if self.video_frame == None:
+            return None
+        image = self.video_frame.image().mirrored(False, True)
+        return image
 
     def update_video_frame(self, video_frame: QVideoFrame):
         self.video_frame = video_frame
