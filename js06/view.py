@@ -21,6 +21,7 @@ from js06.controller import Js06MainCtrl
 class Js06CameraView(QDialog):
     def __init__(self, parent: QWidget):
         super().__init__(parent)
+        self.setModal(True)
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/camera_view.ui")
@@ -71,6 +72,7 @@ class Js06CameraView(QDialog):
 class Js06TargetView(QDialog):
     def __init__(self, parent: QWidget):
         super().__init__(parent)
+        self.setModal(True)
 
         ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                "../resources/target_view.ui")
@@ -354,12 +356,12 @@ class Js06VideoWidget(QWidget):
     ## Slots ##
     ###########
     @pyqtSlot(QVideoFrame)
-    def on_videoFrameProbed(self, frame: QVideoFrame):
+    def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
         self.video_frame_prepared.emit(frame)
     # end of on_videoFrameProbed
 
     @pyqtSlot(str)
-    def on_camera_change(self, uri):
+    def on_camera_change(self, uri: str) -> None:
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
 
@@ -423,6 +425,7 @@ class Js06MainView(QMainWindow):
         self.video_widget.video_frame_prepared.connect(self._ctrl.update_video_frame)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
+        
         # self.video_dock.setMinimumSize(self.width(), self.height() / 2)
 
         # The parameters in the following codes is for the test purposes.
