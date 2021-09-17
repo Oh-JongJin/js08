@@ -157,11 +157,11 @@ class Js06MainCtrl(QObject):
         Js06Settings.set('normal_shutdown', True)
     # end of close_process
 
-    def get_attr(self, model: dict):
-        if self.attr.count_documents({}):
-            attr_doc = list(self.attr.find().sort("_id", -1).limit(1))[0]
-        else:
-            attr_doc = model
+    def get_attr(self):
+        self._model.get_attr()
+        attr_doc = None
+        if self._attr.count_documents({}):
+            attr_doc = list(self._attr.find().sort("_id", -1).limit(1))[0]
         return attr_doc
     # end of get_attr
     

@@ -64,7 +64,10 @@ class Js06CameraView(QDialog):
                 uri = cam['uri']
                 break
         self._ctrl.current_camera_changed.emit(uri)
-        self._ctrl.set_attr(cam)
+        
+        attr = self._ctrl.get_attr()
+        attr['camera'] = cam
+        self._ctrl.insert_attr(attr)
     # end of accepted
 
 # end of Js06CameraView

@@ -11,7 +11,7 @@ import platform
 from PyQt5.QtGui import QImage
 import pymongo
 
-from PyQt5.QtCore import QAbstractTableModel, QDateTime, QModelIndex, QRunnable, QStandardPaths, Qt, QSettings, pyqtSlot
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QRunnable, QStandardPaths, Qt, QSettings
 
 Js06TargetCategory = ['single', 'compound']
 Js06Ordinal = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
@@ -114,83 +114,126 @@ class Js06Model:
         self.db = None
     # end of __init__
 
-    def setup_db(self, attr_json: str, camera_json: str):
-        """
-        Paramters:
-          attr_json: Path to the attribute JSON file.
-          camera_json: Path to the files containing list of camera information.
-        """
-        if camera_json is not None:
-            with open(camera_json, 'r') as fh:
-                camera_data = json.load(fh)
-            self.db.camera.insert_many(camera_data)
-
-        if attr_json is not None:
-            with open(attr_json, 'r') as fh:
-                attr_data = json.load(fh)
-                attr_data[0]["platform"] = platform.platform()
-            self.db.attr.insert_one(attr_data[0])
-    # end of setup_db
-
-    def connect_to_db(self, uri: str, port: int, db: str):
+    def connect_to_db(self, uri: str, port: int, db: str) -> None:
         client = pymongo.MongoClient(uri, port)
         self.db = client[db]
     # end of connect_to_db
 
-    def insert_camera(self, camera: dict):
+    def setup_db(self, attr_json: list, camera_json: list) -> None:
+        """
+        Paramters:
+            attr_json: list of attribute dictionary
+            camera_json: list of camerae dictionary
+        """
+        self.db.camera.insert_many(camera_json)
+    
+        front = self.db.camera.find_one({'placement': 'front'})
+        if attr_json:
+            attr_json[-1]["platform"] = platform.platform()
+            attr_json[-1]["camera"] = front
+            self.db.attr.insert_many(attr_json)
+    # end of setup_db
+
+    def insert_camera(self, camera: dict) -> str:
+        """Insert a camera.
+
+        Parameters:
+            camera: a camera dictionary
+
+        Returns:
+            The _id of the inserted camera
+        """
         response = self.db.camera.insert_one(camera)
-        return response
+        return str(response.inserted_id)
     # end of insert_camera
 
-    def update_camera(self, camera: dict, upsert: bool = False):
+    def upsert_camera(self, camera: dict) -> str:
+        """Update a camera with matched _id or insert one.
+
+        Parameters:
+            camera: a camera dictionary
+
+        Returns:
+            The _id of the inserted camera if an upsert took place.
+            Otherwise None.
+        """
         response = self.db.camera.update_one(
             {"_id": camera["_id"]},
-            {"$set": camera}
+            {"$set": camera},
+            upsert=True
         )
-        return response
+
+        if response.upserted_id:
+            return str(response.upserted_id)
+        else:
+            return None
     # end of update_camera
 
-    def delete_camera(self, _id: str):
+    def delete_camera(self, _id: str) -> int:
+        """Delete a camera with matching _id.
+
+        Parameters:
+          _id: _id of cameras to delete.
+        
+        Return:
+          The number of cameras deleted.
+        """
         response = self.db.camera.delete_one(
             {"_id": _id}
         )
-        return response
+        return response.deleted_count
     # end of delete_camera
 
-    def delete_all_cameras(self):
+    def delete_all_cameras(self) -> int:
+        """Delete all cameras in the database.
+
+        Parameters:
+
+        Return:
+            The number of cameras deleted.
+        """
         response = self.db.camera.delete_many({})
-        return response
+        return response.deleted_count
     # end of delete_all_cameras
 
-    def read_cameras(self):
-        cameras = []
+    def read_cameras(self) -> list:
+        """Get all cameras in the database.
+
+        Parameters:
+
+        Returns:
+            The list of all cameras
+        """
         cr = self.db.camera.find()
-        for cam in cr:
-            cameras.append(cam)
-        return cameras
+        return [cam for cam in cr]
     # end of read_cameras
 
-    def read_attr(self):
+    def read_attr(self) -> dict:
+        """Get the latest attribute in the database.
+
+        Parameters:
+
+        Returns:
+            A dictionary of the latest attribute
+        """
         cr = self.db.attr.find().sort('_id', pymongo.DESCENDING).limit(1)
-        if cr.count() == 0:
-            attr_json = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                     "../resources/attr.json")
-            camera_json = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                       "../resources/camera.json")
-            self.setup_db(attr_json, camera_json)
-        a = next(cr)
-        return a
+        return next(cr)
     # end of read_attr
 
-    def insert_attr(self, attr: dict):
-        response = self.db.attr.insert_one(attr)
-        return response
-    # end of insert_attr
+    def insert_attr(self, attr: dict) -> str:
+        """Insert a new attribute.
 
-    # TODO(Kyungwon): target attribute was moved into camera attribute.
-    def update_attr(self, attr: dict):
-        self.db.attr.update({'model': 'JS-08'}, {'$set': {'targets': attr}})
-    # end of update_attr
+        Parameters:
+            attr: The attribute to insert. Must be a mutable mapping type. If 
+            the attribute does not have an _id field one will be added 
+            automatically.
+
+        Returns:
+            The inserted attributes' _id.
+        """
+        response = self.db.attr.insert_one(attr)
+        return str(response.inserted_id)
+    # end of insert_attr
 
     def write_discernment_result(self, epoch: int, id: int, discernment: bool):
         # self.db.disc.
@@ -204,22 +247,24 @@ class Js06Settings:
 
     defaults = {
         'observation_period': 1, # in minute
-        'normal_shutdown': False,
         'save_vista': True,
         'save_image_patch': True,
         'image_base_path': os.path.join(
             QStandardPaths.writableLocation(QStandardPaths.PicturesLocation),
             'js06'
         ),
-        # 'window_size': [800, 600],
         'thread_count': 2,
+        # Database settings
         'db_host': 'localhost',
         'db_port': 27017,
         'db_name': 'js06',
         'db_admin': 'sijung',
         'db_admin_password': 'sijung_pw',
         'db_user': 'js06',
-        'db_user_password': 'js06_pw'
+        'db_user_password': 'js06_pw',
+        # Hidden settings
+        # 'window_size': [800, 600],
+        'normal_shutdown': False
     }
 
     @classmethod
