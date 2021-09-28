@@ -412,11 +412,12 @@ class Js06MainView(QMainWindow):
         self.actionEdit_Target.triggered.connect(self.edit_target)
         self.actionAbout.triggered.connect(self.about_view)
 
-        self.video_dock = QDockWidget("Front Camera", self)
-        self.video_dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
+        # self.video_dock = QDockWidget("Front Camera", self)
+        # self.video_dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
+        self.video_dock.setTitleBarWidget(QWidget(self))
         self.video_widget = Js06VideoWidget(self)
         self.video_dock.setWidget(self.video_widget)
-        self.setCentralWidget(self.video_dock)
+        # self.setCentralWidget(self.video_dock)
         self.video_widget.video_frame_prepared.connect(self._ctrl.update_video_frame)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
@@ -425,15 +426,16 @@ class Js06MainView(QMainWindow):
         # They should be changed to use canonical coordinates.
         # self.video_widget.draw_roi((50, 50), (40, 40))
 
-        self.video_dock2 = QDockWidget("Back Camera", self)
-        self.video_dock2.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
+        # self.video_dock2 = QDockWidget("Back Camera", self)
+        # self.video_dock2.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
+        self.video_dock2.setTitleBarWidget(QWidget(self))
         self.video_widget2 = Js06VideoWidget(self)
         self.video_dock2.setWidget(self.video_widget2)
         # self.setCentralWidget(self.video_dock2)
-        self.video_widget2.video_frame_prepared.connect(self._ctrl.update_video_frame)
+        # self.video_widget2.video_frame_prepared.connect(self._ctrl.update_video_frame)
         self._ctrl.current_camera_changed.connect(self.video_widget2.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
-        self.addDockWidget(Qt.BottomDockWidgetArea, self.video_dock2)
+        # self.addDockWidget(Qt.BottomDockWidgetArea, self.video_dock2)
 
         # # target plot dock
         # self.target_plot_dock = QDockWidget("Target plot", self)
@@ -468,6 +470,9 @@ class Js06MainView(QMainWindow):
     def about_view(self):
         dlg = Js06AboutView()
         dlg.exec_()
+
+        print(self.video_dock.size())
+        print(self.video_dock2.size())
 
     @pyqtSlot()
     def edit_camera(self):
