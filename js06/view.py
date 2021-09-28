@@ -433,10 +433,7 @@ class Js06MainView(QMainWindow):
         self.video_widget2.video_frame_prepared.connect(self._ctrl.update_video_frame)
         self._ctrl.current_camera_changed.connect(self.video_widget2.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
-        # self.addDockWidget(Qt.BottomDockWidgetArea, self.video_dock2)
-
-        self.splitDockWidget(self.video_dock, self.video_dock2, Qt.Horizontal)
-
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.video_dock2)
 
         # # target plot dock
         # self.target_plot_dock = QDockWidget("Target plot", self)
