@@ -406,6 +406,7 @@ class Js06MainView(QMainWindow):
         if not normal_exit:
             self.ask_restore_default()
 
+        # self.setWindowFlags(Qt.FramelessWindowHint)
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
 
         self.actionEdit_Camera.triggered.connect(self.edit_camera)
@@ -464,15 +465,12 @@ class Js06MainView(QMainWindow):
         dlg.resize(self.width(), self.height())
         dlg.exec_()
 
-        self.setWindowOpacity(0.1)
+        # self.setWindowOpacity(0.1)
     # end of edit_target
 
     def about_view(self):
         dlg = Js06AboutView()
         dlg.exec_()
-
-        print(self.video_dock.size())
-        print(self.video_dock2.size())
 
     @pyqtSlot()
     def edit_camera(self):
