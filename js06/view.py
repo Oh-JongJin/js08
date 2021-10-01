@@ -57,7 +57,7 @@ class Js06CameraView(QDialog):
     def accepted(self):
         # Update camera db
         cameras = self._model.get_data()
-        self._ctrl.update_cameras(cameras)
+        # self._ctrl.update_cameras(cameras)
 
         for cam in cameras:
             if cam['placement'] == 'front':
@@ -113,12 +113,12 @@ class Js06TargetView(QDialog):
         self.buttonBox.accepted.connect(self.save_btn)
         self.buttonBox.rejected.connect(self.rejected_btn)
 
-        for i in range(len(self._ctrl.get_cameras())):
-            self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
-        self.cameraCombo.addItems(self.cam_name)
+        # for i in range(len(self._ctrl.get_cameras())):
+        #     self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
+        # self.cameraCombo.addItems(self.cam_name)
 
-        if self._ctrl.get_camera_models() in self.cam_name:
-            self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_models()))
+        # if self._ctrl.get_camera_models() in self.cam_name:
+        #     self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_models()))
 
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
         self.combo_changed()
@@ -158,10 +158,10 @@ class Js06TargetView(QDialog):
     @pyqtSlot()
     def save_btn(self):
         result = []
-        for i in range(len(self._ctrl.get_cameras())):
-            if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
-                address = self._ctrl.get_cameras()[i]['uri']
-        self._ctrl.current_camera_changed.emit(address)
+        # for i in range(len(self._ctrl.get_cameras())):
+        #     if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
+        #         address = self._ctrl.get_cameras()[i]['uri']
+        # self._ctrl.current_camera_changed.emit(address)
 
         for i in range(self.numberCombo.count()):
             self.numberCombo.setCurrentIndex(i)
@@ -301,6 +301,15 @@ class Js06TargetView(QDialog):
 # end of Js06TargetView
 
 
+class Js06AboutView(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               "../resources/about_view.ui")
+        uic.loadUi(ui_path, self)
+
+
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
     """
@@ -397,16 +406,19 @@ class Js06MainView(QMainWindow):
         if not normal_exit:
             self.ask_restore_default()
 
+        # self.setWindowFlags(Qt.FramelessWindowHint)
         self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
 
         self.actionEdit_Camera.triggered.connect(self.edit_camera)
         self.actionEdit_Target.triggered.connect(self.edit_target)
+        self.actionAbout.triggered.connect(self.about_view)
 
-        self.video_dock = QDockWidget("Video", self)
-        self.video_dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
+        # self.video_dock = QDockWidget("Front Camera", self)
+        # self.video_dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
+        self.video_dock.setTitleBarWidget(QWidget(self))
         self.video_widget = Js06VideoWidget(self)
         self.video_dock.setWidget(self.video_widget)
-        self.setCentralWidget(self.video_dock)
+        # self.setCentralWidget(self.video_dock)
         self.video_widget.video_frame_prepared.connect(self._ctrl.update_video_frame)
         self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
         self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
@@ -414,6 +426,17 @@ class Js06MainView(QMainWindow):
         # The parameters in the following codes is for the test purposes.
         # They should be changed to use canonical coordinates.
         # self.video_widget.draw_roi((50, 50), (40, 40))
+
+        # self.video_dock2 = QDockWidget("Back Camera", self)
+        # self.video_dock2.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
+        self.video_dock2.setTitleBarWidget(QWidget(self))
+        self.video_widget2 = Js06VideoWidget(self)
+        self.video_dock2.setWidget(self.video_widget2)
+        # self.setCentralWidget(self.video_dock2)
+        # self.video_widget2.video_frame_prepared.connect(self._ctrl.update_video_frame)
+        self._ctrl.current_camera_changed.connect(self.video_widget2.on_camera_change)
+        self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
+        # self.addDockWidget(Qt.BottomDockWidgetArea, self.video_dock2)
 
         # # target plot dock
         # self.target_plot_dock = QDockWidget("Target plot", self)
@@ -433,14 +456,21 @@ class Js06MainView(QMainWindow):
 
         # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
         # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
+        # self.splitDockWidget(self.video_dock, self.video_dock2, Qt.Horizontal)
         self.show()
     # end of __init__
 
     def edit_target(self):
-        dlg = Js06TargetView(self._ctrl)
+        dlg = Js06TargetView(self)
         dlg.resize(self.width(), self.height())
         dlg.exec_()
+
+        # self.setWindowOpacity(0.1)
     # end of edit_target
+
+    def about_view(self):
+        dlg = Js06AboutView()
+        dlg.exec_()
 
     @pyqtSlot()
     def edit_camera(self):
