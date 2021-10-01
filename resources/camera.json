@@ -1,0 +1,136 @@
+[
+    {
+        "label": "headquarters panorama",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "PNM-9030V",
+        "serial_number": "",
+        "resolution": [
+            6096,
+            2540
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp",
+        "azimuth": 135,
+        "view_angle": 220,
+        "placement": "null",
+        "targets": []
+    },
+    {
+        "label": "headquarters",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "QND-8020R",
+        "serial_number": "",
+        "resolution": [
+            1920,
+            1080
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp",
+        "azimuth": 0,
+        "view_angle": 79.8,
+        "placement": "back",
+        "targets": []
+    },
+    {
+        "label": "headquarters",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "XNO-8080R",
+        "serial_number": "",
+        "resolution": [
+            2560,
+            1920
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
+        "azimuth": 135,
+        "view_angle": 92.1,
+        "placement": "front",
+        "targets": [
+            {
+                "label": "1",
+                "distance": 4,
+                "wedge": "E",
+                "azimuth": 87,
+                "category": "single",
+                "roi": {
+                    "point": [
+                        437,
+                        288
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "2",
+                "distance": [
+                    5,
+                    6
+                ],
+                "mask": [
+                    "2-1.png",
+                    "2-2.png"
+                ],
+                "wedge": "S",
+                "azimuth": 95,
+                "category": "compound",
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "3",
+                "distance": 1,
+                "wedge": "W",
+                "azimuth": 270,
+                "category": "single",
+                "roi": {
+                    "point": [
+                        560,
+                        349
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "label": "fisheye - dead",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "XNP-9010RV",
+        "serial_number": "null",
+        "resolution": [
+            3008,
+            3008
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:4554/profile2/media.smp",
+        "azimuth": 0,
+        "view_angle": 187,
+        "placement": "null",
+        "targets": []
+    },
+    {
+        "label": "indoor panorama",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "PNM-9022V",
+        "serial_number": "null",
+        "resolution": [
+            4096,
+            1792
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:5554/profile2/media.smp",
+        "azimuth": 0,
+        "view_angle": 209,
+        "placement": "null",
+        "targets": []
+    }
+]
