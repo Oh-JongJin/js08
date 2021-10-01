@@ -9,7 +9,7 @@
             2540
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp",
-        "direction": 135,
+        "azimuth": 135,
         "view_angle": 220,
         "placement": "null",
         "targets": []
@@ -24,7 +24,7 @@
             1080
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp",
-        "direction": 0,
+        "azimuth": 0,
         "view_angle": 79.8,
         "placement": "back",
         "targets": []
@@ -39,14 +39,15 @@
             1920
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
-        "direction": 135,
+        "azimuth": 135,
         "view_angle": 92.1,
         "placement": "front",
         "targets": [
             {
                 "label": "1",
                 "distance": 4,
-                "ordinal": "E",
+                "wedge": "E",
+                "azimuth": 87,
                 "category": "single",
                 "roi": {
                     "point": [
@@ -61,9 +62,16 @@
             },
             {
                 "label": "2",
-                "distances": [],
-                "masks": [],
-                "ordinal": "S",
+                "distance": [
+                    5,
+                    6
+                ],
+                "mask": [
+                    "2-1.png",
+                    "2-2.png"
+                ],
+                "wedge": "S",
+                "azimuth": 95,
                 "category": "compound",
                 "roi": {
                     "point": [
@@ -79,7 +87,8 @@
             {
                 "label": "3",
                 "distance": 1,
-                "ordinal": "W",
+                "wedge": "W",
+                "azimuth": 270,
                 "category": "single",
                 "roi": {
                     "point": [
@@ -104,7 +113,7 @@
             3008
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:4554/profile2/media.smp",
-        "direction": 0,
+        "azimuth": 0,
         "view_angle": 187,
         "placement": "null",
         "targets": []
@@ -119,7 +128,7 @@
             1792
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:5554/profile2/media.smp",
-        "direction": 0,
+        "azimuth": 0,
         "view_angle": 209,
         "placement": "null",
         "targets": []

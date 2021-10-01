@@ -12,7 +12,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 
 from js06.view import Js06MainView
-from js06.model import Js06Model
+from js06.model import Js06AttrModel
 from js06.controller import Js06MainCtrl
 from js06 import js06_rc
 
@@ -21,7 +21,7 @@ def main():
     # Create an instance of `QApplication`
     app = QApplication(sys.argv)
     # Create instances of the model
-    model = Js06Model()
+    model = Js06AttrModel()
     # Create instances of the controller
     ctrl = Js06MainCtrl(model)
     # Show GUI of JS-06

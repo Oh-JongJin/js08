@@ -5,16 +5,49 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-import json
+import datetime
 import os
 import platform
-from PyQt5.QtGui import QImage
 import pymongo
 
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QRunnable, QStandardPaths, Qt, QSettings
+from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QRect, QRunnable, QStandardPaths, Qt, QSettings
+from PyQt5.QtGui import QImage
 
 Js06TargetCategory = ['single', 'compound']
-Js06Ordinal = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+
+class SimpleTarget(QRunnable):
+    """Simple target"""
+
+    def __init__(self, label: str, wedge: str, azimuth: float, distance: float, roi: QRect, mask: QImage):
+        super().__init__()
+        self.label = label
+        self.wedge = wedge
+        self.azimuth = azimuth
+        self.distance = distance
+        self.roi = roi
+        self.mask = mask
+        self.epoch = 0
+        self.image = None
+        self.discernment = None
+        self.setAutoDelete(False)
+    # end of __init__
+
+    def clip_roi(self, epoch: int, vista: QImage) -> None:
+        self.epoch = epoch
+        trimmed = vista.copy(self.roi)
+        # multiply self.mask with trimmed
+        self.image = trimmed
+
+    def run(self):
+        self.discernment = True
+    # end of predict
+
+    def save_image(self):
+        pass
+    # end of save_image
+
+# end of Target
 
 class Js06CameraTableModel(QAbstractTableModel):
     def __init__(self, data: list):
@@ -28,7 +61,7 @@ class Js06CameraTableModel(QAbstractTableModel):
             "serial_number",
             "resolution",
             "uri",
-            "direction",
+            "azimuth",
             "view_angle"
         ]
 
@@ -108,7 +141,7 @@ class Js06CameraTableModel(QAbstractTableModel):
 
 # end of Js06CameraTableModel
 
-class Js06Model:
+class Js06AttrModel:
     def __init__(self):
         super().__init__()
         self.db = None
@@ -120,18 +153,39 @@ class Js06Model:
     # end of connect_to_db
 
     def setup_db(self, attr_json: list, camera_json: list) -> None:
-        """
+        """Create MongoDB collections for JS-06.
+
+        This method creates the following collections:
+        * attr: attributes collection
+        * camera: camera specifications
+        * visibility: visibility measurement records
+
         Paramters:
             attr_json: list of attribute dictionary
             camera_json: list of camerae dictionary
         """
-        self.db.camera.insert_many(camera_json)
+        collections = self.db.list_collection_names()
+        
+        if 'camera' not in collections or self.db.camera.count_documents({}) == 0:
+            self.db.camera.insert_many(camera_json)
     
-        front = self.db.camera.find_one({'placement': 'front'})
-        if attr_json:
+        if 'attr' not in collections or self.db.attr.count_documents({}) == 0:
+            front_cam = self.db.camera.find_one({'placement': 'front'})
+            front_cam['camera_id'] = front_cam.pop('_id')
+
             attr_json[-1]["platform"] = platform.platform()
-            attr_json[-1]["camera"] = front
+            attr_json[-1]["camera"] = front_cam
+            
             self.db.attr.insert_many(attr_json)
+
+        if 'visibility' not in collections:
+            self.db.create_collection('visibility',
+                timeseries = {
+                  'timeField': 'timestamp',
+                  'metaField': 'attr_id',
+                  'granularity': 'minutes'
+                }
+            )
     # end of setup_db
 
     def insert_camera(self, camera: dict) -> str:
@@ -235,9 +289,14 @@ class Js06Model:
         return str(response.inserted_id)
     # end of insert_attr
 
-    def write_discernment_result(self, epoch: int, id: int, discernment: bool):
-        # self.db.disc.
-        pass
+    def write_visibility(self, wedge_visibility: dict):
+        attr = self.read_attr()
+        wedge_visibility['attr_id'] = attr['_id']
+        epoch = wedge_visibility.pop('epoch')
+        kst = datetime.timezone(datetime.timedelta(hours=9))
+        wedge_visibility['timestamp'] = datetime.datetime.fromtimestamp(epoch, kst)
+        wedge_visibility['timestamp'] = datetime.datetime.fromtimestamp(epoch)
+        self.db.visibility.insert_one(wedge_visibility)
     # end of write_discerment_result
 
 # end of Js06Model
@@ -289,24 +348,6 @@ class Js06Settings:
 
 # end of Js06Settings
 
-class Js06InferenceRunner(QRunnable):
-    def __init__(self, model: Js06Model, epoch: int, id: int, image: QImage):
-        super().__init__()
-        self.setAutoDelete(True)
-
-        self.model = model
-        self.epoch = epoch
-        self.id = id
-        self.image = image
-    # end of __init__
-
-    def run(self):
-        discernment = True
-        self.model.write_discernment_result(self.epoch, self.id, discernment)
-    # end of run
-
-# end of Js06InferenceRunner
-
 class Js06IoRunner(QRunnable):
     def __init__(self, path: str, image: QImage):
         super().__init__()
@@ -330,7 +371,7 @@ if __name__ == '__main__':
 
     fake = faker.Faker()
 
-    js06_model = Js06Model()
+    js06_model = Js06AttrModel()
     js06_model.connect_to_db('localhost', 27017, 'js06')
 
     camera = {}
@@ -340,7 +381,7 @@ if __name__ == '__main__':
     camera['serial_number'] = 'ABC-0123456789'
     camera['resolution'] = random.choice([(1920, 1080), (1366, 768), (1440, 900), (1536, 864)])
     camera['uri'] = 'rtsp://' + fake.ipv4_private()
-    camera['direction'] = random.randint(0, 179)
+    camera['azimuth'] = random.randint(0, 179)
     camera['view_angle'] = random.choice([90, 120, 180, 200])
 
     response = js06_model.insert_camera(camera)
@@ -360,7 +401,7 @@ if __name__ == '__main__':
         target = {}
         target['label'] = str(i)
         target['dist'] = random.uniform(0, 20)
-        target['ordinal'] = random.choice(Js06Ordinal)
+        target['ordinal'] = random.choice(Js06Wedge)
         target['category'] = random.choice(Js06TargetCategory)
         target['roi'] = (
             (random.uniform(-1, 0), random.uniform(0, 1)),
