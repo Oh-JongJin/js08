@@ -11,10 +11,10 @@ import sys
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 
-from js06.view import Js06MainView
-from js06.model import Js06AttrModel
-from js06.controller import Js06MainCtrl
-from js06 import js06_rc
+from .view import Js06MainView
+from .model import Js06AttrModel
+from .controller import Js06MainCtrl
+from . import js06_rc
 
 def main():
     """Main function"""
@@ -36,4 +36,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# end of app.py
+# end of __main__.py
