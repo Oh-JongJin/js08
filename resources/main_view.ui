@@ -31,10 +31,10 @@
    </font>
   </property>
   <property name="mouseTracking">
-   <bool>false</bool>
+   <bool>true</bool>
   </property>
   <property name="windowTitle">
-   <string>JS-06</string>
+   <string>JS-08</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
@@ -122,6 +122,17 @@ color: rgb(255, 255, 255);</string>
        <widget class="QFrame" name="verticalFrame_2">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
+          <widget class="QPushButton" name="setting_btn">
+           <property name="text">
+            <string>Setting</string>
+           </property>
+           <property name="icon">
+            <iconset resource="asset/resources.qrc">
+             <normaloff>:/icon/small_config.png</normaloff>:/icon/small_config.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QLabel" name="label">
            <property name="styleSheet">
             <string notr="true">background-color: rgb(55, 64, 121);</string>
@@ -162,7 +173,7 @@ color: rgb(255, 255, 255);</string>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="enabled">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="geometry">
     <rect>
@@ -180,7 +191,7 @@ color: rgb(255, 255, 255);</string>
 color: rgb(255, 255, 255);</string>
    </property>
    <property name="nativeMenuBar">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <widget class="QMenu" name="menuSource">
     <property name="title">

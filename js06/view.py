@@ -12,8 +12,8 @@ from PyQt5.QtCore import QObject, QTimer, QUrl, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
-from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
-    QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QVBoxLayout, QWidget, QLabel
+from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, QAction, \
+    QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QVBoxLayout, QWidget, QLabel, QMenu
 from PyQt5 import uic
 
 from js06.controller import Js06MainCtrl
@@ -340,6 +340,7 @@ class Js06VideoWidget(QWidget):
 
     def fit_in_view(self):
         self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
+        # self.graphicView.fitInView(self._video_item, Qt.KeepAspectRaioByExpanding)
     # end of fit_in_view
 
     ############
@@ -397,6 +398,16 @@ class Js06MainView(QMainWindow):
                                "../resources/main_view.ui")
         uic.loadUi(ui_path, self)
         self._ctrl = controller
+
+        # Set custom Window title bar
+        self.setWindowFlags(Qt.FramelessWindowHint)
+
+        # Hide menuBar
+        self.menubar.setVisible(False)
+
+        # Connect setting button with context menu
+        self.setting_btn.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setting_btn.customContextMenuRequested.connect(self.setting)
 
         # Connect signals and slots
         self.restore_defaults_requested.connect(self._ctrl.restore_defaults)
@@ -459,6 +470,19 @@ class Js06MainView(QMainWindow):
         # self.splitDockWidget(self.video_dock, self.video_dock2, Qt.Horizontal)
         self.show()
     # end of __init__
+
+    def setting(self, QPos):
+        self.popMenu = QMenu(self)
+        self.popMenu.addAction(self.actionEdit_Camera)
+        self.popMenu.addAction(self.actionEdit_Target)
+        self.popMenu.addAction(self.actionAbout)
+        self.popMenu.addSeparator()
+        self.popMenu.addAction(self.actionExit)
+
+        # parentPosition = self.setting_btn.mapToGlobal(QPos)
+        # menuPosition = parentPosition + QPos
+        self.popMenu.move(self.setting_btn.mapToGlobal(QPos))
+        self.popMenu.show()
 
     def edit_target(self):
         dlg = Js06TargetView(self)
