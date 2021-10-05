@@ -51,7 +51,7 @@ class Js06MainCtrl(QObject):
         db_name = Js06Settings.get('db_name')
         self._model.connect_to_db(db_host, db_port, db_name)
 
-        file_path = os.path.dirname(os.path.dirname(__file__))
+        file_path = os.path.dirname(__file__)
         attr_path = os.path.join(file_path, 'resources', 'attr.json')
         with open(attr_path, 'r') as f:
             attr_json = json.load(f)

@@ -23,8 +23,8 @@ class Js06CameraView(QDialog):
         super().__init__(parent)
         self.setModal(True)
 
-        ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               "../resources/camera_view.ui")
+        ui_path = os.path.join(os.path.dirname(__file__),
+                               'resources', 'camera_view.ui')
         uic.loadUi(ui_path, self)
 
         self._ctrl = parent._ctrl
@@ -78,8 +78,8 @@ class Js06TargetView(QDialog):
         super().__init__(parent)
         self.setModal(True)
 
-        ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               "../resources/target_view.ui")
+        ui_path = os.path.join(os.path.dirname(__file__),
+                               'resources', 'target_view.ui')
         uic.loadUi(ui_path, self)
         self._ctrl = parent._ctrl
         self._model = self._ctrl.get_target()
@@ -305,8 +305,8 @@ class Js06AboutView(QDialog):
     def __init__(self):
         super().__init__()
 
-        ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               "../resources/about_view.ui")
+        ui_path = os.path.join(os.path.dirname(__file__),
+                               'resources', 'about_view.ui')
         uic.loadUi(ui_path, self)
 
 
@@ -393,8 +393,8 @@ class Js06MainView(QMainWindow):
     def __init__(self, controller: Js06MainCtrl):
         super().__init__()
 
-        ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               "../resources/main_view.ui")
+        ui_path = os.path.join(os.path.dirname(__file__),
+                               'resources', 'main_view.ui')
         uic.loadUi(ui_path, self)
         self._ctrl = controller
 
