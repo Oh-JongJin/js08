@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
     QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QVBoxLayout, QWidget, QLabel
 from PyQt5 import uic
 
-from js06.controller import Js06MainCtrl
+from .controller import Js06MainCtrl
 
 class Js06CameraView(QDialog):
     def __init__(self, parent: QWidget):

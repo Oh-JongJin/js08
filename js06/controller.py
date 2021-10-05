@@ -13,7 +13,7 @@ from PyQt5.QtCore import QDateTime, QDir, QObject, QRect, QThreadPool, QTime, QT
 from PyQt5.QtGui import QImage
 from PyQt5.QtMultimedia import QVideoFrame
 
-from js06.model import Js06CameraTableModel, Js06IoRunner, Js06AttrModel, Js06Settings, Js06Wedge, SimpleTarget
+from .model import Js06CameraTableModel, Js06IoRunner, Js06AttrModel, Js06Settings, Js06Wedge, SimpleTarget
 
 class Js06MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
