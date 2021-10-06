@@ -13,7 +13,7 @@ from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResi
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
-    QGraphicsView, QMainWindow, QDockWidget, QMessageBox, QVBoxLayout, QWidget, QLabel
+    QGraphicsView, QMainWindow, QMessageBox, QVBoxLayout, QWidget, QLabel
 from PyQt5 import uic
 
 from .controller import Js06MainCtrl
@@ -59,14 +59,21 @@ class Js06CameraView(QDialog):
         cameras = self._model.get_data()
         # self._ctrl.update_cameras(cameras)
 
+        front_cam = {}
+        rear_cam = {}
         for cam in cameras:
             if cam['placement'] == 'front':
                 uri = cam['uri']
-                break
-        self._ctrl.current_camera_changed.emit(uri)
-        
+                self._ctrl.front_camera_changed.emit(uri)
+                front_cam = cam
+            elif cam['placement'] == 'rear':
+                uri = cam['uri']
+                self._ctrl.rear_camera_changed.emit(uri)
+                rear_cam = cam
+
         attr = self._ctrl.get_attr()
-        attr['camera'] = cam
+        attr['front_camera'] = front_cam
+        attr['rear_camera'] = rear_cam
         self._ctrl.insert_attr(attr)
     # end of accepted
 
@@ -308,7 +315,7 @@ class Js06AboutView(QDialog):
         ui_path = os.path.join(os.path.dirname(__file__),
                                'resources', 'about_view.ui')
         uic.loadUi(ui_path, self)
-
+# end of Js06AboutView
 
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
@@ -413,30 +420,21 @@ class Js06MainView(QMainWindow):
         self.actionEdit_Target.triggered.connect(self.edit_target)
         self.actionAbout.triggered.connect(self.about_view)
 
-        # self.video_dock = QDockWidget("Front Camera", self)
-        # self.video_dock.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
-        self.video_dock.setTitleBarWidget(QWidget(self))
-        self.video_widget = Js06VideoWidget(self)
-        self.video_dock.setWidget(self.video_widget)
-        # self.setCentralWidget(self.video_dock)
-        self.video_widget.video_frame_prepared.connect(self._ctrl.update_video_frame)
-        self._ctrl.current_camera_changed.connect(self.video_widget.on_camera_change)
-        self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
+        # Front camera
+        self.front_video_dock.setTitleBarWidget(QWidget(self))
+        self.front_video_widget = Js06VideoWidget(self)
+        self.front_video_dock.setWidget(self.front_video_widget)
+        self.front_video_widget.video_frame_prepared.connect(self._ctrl.update_front_video_frame)
+        self._ctrl.front_camera_changed.connect(self.front_video_widget.on_camera_change)
+        self._ctrl.front_camera_changed.emit(self._ctrl.get_front_camera_uri())
 
-        # The parameters in the following codes is for the test purposes.
-        # They should be changed to use canonical coordinates.
-        # self.video_widget.draw_roi((50, 50), (40, 40))
-
-        # self.video_dock2 = QDockWidget("Back Camera", self)
-        # self.video_dock2.setFeatures(QDockWidget.DockWidgetClosable | QDockWidget.DockWidgetFloatable)
-        self.video_dock2.setTitleBarWidget(QWidget(self))
-        self.video_widget2 = Js06VideoWidget(self)
-        self.video_dock2.setWidget(self.video_widget2)
-        # self.setCentralWidget(self.video_dock2)
-        # self.video_widget2.video_frame_prepared.connect(self._ctrl.update_video_frame)
-        self._ctrl.current_camera_changed.connect(self.video_widget2.on_camera_change)
-        self._ctrl.current_camera_changed.emit(self._ctrl.get_current_camera_uri())
-        # self.addDockWidget(Qt.BottomDockWidgetArea, self.video_dock2)
+        # Rear camera
+        self.rear_video_dock.setTitleBarWidget(QWidget(self))
+        self.rear_video_widget = Js06VideoWidget(self)
+        self.rear_video_dock.setWidget(self.rear_video_widget)
+        self.rear_video_widget.video_frame_prepared.connect(self._ctrl.update_rear_video_frame)
+        self._ctrl.rear_camera_changed.connect(self.rear_video_widget.on_camera_change)
+        self._ctrl.rear_camera_changed.emit(self._ctrl.get_rear_camera_uri())
 
         # # target plot dock
         # self.target_plot_dock = QDockWidget("Target plot", self)

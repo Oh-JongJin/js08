@@ -26,11 +26,11 @@
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp",
         "azimuth": 0,
         "view_angle": 79.8,
-        "placement": "back",
+        "placement": "null",
         "targets": []
     },
     {
-        "label": "headquarters",
+        "label": "headquarters - front",
         "manufacturer": "Hanwha Techwin Co., Ltd.",
         "model": "XNO-8080R",
         "serial_number": "",
@@ -89,6 +89,80 @@
                 "distance": 1,
                 "wedge": "W",
                 "azimuth": 270,
+                "category": "single",
+                "roi": {
+                    "point": [
+                        560,
+                        349
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "label": "headquarters - rear",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "XNO-8080R",
+        "serial_number": "",
+        "resolution": [
+            2560,
+            1920
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
+        "azimuth": 315,
+        "view_angle": 92.1,
+        "placement": "rear",
+        "targets": [
+            {
+                "label": "1",
+                "distance": 4,
+                "wedge": "SW",
+                "azimuth": 267,
+                "category": "single",
+                "roi": {
+                    "point": [
+                        437,
+                        288
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "2",
+                "distance": [
+                    5,
+                    6
+                ],
+                "mask": [
+                    "2-1.png",
+                    "2-2.png"
+                ],
+                "wedge": "W",
+                "azimuth": 275,
+                "category": "compound",
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "3",
+                "distance": 1,
+                "wedge": "N",
+                "azimuth": 0,
                 "category": "single",
                 "roi": {
                     "point": [
