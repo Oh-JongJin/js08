@@ -10,8 +10,12 @@ import os
 import platform
 import pymongo
 
-from PyQt5.QtCore import QAbstractTableModel, QModelIndex, QRect, QRunnable, QStandardPaths, Qt, QSettings
+import numpy as np
+
+from PyQt5.QtCore import \
+    QAbstractTableModel, QModelIndex, QRect, QRunnable, QStandardPaths, Qt, QSettings
 from PyQt5.QtGui import QImage
+from tflite_runtime.interpreter import Interpreter
 
 Js06TargetCategory = ['single', 'compound']
 Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
@@ -27,21 +31,86 @@ class SimpleTarget(QRunnable):
         self.distance = distance
         self.roi = roi
         self.mask = mask
+
+        # epoch and image are set using clip_roi
         self.epoch = 0
         self.image = None
+
         self.discernment = None
+
+        # TODO(Kyungwon): Put the model file into Qt Resource Collection.
+        model_path = os.path.join(
+            os.path.dirname(__file__), 
+            'resources', 
+            'js02.tflite'
+            )
+        self.interpreter = Interpreter(model_path=model_path)
+        self.interpreter.allocate_tensors()
+
         self.setAutoDelete(False)
     # end of __init__
+    
+    def set_input_tensor(self, interpreter: Interpreter, image: np.ndarray) -> None:
+        tensor_index = interpreter.get_input_details()[0]['index']
+        input_tensor = interpreter.tensor(tensor_index)()[0]
+        input_tensor[:, :] = image
+    # end of set_input_tensor
+
+    def classify_image(self, interpreter: Interpreter, image: np.ndarray, top_k: int=1) -> list:
+        """Returns a sorted array of classification results."""
+        self.set_input_tensor(interpreter, image)
+        interpreter.invoke()
+        output_details = interpreter.get_output_details()[0]
+        output = np.squeeze(interpreter.get_tensor(output_details['index']))
+
+        # If the model is quantized (uint8 data), then dequantize the results
+        if output_details['dtype'] == np.uint8:
+            scale, zero_point = output_details['quantization']
+            output = scale * (output - zero_point)
+
+        ordered = np.argpartition(-output, top_k)
+        return [(i, output[i]) for i in ordered[:top_k]]
+    # end of classify_image
 
     def clip_roi(self, epoch: int, vista: QImage) -> None:
         self.epoch = epoch
         trimmed = vista.copy(self.roi)
         # multiply self.mask with trimmed
         self.image = trimmed
+    # end of clip_roi
 
     def run(self):
-        self.discernment = True
-    # end of predict
+        _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
+        image = self.image.scaled(
+            width, 
+            height,
+            Qt.IgnoreAspectRatio, 
+            Qt.SmoothTransformation
+            )
+        
+        # The following code is referring to:
+        # https://stackoverflow.com/questions/19902183/qimage-to-numpy-array-using-pyside
+        ptr = image.bits()
+        ptr.setsize(int(height * width * 3))
+        arr = np.frombuffer(ptr, np.uint8).reshape((height, width, 3))
+
+        # # The following code is referring to:
+        # # https://newbedev.com/convert-pyqt5-qpixmap-to-numpy-ndarray
+        # bits = image.bits()
+        # bits.setsize(self._height * self._width * 3)
+        # img_arr = np.frombuffer(bits, np.uint8).reshape((self._height, self._width, 3))
+        
+        # # The following code is referring to:
+        # # https://www.programcreek.com/python/example/106694/PyQt5.QtGui.QImage
+        # tmp = image.bits().asstring(image.numBytes())
+        # img_arr = np.frombuffer(tmp, np.uint8).reshape((self._height, self._width, 3))
+        # img_arr = img_arr.astype(np.float32) / 255
+
+        results = self.classify_image(self.interpreter, arr)
+        
+        label_id, _ = results[0]
+        self.discernment = True if label_id else False
+    # end of run
 
     def save_image(self):
         pass
@@ -173,9 +242,13 @@ class Js06AttrModel:
             front_cam = self.db.camera.find_one({'placement': 'front'})
             front_cam['camera_id'] = front_cam.pop('_id')
 
-            attr_json[-1]["platform"] = platform.platform()
-            attr_json[-1]["camera"] = front_cam
-            
+            rear_cam = self.db.camera.find_one({'placement': 'rear'})
+            rear_cam['camera_id'] = rear_cam.pop('_id')
+
+            attr_json[-1]['platform'] = platform.platform()
+            attr_json[-1]['front_camera'] = front_cam
+            attr_json[-1]['rear_camera'] = rear_cam
+
             self.db.attr.insert_many(attr_json)
 
         if 'visibility' not in collections:

@@ -13,12 +13,14 @@ from PyQt5.QtCore import QDateTime, QDir, QObject, QRect, QThreadPool, QTime, QT
 from PyQt5.QtGui import QImage
 from PyQt5.QtMultimedia import QVideoFrame
 
-from js06.model import Js06CameraTableModel, Js06IoRunner, Js06AttrModel, Js06Settings, Js06Wedge, SimpleTarget
+from .model import Js06CameraTableModel, Js06IoRunner, Js06AttrModel, Js06Settings, Js06Wedge, SimpleTarget
 
 class Js06MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
-    current_camera_changed = pyqtSignal(str)
-    target_decomposed = pyqtSignal()
+    front_camera_changed = pyqtSignal(str)
+    rear_camera_changed = pyqtSignal(str)
+    front_target_decomposed = pyqtSignal()
+    rear_target_decomposed = pyqtSignal()
 
     def __init__(self, model: Js06AttrModel):
         super().__init__()
@@ -31,13 +33,20 @@ class Js06MainCtrl(QObject):
 
         self._model = model
 
-        self.video_frame = None
+        self.front_video_frame = None
+        self.rear_video_frame = None
+        self.num_working_cam = 0
+
+        self.front_decomposed_targets = []
+        self.rear_decomposed_targets = []
 
         self.init_db()
 
         self.observation_timer = QTimer()
-        self.current_camera_changed.connect(self.prepare_targets)
-        self.target_decomposed.connect(self.start_observation_timer)
+        self.front_camera_changed.connect(self.decompose_front_targets)
+        self.rear_camera_changed.connect(self.decompose_rear_targets)
+        self.front_target_decomposed.connect(self.start_observation_timer)
+        self.rear_target_decomposed.connect(self.start_observation_timer)
     # end of __init__
 
     def set_max_inference_thread(self):
@@ -51,7 +60,7 @@ class Js06MainCtrl(QObject):
         db_name = Js06Settings.get('db_name')
         self._model.connect_to_db(db_host, db_port, db_name)
 
-        file_path = os.path.dirname(os.path.dirname(__file__))
+        file_path = os.path.dirname(__file__)
         attr_path = os.path.join(file_path, 'resources', 'attr.json')
         with open(attr_path, 'r') as f:
             attr_json = json.load(f)
@@ -63,7 +72,7 @@ class Js06MainCtrl(QObject):
     # end of init
 
     @pyqtSlot(str)
-    def prepare_targets(self, _:str) -> None:
+    def decompose_front_targets(self, _:str) -> None:
         """Make list of SimpleTarget by decoposing compound targets.
 
         Parameters:
@@ -71,9 +80,9 @@ class Js06MainCtrl(QObject):
             vista: vista image
         """
         # Discard existing targets
-        self.simple_targets = []
+        self.front_decomposed_targets = []
         attr = self._model.read_attr()
-        targets = attr['camera']['targets']
+        targets = attr['front_camera']['targets']
         for tg in targets:
             wedge = tg['wedge']
             azimuth = tg['azimuth']
@@ -86,7 +95,7 @@ class Js06MainCtrl(QObject):
                 distance = tg['distance']
                 mask = None # read mask from disk
                 st = SimpleTarget(label, wedge, azimuth, distance, roi, mask)
-                self.simple_targets.append(st)
+                self.front_decomposed_targets.append(st)
                 # continue
             
             elif tg['category'] == 'compound':
@@ -95,10 +104,48 @@ class Js06MainCtrl(QObject):
                     distance = tg['distance'][i]
                     mask = None # read mask from disk
                     st = SimpleTarget(label, wedge, azimuth, distance, roi, mask)
-                    self.simple_targets.append(st)
+                    self.front_decomposed_targets.append(st)
 
-        self.target_decomposed.emit()
-    # end of preppare_targets
+        self.front_target_decomposed.emit()
+    # end of decompose_front_targets
+
+    @pyqtSlot(str)
+    def decompose_rear_targets(self, _:str) -> None:
+        """Make list of SimpleTarget by decoposing compound targets.
+
+        Parameters:
+            epoch: timestamp when the vista taken
+            vista: vista image
+        """
+        # Discard existing targets
+        self.rear_decomposed_targets = []
+        attr = self._model.read_attr()
+        targets = attr['rear_camera']['targets']
+        for tg in targets:
+            wedge = tg['wedge']
+            azimuth = tg['azimuth']
+            point = tg['roi']['point']
+            size = tg['roi']['size']
+            roi = QRect(*point, *size)
+
+            if tg['category'] == 'simple':
+                label = tg['label']
+                distance = tg['distance']
+                mask = None # read mask from disk
+                st = SimpleTarget(label, wedge, azimuth, distance, roi, mask)
+                self.rear_decomposed_targets.append(st)
+                # continue
+            
+            elif tg['category'] == 'compound':
+                for i in range(len(tg['mask'])):
+                    label = f"{tg['label']}_{i}"
+                    distance = tg['distance'][i]
+                    mask = None # read mask from disk
+                    st = SimpleTarget(label, wedge, azimuth, distance, roi, mask)
+                    self.rear_decomposed_targets.append(st)
+
+        self.rear_target_decomposed.emit()
+    # end of decompose_rear_targets
 
     def prevailing_visibility(self) -> float:
         vis = list(self.directional_visibility.values())
@@ -107,20 +154,29 @@ class Js06MainCtrl(QObject):
         vis.sort(reverse=True)
         prevailing = vis[(len(vis) - 1) // 2]
         return prevailing
+    # end of prevailing_visibility
 
     @pyqtSlot()
     def start_observation_timer(self) -> None:
-        print('DEBUG:', QTime.currentTime().toString())
+        # Start timer only when both cameras are ready.
+        if self.num_working_cam < 1:
+            self.num_working_cam += 1
+            return
+        else:
+            self.num_working_cam = 0
+
+        print('DEBUG(start_observation_timer):', QTime.currentTime().toString())
         observation_period = Js06Settings.get('observation_period')
         self.observation_timer.setInterval(observation_period * 60 * 1000)
         self.observation_timer.timeout.connect(self.job_broker)
 
-        # Start repeating timer on time        
-        now = QTime.currentTime()
-        minute_left = observation_period - (now.minute() % observation_period) - 1
-        second_left = 60 - now.second()
-        timeout_in_sec = minute_left * 60 + second_left
-        QTimer.singleShot(timeout_in_sec * 1000, self.observation_timer.start)
+        # # Start repeating timer on time        
+        # now = QTime.currentTime()
+        # minute_left = observation_period - (now.minute() % observation_period) - 1
+        # second_left = 60 - now.second()
+        # timeout_in_sec = minute_left * 60 + second_left
+        # QTimer.singleShot(timeout_in_sec * 1000, self.observation_timer.start)
+        self.observation_timer.start()
     # end of start_timer
 
     def stop_timer(self) -> None:
@@ -128,26 +184,28 @@ class Js06MainCtrl(QObject):
     # end of stop_timer
 
     def job_broker(self) -> None:
-        # print('DEBUG: Inside of job_broker')
-        if self.video_frame == None:
+        if self.front_video_frame == None or self.rear_video_frame == None:
             return
         
         epoch = QDateTime.currentSecsSinceEpoch()
-        # print('DEBUG:', now.toString())
-        image = self.get_image()
-            
+        front_image = self.get_front_image()
+        rear_image = self.get_rear_image()
+
         if Js06Settings.get('save_vista'):
             basepath = Js06Settings.get('image_base_path')
-            print(f'DEBUG: {basepath}')
             now = QDateTime.fromSecsSinceEpoch(epoch)
             dir = os.path.join(basepath, 'vista', now.toString("yyyy-MM-dd"))
-            filename = f'vista-{now.toString("yyyy-MM-dd-hh-mm")}.png'
-            self.save_image(dir, filename, image)
+            filename = f'vista-front-{now.toString("yyyy-MM-dd-hh-mm")}.png'
+            self.save_image(dir, filename, front_image)
+            filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
+            self.save_image(dir, filename, rear_image)
 
-        targets = self.get_target()
-        # print('DEBUG:', type(targets))
-        for stg in self.simple_targets:
-            stg.clip_roi(epoch, image)
+        for stg in self.front_decomposed_targets:
+            stg.clip_roi(epoch, front_image)
+            self.inference_pool.start(stg)
+
+        for stg in self.rear_decomposed_targets:
+            stg.clip_roi(epoch, rear_image)
             self.inference_pool.start(stg)
 
         self.inference_pool.waitForDone()
@@ -167,7 +225,13 @@ class Js06MainCtrl(QObject):
 
     def wedge_visibility(self) -> dict:
         wedge_vis = {w: None for w in Js06Wedge}
-        for t in self.simple_targets:
+        for t in self.front_decomposed_targets:
+            if t.discernment:
+                if wedge_vis[t.wedge] == None:
+                    wedge_vis[t.wedge] = t.distance
+                elif wedge_vis[t.wedge] < t.distance:
+                    wedge_vis[t.wedge] = t.distance
+        for t in self.rear_decomposed_targets:
             if t.discernment:
                 if wedge_vis[t.wedge] == None:
                     wedge_vis[t.wedge] = t.distance
@@ -191,25 +255,45 @@ class Js06MainCtrl(QObject):
         self.writer_pool.start(runner)
     # end of save_image
 
-    def get_image(self) -> QImage:
-        if self.video_frame == None:
+    def get_front_image(self) -> QImage:
+        if self.front_video_frame == None:
             return None
-        image = self.video_frame.image().mirrored(False, True)
+        image = self.front_video_frame.image().mirrored(False, True)
         return image
 
-    def update_video_frame(self, video_frame: QVideoFrame):
-        self.video_frame = video_frame
-    # end of update_video_frame
+    def get_rear_image(self) -> QImage:
+        if self.rear_video_frame == None:
+            return None
+        image = self.rear_video_frame.image().mirrored(False, True)
+        return image
 
-    def get_current_camera_uri(self):
-        attr = self._model.read_attr()
-        return attr['camera']['uri']
-    # end of get_current_camera_rui
+    def update_front_video_frame(self, video_frame: QVideoFrame):
+        self.front_video_frame = video_frame
+    # end of update_front_video_frame
 
-    def get_target(self):
+    def update_rear_video_frame(self, video_frame: QVideoFrame):
+        self.rear_video_frame = video_frame
+    # end of update_rear_video_frame
+
+    def get_front_camera_uri(self):
         attr = self._model.read_attr()
-        return attr['camera']['targets']
-    # end of get_target
+        return attr['front_camera']['uri']
+    # end of get_front_camera_uri
+
+    def get_rear_camera_uri(self):
+        attr = self._model.read_attr()
+        return attr['rear_camera']['uri']
+    # end of get_rear_camera_uri
+
+    def get_front_target(self):
+        attr = self._model.read_attr()
+        return attr['front_camera']['targets']
+    # end of get_front_target
+
+    def get_rear_target(self):
+        attr = self._model.read_attr()
+        return attr['rear_camera']['targets']
+    # end of get_rear_target
 
     def get_camera_table_model(self):
         cameras = self.get_cameras()

@@ -3,6 +3,5 @@
   <qresource prefix="font"/>
   <qresource prefix="icon">
     <file>logo.png</file>
-    <file>small_config.png</file>
   </qresource>
 </RCC>
