@@ -17,8 +17,6 @@ from PyQt5.QtCore import \
 from PyQt5.QtGui import QImage
 from tflite_runtime.interpreter import Interpreter
 
-from js06 import js06_rc
-
 Js06TargetCategory = ['single', 'compound']
 Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 
@@ -41,8 +39,12 @@ class SimpleTarget(QRunnable):
         self.discernment = None
 
         # TODO(Kyungwon): Put the model file into Qt Resource Collection.
-        model_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                               "../resources/js02.tflite")
+        model_path = os.path.join(
+            os.path.dirname(__file__), 
+            'resources', 
+            'js02.tflite'
+            )
+        self.interpreter = Interpreter(model_path=model_path)
         self.interpreter.allocate_tensors()
 
         self.setAutoDelete(False)
@@ -89,7 +91,7 @@ class SimpleTarget(QRunnable):
         # The following code is referring to:
         # https://stackoverflow.com/questions/19902183/qimage-to-numpy-array-using-pyside
         ptr = image.bits()
-        ptr.setsize(height * width * 3)
+        ptr.setsize(int(height * width * 3))
         arr = np.frombuffer(ptr, np.uint8).reshape((height, width, 3))
 
         # # The following code is referring to:
@@ -240,9 +242,13 @@ class Js06AttrModel:
             front_cam = self.db.camera.find_one({'placement': 'front'})
             front_cam['camera_id'] = front_cam.pop('_id')
 
-            attr_json[-1]["platform"] = platform.platform()
-            attr_json[-1]["camera"] = front_cam
-            
+            rear_cam = self.db.camera.find_one({'placement': 'rear'})
+            rear_cam['camera_id'] = rear_cam.pop('_id')
+
+            attr_json[-1]['platform'] = platform.platform()
+            attr_json[-1]['front_camera'] = front_cam
+            attr_json[-1]['rear_camera'] = rear_cam
+
             self.db.attr.insert_many(attr_json)
 
         if 'visibility' not in collections:

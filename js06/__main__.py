@@ -6,6 +6,7 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
+import cProfile
 import sys
 
 from PyQt5.QtGui import QIcon
@@ -27,13 +28,17 @@ def main():
     # Show GUI of JS-06
     view = Js06MainView(ctrl)
     # Set icon of the app
-    app_icon = QIcon(":icon/logo.png")
+    app_icon = QIcon(':icon/logo.png')
     view.setWindowIcon(app_icon)
     # Execute calculator's main loop
     sys.exit(app.exec())
 # end of main
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    do_profiling = True
+    if do_profiling:
+        cProfile.run('main()', 'restats')
+    else:
+        main()
 
 # end of __main__.py
