@@ -12,15 +12,25 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>837</width>
+    <width>1053</width>
     <height>646</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Edit Target</string>
   </property>
   <property name="autoFillBackground">
    <bool>false</bool>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(39, 44, 86);
+color: rgb(255, 255, 255);</string>
   </property>
   <property name="sizeGripEnabled">
    <bool>true</bool>
@@ -34,169 +44,60 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QLabel" name="image_label">
-         <property name="text">
-          <string/>
-         </property>
-         <property name="scaledContents">
-          <bool>true</bool>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QLabel" name="image_label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="switch_btn">
+           <property name="text">
+            <string>Switch Camera</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="minimumSize">
           <size>
            <width>300</width>
            <height>0</height>
           </size>
          </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(39, 44, 86);
+color: rgb(255, 255, 255);</string>
+         </property>
          <property name="title">
           <string>Target Infomation</string>
          </property>
          <layout class="QGridLayout" name="gridLayout">
-          <item row="10" column="0">
-           <widget class="QLabel" name="categoryLabel">
-            <property name="text">
-             <string>Category: </string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="0">
-           <widget class="QLabel" name="ordinalLabel">
-            <property name="text">
-             <string>Ordinal: </string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="2">
-           <widget class="QComboBox" name="ordinalCombo">
-            <property name="placeholderText">
-             <string/>
-            </property>
-            <item>
-             <property name="text">
-              <string>N</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>NE</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>E</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>SE</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>S</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>SW</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>W</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>NW</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="6" column="2">
-           <widget class="QLineEdit" name="distanceEdit">
-            <property name="inputMask">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QComboBox" name="numberCombo"/>
-          </item>
-          <item row="12" column="0">
-           <widget class="QLabel" name="pointLabel">
-            <property name="text">
-             <string>Point: </string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="15" column="2">
-           <widget class="Line" name="line_5">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="14" column="2">
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <item>
-             <widget class="QLineEdit" name="size_x_Edit"/>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>x</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="size_y_Edit"/>
-            </item>
-           </layout>
-          </item>
-          <item row="10" column="2">
-           <widget class="QComboBox" name="categoryCombo">
-            <item>
-             <property name="text">
-              <string>single</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>compound</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="Line" name="line_8">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="11" column="2">
-           <widget class="Line" name="line_4">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="2">
-           <widget class="QLineEdit" name="labelEdit"/>
-          </item>
           <item row="4" column="0">
            <widget class="QLabel" name="labelLabel">
             <property name="text">
@@ -204,27 +105,6 @@
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="2">
-           <widget class="Line" name="line_6">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="2">
-           <widget class="Line" name="line">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="13" column="2">
-           <widget class="Line" name="line_7">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
@@ -238,7 +118,54 @@
             </property>
            </widget>
           </item>
-          <item row="12" column="2">
+          <item row="8" column="2">
+           <widget class="QLineEdit" name="azimuthEdit"/>
+          </item>
+          <item row="10" column="0">
+           <widget class="QLabel" name="pointLabel">
+            <property name="text">
+             <string>Point: </string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="2">
+           <widget class="Line" name="line_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="2">
+           <widget class="QLineEdit" name="distanceEdit">
+            <property name="inputMask">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="QLineEdit" name="labelEdit"/>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="numberLabel">
+            <property name="text">
+             <string>Number: </string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="2">
+           <widget class="Line" name="line_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="2">
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QLineEdit" name="point_x_Edit"/>
@@ -255,37 +182,44 @@
             </item>
            </layout>
           </item>
-          <item row="5" column="2">
-           <widget class="Line" name="line_2">
+          <item row="8" column="0">
+           <widget class="QLabel" name="azimuthLabel">
+            <property name="text">
+             <string>Azimuth:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QComboBox" name="numberCombo"/>
+          </item>
+          <item row="1" column="2">
+           <widget class="Line" name="line_1">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="numberLabel">
-            <property name="text">
-             <string>Number: </string>
+          <item row="9" column="2">
+           <widget class="Line" name="line_5">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
+           </widget>
+          </item>
+          <item row="11" column="2">
+           <widget class="QPushButton" name="delete_btn">
+            <property name="text">
+             <string>Delete Target</string>
             </property>
            </widget>
           </item>
           <item row="7" column="2">
-           <widget class="Line" name="line_3">
+           <widget class="Line" name="line_4">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="14" column="0">
-           <widget class="QLabel" name="sizeLabel">
-            <property name="text">
-             <string>Size: </string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>

@@ -9,7 +9,7 @@
 import os
 
 from PyQt5.QtCore import QObject, QTimer, QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent
+from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent, QImage
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
@@ -107,14 +107,16 @@ class Js06TargetView(QDialog):
 
         self.get_target()
 
-        self.image = self._ctrl.video_frame.image().mirrored(False, True)
-        self.image_label.setPixmap(QPixmap.fromImage(self.image))
-        self.image_label.setMaximumSize(self.width(), self.height())
-
+        self.image = self._ctrl.front_video_frame.image().mirrored(False, True)
         self.w = self.image.width()
         self.h = self.image.height()
 
+        # self.image_label.setPixmap(QPixmap.fromImage(self.image).scaledToWidth(self.image.width()))
+        self.image_label.setPixmap(QPixmap.fromImage(self.image))
+        self.image_label.setMaximumSize(self.width(), self.height())
+
         self.blank_lbl = QLabel(self)
+        self.blank_lbl.setStyleSheet('background-color: rgba(255, 255, 255, 0);')
 
         self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
         self.buttonBox.accepted.connect(self.save_btn)
@@ -127,15 +129,24 @@ class Js06TargetView(QDialog):
         # if self._ctrl.get_camera_models() in self.cam_name:
         #     self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_models()))
 
+        self.switch_btn.clicked.connect(self.switch_button)
+
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
         self.combo_changed()
-        self.blank_lbl.raise_()
+        # self.blank_lbl.raise_()
     # end of __init__
+
+    def switch_button(self):
+        # image = self._ctrl.get_front_image()
+        # image.convertToFormat(QImage.Format_Grayscale8)
+        print(self.image.size())
+        print(self.image_label.size())
+        print(self.blank_lbl.size())
 
     def combo_changed(self):
         self.blank_lbl.paintEvent = self.blank_paintEvent
-        ordinalItems = [self.ordinalCombo.itemText(i) for i in range(self.ordinalCombo.count())]
-        categoryItems = [self.categoryCombo.itemText(i) for i in range(self.categoryCombo.count())]
+        # ordinalItems = [self.ordinalCombo.itemText(i) for i in range(self.ordinalCombo.count())]
+        # categoryItems = [self.categoryCombo.itemText(i) for i in range(self.categoryCombo.count())]
 
         for i in range(len(self.target)):
             if self.numberCombo.currentText() == str(i + 1):
@@ -143,23 +154,23 @@ class Js06TargetView(QDialog):
                 self.distanceEdit.setText(str(self.distance[i]))
                 self.point_x_Edit.setText(str(self.point_x[i]))
                 self.point_y_Edit.setText(str(self.point_y[i]))
-                self.size_x_Edit.setText(str(self.size_x[i]))
-                self.size_y_Edit.setText(str(self.size_y[i]))
+                # self.size_x_Edit.setText(str(self.size_x[i]))
+                # self.size_y_Edit.setText(str(self.size_y[i]))
 
-                if self.ordinal[i] in ordinalItems:
-                    self.ordinalCombo.setCurrentIndex(ordinalItems.index(self.ordinal[i]))
-                if self.category[i] in categoryItems:
-                    self.categoryCombo.setCurrentIndex(categoryItems.index(self.category[i]))
+                # if self.ordinal[i] in ordinalItems:
+                #     self.ordinalCombo.setCurrentIndex(ordinalItems.index(self.ordinal[i]))
+                # if self.category[i] in categoryItems:
+                #     self.categoryCombo.setCurrentIndex(categoryItems.index(self.category[i]))
                 break
             else:
                 self.labelEdit.setText("")
                 self.distanceEdit.setText("")
                 self.point_x_Edit.setText("")
                 self.point_y_Edit.setText("")
-                self.size_x_Edit.setText("")
-                self.size_y_Edit.setText("")
-                self.ordinalCombo.setCurrentIndex(-1)
-                self.categoryCombo.setCurrentIndex(-1)
+                # self.size_x_Edit.setText("")
+                # self.size_y_Edit.setText("")
+                # self.ordinalCombo.setCurrentIndex(-1)
+                # self.categoryCombo.setCurrentIndex(-1)
     # end of combo_changed
 
     @pyqtSlot()
@@ -174,11 +185,11 @@ class Js06TargetView(QDialog):
             self.numberCombo.setCurrentIndex(i)
             result.append({'label': f'{self.labelEdit.text()}',
                            'distance': f'{float(self.distanceEdit.text())}',
-                           'ordinal': f'{self.ordinalCombo.currentText()}',
-                           'category': f'{self.categoryCombo.currentText()}',
+                           # 'ordinal': f'{self.ordinalCombo.currentText()}',
+                           # 'category': f'{self.categoryCombo.currentText()}',
                            'roi': {
-                               'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())],
-                               'size': [int(self.size_x_Edit.text()), int(self.size_y_Edit.text())]
+                               'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
+                               # 'size': [int(self.size_x_Edit.text()), int(self.size_y_Edit.text())]
                            }})
 
         # TODO(Kyungwon): update camera db only, the current camera selection is 
@@ -205,7 +216,7 @@ class Js06TargetView(QDialog):
         self.painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
                               self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
 
-        self.painter.setPen(QPen(Qt.red, 2))
+        self.painter.setPen(QPen(Qt.black, 2))
         for name, x, y in zip(self.target, self.point_x, self.point_y):
             self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
             self.painter.drawText(x - 4, y - 10, f"{name}")
@@ -217,8 +228,12 @@ class Js06TargetView(QDialog):
     def blank_mousePressEvent(self, event):
         self.update()
 
-        x = int(event.pos().x() / self.width() * self.w)
-        y = int(event.pos().y() / self.height() * self.h)
+        x = int(event.pos().x() / self.blank_lbl.width() * self.w)
+        y = int(event.pos().y() / self.blank_lbl.height() * self.h)
+
+        print(event.pos())
+        print(self.image_label.geometry())
+        print(self.w)
 
         for i in range(len(self.target)):
             self.target[i] = i + 1
@@ -235,8 +250,8 @@ class Js06TargetView(QDialog):
             self.size_y.append(0.3)
             self.target.append(len(self.point_x))
             self.distance.append(0)
-            self.ordinal.append("E")
-            self.category.append("Single")
+            # self.ordinal.append("E")
+            # self.category.append("Single")
 
             self.combo_changed()
 
@@ -301,8 +316,8 @@ class Js06TargetView(QDialog):
             self.size_x.append(self.result[i]['roi']['size'][0])
             self.size_y.append(self.result[i]['roi']['size'][1])
             self.distance.append(self.result[i]['distance'])
-            self.ordinal.append(self.result[i]['ordinal'])
-            self.category.append(self.result[i]['category'])
+            # self.ordinal.append(self.result[i]['ordinal'])
+            # self.category.append(self.result[i]['category'])
     # end of get_target
 
 # end of Js06TargetView

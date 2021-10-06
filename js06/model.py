@@ -41,7 +41,7 @@ class SimpleTarget(QRunnable):
         # TODO(Kyungwon): Put the model file into Qt Resource Collection.
         model_path = os.path.join(
             os.path.dirname(__file__), 
-            'resources', 
+            'resources',
             'js02.tflite'
             )
         self.interpreter = Interpreter(model_path=model_path)
