@@ -209,7 +209,7 @@ class Js06TargetView(QDialog):
         self.close()
     # end of rejected_btn
 
-    def blank_paintEvent(self, event: QPaintEvent):
+    def blank_paintEvent(self, event):
         self.painter = QPainter(self.blank_lbl)
 
         self.painter.setPen(QPen(Qt.black, 1, Qt.DotLine))
@@ -220,20 +220,19 @@ class Js06TargetView(QDialog):
         for name, x, y in zip(self.target, self.point_x, self.point_y):
             self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
             self.painter.drawText(x - 4, y - 10, f"{name}")
-        self.blank_lbl.setGeometry(self.image_label.geometry())
+        self.blank_lbl.resize(self.image_label.size())
 
         self.painter.end()
     # end of paintEvent
 
     def blank_mousePressEvent(self, event):
-        self.update()
+        # self.update()
 
-        x = int(event.pos().x() / self.blank_lbl.width() * self.w)
-        y = int(event.pos().y() / self.blank_lbl.height() * self.h)
+        x = int(event.pos().x() / self.blank_lbl.width() * self.image.width())
+        y = int(event.pos().y() / self.blank_lbl.height() * self.image.height())
 
         print(event.pos())
-        print(self.image_label.geometry())
-        print(self.w)
+        print(self.image_label.size())
 
         for i in range(len(self.target)):
             self.target[i] = i + 1
