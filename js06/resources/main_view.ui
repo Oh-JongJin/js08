@@ -107,12 +107,12 @@ color: rgb(255, 255, 255);</string>
          </layout>
         </item>
         <item>
-         <widget class="QDockWidget" name="video_dock">
+         <widget class="QDockWidget" name="front_video_dock">
           <widget class="QWidget" name="dockWidgetContents_3"/>
          </widget>
         </item>
         <item>
-         <widget class="QDockWidget" name="video_dock2">
+         <widget class="QDockWidget" name="rear_video_dock">
           <widget class="QWidget" name="dockWidgetContents_2"/>
          </widget>
         </item>
@@ -130,7 +130,7 @@ color: rgb(255, 255, 255);</string>
             <enum>QFrame::NoFrame</enum>
            </property>
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Visibility by direction&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Directional visibility&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -146,7 +146,7 @@ color: rgb(255, 255, 255);</string>
             <string notr="true">background-color: rgb(55, 64, 121);</string>
            </property>
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Graph&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Prevailing visibility&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>

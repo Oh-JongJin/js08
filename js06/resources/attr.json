@@ -16,6 +16,7 @@
             "single": "null",
             "compound": "null"
         },
-        "camera": {}
+        "front_camera": {},
+        "rear_camera": {}
     }
 ]
