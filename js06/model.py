@@ -9,6 +9,7 @@ import datetime
 import os
 import platform
 import pymongo
+import sys
 
 import numpy as np
 
@@ -39,11 +40,11 @@ class SimpleTarget(QRunnable):
         self.discernment = None
 
         # TODO(Kyungwon): Put the model file into Qt Resource Collection.
-        model_path = os.path.join(
-            os.path.dirname(__file__), 
-            'resources', 
-            'js02.tflite'
-            )
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        model_path = os.path.join(directory, 'resources', 'js02.tflite')
         self.interpreter = Interpreter(model_path=model_path)
         self.interpreter.allocate_tensors()
 

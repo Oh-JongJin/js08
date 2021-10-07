@@ -7,6 +7,7 @@
 #     5jx2oh@gmail.com (Jongjin Oh)
 
 import os
+import sys
 
 from PyQt5.QtCore import QObject, QTimer, QUrl, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent
@@ -23,8 +24,11 @@ class Js06CameraView(QDialog):
         super().__init__(parent)
         self.setModal(True)
 
-        ui_path = os.path.join(os.path.dirname(__file__),
-                               'resources', 'camera_view.ui')
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        ui_path = os.path.join(directory, 'resources', 'camera_view.ui')
         uic.loadUi(ui_path, self)
 
         self._ctrl = parent._ctrl
@@ -85,8 +89,11 @@ class Js06TargetView(QDialog):
         super().__init__(parent)
         self.setModal(True)
 
-        ui_path = os.path.join(os.path.dirname(__file__),
-                               'resources', 'target_view.ui')
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        ui_path = os.path.join(directory, 'resources', 'target_view.ui')
         uic.loadUi(ui_path, self)
         self._ctrl = parent._ctrl
         self._model = self._ctrl.get_target()
@@ -307,13 +314,15 @@ class Js06TargetView(QDialog):
 
 # end of Js06TargetView
 
-
 class Js06AboutView(QDialog):
     def __init__(self):
         super().__init__()
 
-        ui_path = os.path.join(os.path.dirname(__file__),
-                               'resources', 'about_view.ui')
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        ui_path = os.path.join(directory, 'resources', 'about_view.ui')
         uic.loadUi(ui_path, self)
 # end of Js06AboutView
 
@@ -400,8 +409,11 @@ class Js06MainView(QMainWindow):
     def __init__(self, controller: Js06MainCtrl):
         super().__init__()
 
-        ui_path = os.path.join(os.path.dirname(__file__),
-                               'resources', 'main_view.ui')
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        ui_path = os.path.join(directory, 'resources', 'main_view.ui')
         uic.loadUi(ui_path, self)
         self._ctrl = controller
 

@@ -8,6 +8,7 @@
 
 import json
 import os
+import sys
 
 from PyQt5.QtCore import QDateTime, QDir, QObject, QRect, QThreadPool, QTime, QTimer, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QImage
@@ -60,11 +61,14 @@ class Js06MainCtrl(QObject):
         db_name = Js06Settings.get('db_name')
         self._model.connect_to_db(db_host, db_port, db_name)
 
-        file_path = os.path.dirname(__file__)
-        attr_path = os.path.join(file_path, 'resources', 'attr.json')
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        attr_path = os.path.join(directory, 'resources', 'attr.json')
         with open(attr_path, 'r') as f:
             attr_json = json.load(f)
-        camera_path = os.path.join(file_path, 'resources', 'camera.json')
+        camera_path = os.path.join(directory, 'resources', 'camera.json')
         with open(camera_path, 'r') as f:
             camera_json = json.load(f)
 
