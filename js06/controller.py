@@ -22,6 +22,8 @@ class Js06MainCtrl(QObject):
     rear_camera_changed = pyqtSignal(str)
     front_target_decomposed = pyqtSignal()
     rear_target_decomposed = pyqtSignal()
+    target_discerned = pyqtSignal(list, list)
+    prevailing_visibility_prepared = pyqtSignal(int, float)
 
     def __init__(self, model: Js06AttrModel):
         super().__init__()
@@ -49,7 +51,7 @@ class Js06MainCtrl(QObject):
         self.front_target_decomposed.connect(self.start_observation_timer)
         self.rear_target_decomposed.connect(self.start_observation_timer)
     # end of __init__
-
+    
     def set_max_inference_thread(self):
         threads = Js06Settings.get('thread_count')
         self.inference_pool.setMaxThreadCount(threads)
@@ -214,13 +216,36 @@ class Js06MainCtrl(QObject):
 
         self.inference_pool.waitForDone()
         
+        pos, neg = self.assort_discernment()
+        self.target_discerned.emit(pos, neg)
+
         wedge_visibility = self.wedge_visibility()
         self.write_visibilitiy(epoch, wedge_visibility)
     # end of job_broker
 
+    def assort_discernment(self) -> tuple:
+        pos, neg = [], []
+
+        for t in self.front_decomposed_targets:
+            point = (t.azimuth, t.distance)
+            if t.discernment:
+                pos.append(point)
+            else:
+                neg.append(point)
+
+        for t in self.rear_decomposed_targets:
+            point = (t.azimuth, t.distance)
+            if t.discernment:
+                pos.append(point)
+            else:
+                neg.append(point)
+
+        return pos, neg
+
     def write_visibilitiy(self, epoch: int, wedge_visibility: dict):
         vis_list = list(wedge_visibility.values())
         prevailing = self.prevailing_visibility(vis_list)
+        self.prevailing_visibility_prepared.emit(epoch, prevailing)
         wedge_visibility['epoch'] = epoch
         wedge_visibility['prevailing'] = prevailing
         print('DEBUG:', wedge_visibility)

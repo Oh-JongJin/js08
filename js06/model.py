@@ -234,12 +234,12 @@ class Js06AttrModel:
             attr_json: list of attribute dictionary
             camera_json: list of camerae dictionary
         """
-        collections = self.db.list_collection_names()
+        coll = self.db.list_collection_names()
         
-        if 'camera' not in collections or self.db.camera.count_documents({}) == 0:
+        if 'camera' not in coll or self.db.camera.count_documents({}) == 0:
             self.db.camera.insert_many(camera_json)
     
-        if 'attr' not in collections or self.db.attr.count_documents({}) == 0:
+        if 'attr' not in coll or self.db.attr.count_documents({}) == 0:
             front_cam = self.db.camera.find_one({'placement': 'front'})
             front_cam['camera_id'] = front_cam.pop('_id')
 
@@ -252,7 +252,7 @@ class Js06AttrModel:
 
             self.db.attr.insert_many(attr_json)
 
-        if 'visibility' not in collections:
+        if 'visibility' not in coll:
             self.db.create_collection('visibility',
                 timeseries = {
                   'timeField': 'timestamp',

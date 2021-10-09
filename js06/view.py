@@ -6,18 +6,145 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
+import collections
 import os
 import sys
 
-from PyQt5.QtCore import QObject, QTimer, QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent
-from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
-from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
-from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
-    QGraphicsView, QMainWindow, QMessageBox, QVBoxLayout, QWidget, QLabel
 from PyQt5 import uic
+from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
+                           QLineSeries, QPolarChart, QScatterSeries,
+                           QValueAxis)
+from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, QTimer, QUrl,
+                          pyqtSignal, pyqtSlot)
+from PyQt5.QtGui import (QCloseEvent, QColor, QPainter, QPaintEvent, QPen,
+                         QPixmap, QResizeEvent)
+from PyQt5.QtMultimedia import (QMediaContent, QMediaPlayer, QVideoFrame,
+                                QVideoProbe)
+from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
+from PyQt5.QtWidgets import (QDialog, QGraphicsRectItem, QGraphicsScene,
+                             QGraphicsView, QLabel, QMainWindow, QMessageBox,
+                             QVBoxLayout, QWidget)
 
 from .controller import Js06MainCtrl
+
+
+class Js06DiscernmentView(QChartView):
+    def __init__(self, parent: QWidget, title: str = None):
+        super().__init__(parent)
+
+        self.setRenderHint(QPainter.Antialiasing)
+
+        chart = QPolarChart(title=title)
+        # chart.setAnimationOptions(QChart.AllAnimations)
+        chart.legend().setAlignment(Qt.AlignRight)
+        chart.legend().setMarkerShape(QLegend.MarkerShapeCircle)
+        self.setChart(chart)
+
+        self.positives = QScatterSeries(name='Positive')
+        self.negatives = QScatterSeries(name='Negative')
+        self.positives.setColor(QColor('green'))
+        self.negatives.setColor(QColor('red'))
+        chart.addSeries(self.positives)
+        chart.addSeries(self.negatives)
+        
+        axis_x = QValueAxis()
+        axis_x.setRange(0, 360)
+        axis_x.setLabelFormat('%d')
+        axis_x.setTitleText('Azimuth (deg)')
+        axis_x.setTitleVisible(False)
+        chart.setAxisX(axis_x, self.positives)
+        chart.setAxisX(axis_x, self.negatives)
+
+        axis_y = QValueAxis()
+        axis_y.setRange(0, 20)
+        axis_y.setLabelFormat('%d')
+        axis_y.setTitleText('Distance (km)')
+        axis_y.setTitleVisible(False)
+        chart.setAxisY(axis_y, self.positives)
+        chart.setAxisY(axis_y, self.negatives)
+
+    def keyPressEvent(self, event):
+        keymap = {
+            Qt.Key_Up: lambda: self.chart().scroll(0, -10),
+            Qt.Key_Down: lambda: self.chart().scroll(0, 10),
+            Qt.Key_Right: lambda: self.chart().scroll(-10, 0),
+            Qt.Key_Left: lambda: self.chart().scroll(10, 0),
+            Qt.Key_Greater: lambda: self.chart().zoonIn,
+            Qt.Key_Less: lambda: self.chart().zoonOut,
+        }
+        callback = keymap.get(event.key())
+        if callback:
+            callback()
+
+    @pyqtSlot(list, list)
+    def refresh_stats(self, positives: list, negatives: list):
+        print('DEBUG(Js06DiscernmentView.refresh_stats)')
+        pos_point = [QPointF(a, d) for a, d in positives]
+        self.positives.replace(pos_point)
+        neg_point = [QPointF(a, d) for a, d in negatives]
+        self.negatives.replace(neg_point)
+
+
+class Js06VisibilityView(QChartView):
+    def __init__(self, parent: QWidget, maxlen: int, title: str = None):
+        super().__init__(parent)
+
+        now = QDateTime.currentSecsSinceEpoch()
+        zeros = [(t * 1000, 0) for t in range(now - maxlen * 60, now, 60)]
+        self.data = collections.deque(zeros, maxlen=maxlen)
+        
+        self.setRenderHint(QPainter.Antialiasing)
+
+        chart = QChart(title=title)
+        # chart.setAnimationOptions(QChart.AllAnimations)
+        chart.legend().setVisible(False)
+        self.setChart(chart)
+        self.series = QLineSeries(name='Prevailing Visibility')
+        chart.addSeries(self.series)
+
+        axis_x = QDateTimeAxis()
+        axis_x.setFormat('yyyy-MM-dd hh:mm')
+        axis_x.setTitleText('Time')
+        left = QDateTime.fromMSecsSinceEpoch(self.data[0][0])
+        right = QDateTime.fromMSecsSinceEpoch(self.data[-1][0])
+        axis_x.setRange(left, right)
+        chart.setAxisX(axis_x, self.series)
+
+        axis_y = QValueAxis()
+        axis_y.setRange(0, 20)
+        axis_y.setLabelFormat('%d')
+        axis_y.setTitleText('Distance (km)')
+        chart.setAxisY(axis_y, self.series)
+
+        data_point = [QPointF(t, v) for t, v in self.data]
+        self.series.replace(data_point)
+        for t, v in self.data:
+            self.series.append(t, v)
+
+    def keyPressEvent(self, event):
+        keymap = {
+            Qt.Key_Up: lambda: self.chart().scroll(0, -10),
+            Qt.Key_Down: lambda: self.chart().scroll(0, 10),
+            Qt.Key_Right: lambda: self.chart().scroll(-10, 0),
+            Qt.Key_Left: lambda: self.chart().scroll(10, 0),
+            Qt.Key_Greater: lambda: self.chart().zoonIn,
+            Qt.Key_Less: lambda: self.chart().zoonOut,
+        }
+        callback = keymap.get(event.key())
+        if callback:
+            callback()
+
+    @pyqtSlot(int, float)
+    def refresh_stats(self, epoch: int, data: float):
+        self.data.append((epoch * 1000, data))
+        
+        left = QDateTime.fromMSecsSinceEpoch(self.data[0][0])
+        right = QDateTime.fromMSecsSinceEpoch(self.data[-1][0])
+        self.chart().axisX().setRange(left, right)
+        
+        data_point = [QPointF(t, v) for t, v in self.data]
+        self.series.replace(data_point)
+
 
 class Js06CameraView(QDialog):
     def __init__(self, parent: QWidget):
@@ -159,12 +286,12 @@ class Js06TargetView(QDialog):
                     self.categoryCombo.setCurrentIndex(categoryItems.index(self.category[i]))
                 break
             else:
-                self.labelEdit.setText("")
-                self.distanceEdit.setText("")
-                self.point_x_Edit.setText("")
-                self.point_y_Edit.setText("")
-                self.size_x_Edit.setText("")
-                self.size_y_Edit.setText("")
+                self.labelEdit.setText('')
+                self.distanceEdit.setText('')
+                self.point_x_Edit.setText('')
+                self.point_y_Edit.setText('')
+                self.size_x_Edit.setText('')
+                self.size_y_Edit.setText('')
                 self.ordinalCombo.setCurrentIndex(-1)
                 self.categoryCombo.setCurrentIndex(-1)
     # end of combo_changed
@@ -215,7 +342,7 @@ class Js06TargetView(QDialog):
         self.painter.setPen(QPen(Qt.red, 2))
         for name, x, y in zip(self.target, self.point_x, self.point_y):
             self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
-            self.painter.drawText(x - 4, y - 10, f"{name}")
+            self.painter.drawText(x - 4, y - 10, f'{name}')
         self.blank_lbl.setGeometry(self.image_label.geometry())
 
         self.painter.end()
@@ -242,19 +369,19 @@ class Js06TargetView(QDialog):
             self.size_y.append(0.3)
             self.target.append(len(self.point_x))
             self.distance.append(0)
-            self.ordinal.append("E")
-            self.category.append("Single")
+            self.ordinal.append('E')
+            self.category.append('Single')
 
             self.combo_changed()
 
-            print("mousePressEvent - ", len(self.target))
+            print('mousePressEvent - ', len(self.target))
             # self.save_target()
             # self.get_target()
 
         if event.buttons() == Qt.RightButton:
             deleteIndex = self.numberCombo.currentIndex() + 1
-            reply = QMessageBox.question(self, "Delete Target",
-                                         f"Are you sure delete target [{deleteIndex}] ?")
+            reply = QMessageBox.question(self, 'Delete Target',
+                                         f'Are you sure delete target [{deleteIndex}] ?')
             if reply == QMessageBox.Yes:
                 self.numberCombo.removeItem(deleteIndex - 1)
                 self.numberCombo.setCurrentIndex(deleteIndex - 2)
@@ -286,7 +413,7 @@ class Js06TargetView(QDialog):
                 # # self.result[i]['label_y'] = [int(y * self.height() / self.h) for y in self.target_y][i]
                 # self.result[i]['roi']['point'][0] = self.label_x
                 # self.result[i]['roi']['point'][1] = self.label_y
-                # self.result[i]["distance"] = self.distance
+                # self.result[i]['distance'] = self.distance
                 # # print(self.target[i])
                 # # print(self.label_x[i])
                 # # print(self.label_y[i])
@@ -336,7 +463,7 @@ class Js06VideoWidget(QWidget):
 
         self.scene = QGraphicsScene(self)
         self.graphicView = QGraphicsView(self.scene)
-        self.graphicView.setStyleSheet("background: #000000")
+        self.graphicView.setStyleSheet('background: #000000')
         self.graphicView.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.graphicView.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self._video_item = QGraphicsVideoItem()
@@ -358,19 +485,11 @@ class Js06VideoWidget(QWidget):
         self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
     # end of fit_in_view
 
-    ############
-    ## Events ##
-    ############
     def resizeEvent(self, a0: QResizeEvent) -> None:
         self.fit_in_view()
         return super().resizeEvent(a0)
     # end of resizeEvent
 
-    # end of events
-
-    ###########
-    ## Slots ##
-    ###########
     @pyqtSlot(QVideoFrame)
     def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
         self.video_frame_prepared.emit(frame)
@@ -432,41 +551,31 @@ class Js06MainView(QMainWindow):
         self.actionEdit_Target.triggered.connect(self.edit_target)
         self.actionAbout.triggered.connect(self.about_view)
 
-        # Front camera
-        self.front_video_dock.setTitleBarWidget(QWidget(self))
+        # Front video
+        # self.front_video_dock.setTitleBarWidget(QWidget(self))
         self.front_video_widget = Js06VideoWidget(self)
         self.front_video_dock.setWidget(self.front_video_widget)
         self.front_video_widget.video_frame_prepared.connect(self._ctrl.update_front_video_frame)
         self._ctrl.front_camera_changed.connect(self.front_video_widget.on_camera_change)
         self._ctrl.front_camera_changed.emit(self._ctrl.get_front_camera_uri())
 
-        # Rear camera
-        self.rear_video_dock.setTitleBarWidget(QWidget(self))
+        # Rear video
+        # self.rear_video_dock.setTitleBarWidget(QWidget(self))
         self.rear_video_widget = Js06VideoWidget(self)
         self.rear_video_dock.setWidget(self.rear_video_widget)
         self.rear_video_widget.video_frame_prepared.connect(self._ctrl.update_rear_video_frame)
         self._ctrl.rear_camera_changed.connect(self.rear_video_widget.on_camera_change)
         self._ctrl.rear_camera_changed.emit(self._ctrl.get_rear_camera_uri())
 
-        # # target plot dock
-        # self.target_plot_dock = QDockWidget("Target plot", self)
-        # self.addDockWidget(Qt.BottomDockWidgetArea, self.target_plot_dock)
-        # self.target_plot_dock.setFeatures(
-        #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        # self.target_plot_widget = Js06TargetPlotWidget2(self)
-        # self.target_plot_dock.setWidget(self.target_plot_widget)
-        #
-        # # grafana dock 1
-        # self.web_dock_1 = QDockWidget("Grafana plot 1", self)
-        # self.addDockWidget(Qt.BottomDockWidgetArea, self.web_dock_1)
-        # self.web_dock_1.setFeatures(
-        #     QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        # self.web_view_1 = Js06TimeSeriesPlotWidget()
-        # self.web_dock_1.setWidget(self.web_view_1)
+        # Discernment status
+        self.discernment_widet = Js06DiscernmentView(self)
+        self.discernment_dock.setWidget(self.discernment_widet)
+        self._ctrl.target_discerned.connect(self.discernment_widet.refresh_stats)
 
-        # self.splitDockWidget(self.target_plot_dock, self.web_dock_1, Qt.Horizontal)
-        # self.tabifyDockWidget(self.target_plot_dock, self.web_dock_1)
-        # self.splitDockWidget(self.video_dock, self.video_dock2, Qt.Horizontal)
+        # Prevailing visibility
+        self.visibility_view_widget = Js06VisibilityView(self, 1440)
+        self.visibility_dock.setWidget(self.visibility_view_widget)
+
         self.show()
     # end of __init__
 
@@ -509,6 +618,7 @@ class Js06MainView(QMainWindow):
 
 if __name__ == '__main__':
     import sys
+
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
