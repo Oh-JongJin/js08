@@ -10,11 +10,14 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import QDateTime, QDir, QObject, QRect, QThreadPool, QTime, QTimer, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThreadPool, QTime,
+                          QTimer, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QImage
 from PyQt5.QtMultimedia import QVideoFrame
 
-from .model import Js06CameraTableModel, Js06IoRunner, Js06AttrModel, Js06Settings, Js06Wedge, SimpleTarget
+from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner,
+                    Js06Settings, Js06Wedge, SimpleTarget)
+
 
 class Js06MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
@@ -50,12 +53,10 @@ class Js06MainCtrl(QObject):
         self.rear_camera_changed.connect(self.decompose_rear_targets)
         self.front_target_decomposed.connect(self.start_observation_timer)
         self.rear_target_decomposed.connect(self.start_observation_timer)
-    # end of __init__
     
     def set_max_inference_thread(self):
         threads = Js06Settings.get('thread_count')
         self.inference_pool.setMaxThreadCount(threads)
-    # end of set_max_inference_thread
 
     def init_db(self):
         db_host = Js06Settings.get('db_host')
@@ -75,7 +76,6 @@ class Js06MainCtrl(QObject):
             camera_json = json.load(f)
 
         self._model.setup_db(attr_json, camera_json)
-    # end of init
 
     @pyqtSlot(str)
     def decompose_front_targets(self, _:str) -> None:
@@ -113,7 +113,6 @@ class Js06MainCtrl(QObject):
                     self.front_decomposed_targets.append(st)
 
         self.front_target_decomposed.emit()
-    # end of decompose_front_targets
 
     @pyqtSlot(str)
     def decompose_rear_targets(self, _:str) -> None:
@@ -151,7 +150,6 @@ class Js06MainCtrl(QObject):
                     self.rear_decomposed_targets.append(st)
 
         self.rear_target_decomposed.emit()
-    # end of decompose_rear_targets
 
     def prevailing_visibility(self) -> float:
         vis = list(self.directional_visibility.values())
@@ -160,7 +158,6 @@ class Js06MainCtrl(QObject):
         vis.sort(reverse=True)
         prevailing = vis[(len(vis) - 1) // 2]
         return prevailing
-    # end of prevailing_visibility
 
     @pyqtSlot()
     def start_observation_timer(self) -> None:
@@ -183,11 +180,9 @@ class Js06MainCtrl(QObject):
         # timeout_in_sec = minute_left * 60 + second_left
         # QTimer.singleShot(timeout_in_sec * 1000, self.observation_timer.start)
         self.observation_timer.start()
-    # end of start_timer
 
     def stop_timer(self) -> None:
         self.observation_timer.stop()
-    # end of stop_timer
 
     def job_broker(self) -> None:
         if self.front_video_frame == None or self.rear_video_frame == None:
@@ -221,7 +216,6 @@ class Js06MainCtrl(QObject):
 
         wedge_visibility = self.wedge_visibility()
         self.write_visibilitiy(epoch, wedge_visibility)
-    # end of job_broker
 
     def assort_discernment(self) -> tuple:
         pos, neg = [], []
@@ -242,7 +236,7 @@ class Js06MainCtrl(QObject):
 
         return pos, neg
 
-    def write_visibilitiy(self, epoch: int, wedge_visibility: dict):
+    def write_visibilitiy(self, epoch: int, wedge_visibility: dict) -> None:
         vis_list = list(wedge_visibility.values())
         prevailing = self.prevailing_visibility(vis_list)
         self.prevailing_visibility_prepared.emit(epoch, prevailing)
@@ -250,7 +244,6 @@ class Js06MainCtrl(QObject):
         wedge_visibility['prevailing'] = prevailing
         print('DEBUG:', wedge_visibility)
         self._model.write_visibility(wedge_visibility)
-    # end of write_visibility
 
     def wedge_visibility(self) -> dict:
         wedge_vis = {w: None for w in Js06Wedge}
@@ -267,7 +260,6 @@ class Js06MainCtrl(QObject):
                 elif wedge_vis[t.wedge] < t.distance:
                     wedge_vis[t.wedge] = t.distance
         return wedge_vis
-    # end of wedge_visibility
 
     def prevailing_visibility(self, wedge_vis: list) -> float:
         if None in wedge_vis:
@@ -275,14 +267,12 @@ class Js06MainCtrl(QObject):
         sorted_vis = sorted(wedge_vis, reverse=True)
         prevailing = sorted_vis[(len(sorted_vis) - 1) // 2]
         return prevailing
-    # end of prevailing_visibility
 
-    def save_image(self, dir: str, filename: str, image: QImage):
+    def save_image(self, dir: str, filename: str, image: QImage) -> None:
         os.makedirs(dir, exist_ok=True)
         path = QDir.cleanPath(os.path.join(dir, filename))
         runner = Js06IoRunner(path, image)
         self.writer_pool.start(runner)
-    # end of save_image
 
     def get_front_image(self) -> QImage:
         if self.front_video_frame == None:
@@ -296,47 +286,39 @@ class Js06MainCtrl(QObject):
         image = self.rear_video_frame.image().mirrored(False, True)
         return image
 
-    def update_front_video_frame(self, video_frame: QVideoFrame):
+    def update_front_video_frame(self, video_frame: QVideoFrame) -> None:
         self.front_video_frame = video_frame
-    # end of update_front_video_frame
 
-    def update_rear_video_frame(self, video_frame: QVideoFrame):
+    def update_rear_video_frame(self, video_frame: QVideoFrame) -> None:
         self.rear_video_frame = video_frame
-    # end of update_rear_video_frame
 
-    def get_front_camera_uri(self):
+    def get_front_camera_uri(self) -> str:
         attr = self._model.read_attr()
         return attr['front_camera']['uri']
-    # end of get_front_camera_uri
 
-    def get_rear_camera_uri(self):
+    def get_rear_camera_uri(self) -> str:
         attr = self._model.read_attr()
         return attr['rear_camera']['uri']
-    # end of get_rear_camera_uri
 
-    def get_front_target(self):
+    def get_front_target(self) -> list:
         attr = self._model.read_attr()
         return attr['front_camera']['targets']
-    # end of get_front_target
 
-    def get_rear_target(self):
+    def get_rear_target(self) -> list:
         attr = self._model.read_attr()
         return attr['rear_camera']['targets']
-    # end of get_rear_target
 
-    def get_camera_table_model(self):
+    def get_camera_table_model(self) -> dict:
         cameras = self.get_cameras()
         table_model =  Js06CameraTableModel(cameras)
         return table_model
-    # end of get_camera_table_model
 
-    def check_exit_status(self):
+    def check_exit_status(self) -> bool:
         normal_exit = Js06Settings.get('normal_shutdown')
         Js06Settings.set('normal_shutdown', False)
         return normal_exit
-    # end of check_exit_stauts
 
-    def update_cameras(self, cameras: list):
+    def update_cameras(self, cameras: list) -> None:
         # Remove deleted cameras
         cam_id_in_db = [cam["_id"] for cam in self._model.read_cameras()]
         cam_id_in_arg = [cam["_id"] for cam in cameras]
@@ -347,43 +329,28 @@ class Js06MainCtrl(QObject):
         # Update existing camera or Insert new cameras
         for cam in cameras:
             self._model.update_camera(cam, upsert=True)
-    # end of update_cameras
 
     @pyqtSlot()
-    def close_process(self):
+    def close_process(self) -> None:
         Js06Settings.set('normal_shutdown', True)
-    # end of close_process
 
-    def get_attr(self):
+    def get_attr(self) -> dict:
         self._model.get_attr()
         attr_doc = None
         if self._attr.count_documents({}):
             attr_doc = list(self._attr.find().sort("_id", -1).limit(1))[0]
         return attr_doc
-    # end of get_attr
     
-    def set_attr(self, model: dict):
+    def set_attr(self, model: dict) -> None:
         self._model.update_attr(model)
-    # end of set_attr
 
     @pyqtSlot()
-    def restore_defaults(self):
+    def restore_defaults(self) -> None:
         Js06Settings.restore_defaults()
-    # end of restore_defaults
 
     @pyqtSlot(bool)
-    def set_normal_shutdown(self):
+    def set_normal_shutdown(self) -> None:
          Js06Settings.set('normal_shutdown', True)
-    # end of set_normal_shutdown
 
-    def get_cameras(self):
+    def get_cameras(self) -> list:
         return self._model.read_cameras()
-    # end of get_camearas
-
-# end of Js06MainCtrl
-
-# if __name__ == '__main__':
-#     ctrl = Js06MainCtrl(model=Js06Model, view=Js06MainView)
-#     print(ctrl.get_attr)
-
-# end of main_ctrl.py

@@ -147,7 +147,7 @@ class Js06VisibilityView(QChartView):
 
 
 class Js06CameraView(QDialog):
-    def __init__(self, parent: QWidget):
+    def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
         self.setModal(True)
 
@@ -165,27 +165,23 @@ class Js06CameraView(QDialog):
         self.insertBelow.clicked.connect(self.insert_below)
         self.removeRows.clicked.connect(self.remove_rows)
         self.buttonBox.accepted.connect(self.accepted)
-    # end of __init__
 
-    def insert_above(self):
+    def insert_above(self) -> None:
         selected = self.tableView.selectedIndexes()
         row = selected[0].row() if selected else 0
         self._model.insertRows(row, 1, None)
-    # end of insert_above
 
-    def insert_below(self):
+    def insert_below(self) -> None:
         selected = self.tableView.selectedIndexes()
         row = selected[-1].row() if selected else self._model.rowCount(None)
         self._model.insertRows(row + 1, 1, None)
-    # end of insert_below
 
-    def remove_rows(self):
+    def remove_rows(self) -> None:
         selected = self.tableView.selectedIndexes()
         if selected:
             self._model.removeRows(selected[0].row(), len(selected), None)
-    # end of remove_rows
 
-    def accepted(self):
+    def accepted(self) -> None:
         # Update camera db
         cameras = self._model.get_data()
         # self._ctrl.update_cameras(cameras)
@@ -206,13 +202,10 @@ class Js06CameraView(QDialog):
         attr['front_camera'] = front_cam
         attr['rear_camera'] = rear_cam
         self._ctrl.insert_attr(attr)
-    # end of accepted
-
-# end of Js06CameraView
 
 
 class Js06TargetView(QDialog):
-    def __init__(self, parent: QWidget):
+    def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
         self.setModal(True)
 
@@ -264,9 +257,8 @@ class Js06TargetView(QDialog):
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
         self.combo_changed()
         self.blank_lbl.raise_()
-    # end of __init__
 
-    def combo_changed(self):
+    def combo_changed(self) -> None:
         self.blank_lbl.paintEvent = self.blank_paintEvent
         ordinalItems = [self.ordinalCombo.itemText(i) for i in range(self.ordinalCombo.count())]
         categoryItems = [self.categoryCombo.itemText(i) for i in range(self.categoryCombo.count())]
@@ -294,10 +286,9 @@ class Js06TargetView(QDialog):
                 self.size_y_Edit.setText('')
                 self.ordinalCombo.setCurrentIndex(-1)
                 self.categoryCombo.setCurrentIndex(-1)
-    # end of combo_changed
 
     @pyqtSlot()
-    def save_btn(self):
+    def save_btn(self) -> None:
         result = []
         # for i in range(len(self._ctrl.get_cameras())):
         #     if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
@@ -321,18 +312,15 @@ class Js06TargetView(QDialog):
         self._ctrl.set_attr(result)
 
         self.close()
-    # end of save_targets
 
-    def save_cameras(self):
+    def save_cameras(self) -> None:
         cameras = self._model.get_data()
         self._ctrl.update_cameras(cameras)
-    # end of save_cameras
 
-    def rejected_btn(self):
+    def rejected_btn(self) -> None:
         self.close()
-    # end of rejected_btn
 
-    def blank_paintEvent(self, event: QPaintEvent):
+    def blank_paintEvent(self, event: QPaintEvent) -> None:
         self.painter = QPainter(self.blank_lbl)
 
         self.painter.setPen(QPen(Qt.black, 1, Qt.DotLine))
@@ -346,9 +334,8 @@ class Js06TargetView(QDialog):
         self.blank_lbl.setGeometry(self.image_label.geometry())
 
         self.painter.end()
-    # end of paintEvent
 
-    def blank_mousePressEvent(self, event):
+    def blank_mousePressEvent(self, event) -> None:
         self.update()
 
         x = int(event.pos().x() / self.width() * self.w)
@@ -390,19 +377,16 @@ class Js06TargetView(QDialog):
                 del self.point_y[deleteIndex - 1]
                 del self.target[deleteIndex - 1]
                 self.combo_changed()
-    # end of blank_mousePressEvent
 
-    def coordinator(self):
+    def coordinator(self) -> None:
         self.prime_y = [y / self.h for y in self.target_y]
         self.prime_x = [2 * x / self.w - 1 for x in self.target_x]
-    # end of coordinator
 
-    def restoration(self):
+    def restoration(self) -> None:
         self.target_x = [int((x + 1) * self.w / 2) for x in self.prime_x]
         self.target_y = [int(y * self.h) for y in self.prime_y]
-    # end of restoration
 
-    def save_target(self):
+    def save_target(self) -> None:
         # targets = self._model
 
         if self.target:
@@ -418,9 +402,8 @@ class Js06TargetView(QDialog):
                 # # print(self.label_x[i])
                 # # print(self.label_y[i])
                 # # print(self.distance[i])
-    # end of save_target
 
-    def get_target(self):
+    def get_target(self) -> None:
         targets = self._model
 
         self.numberCombo.clear()
@@ -437,12 +420,10 @@ class Js06TargetView(QDialog):
             self.distance.append(self.result[i]['distance'])
             self.ordinal.append(self.result[i]['ordinal'])
             self.category.append(self.result[i]['category'])
-    # end of get_target
 
-# end of Js06TargetView
 
 class Js06AboutView(QDialog):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
         if getattr(sys, 'frozen', False):
@@ -451,14 +432,14 @@ class Js06AboutView(QDialog):
             directory = os.path.dirname(__file__)
         ui_path = os.path.join(directory, 'resources', 'about_view.ui')
         uic.loadUi(ui_path, self)
-# end of Js06AboutView
+
 
 class Js06VideoWidget(QWidget):
     """Video stream player using QGraphicsVideoItem
     """
     video_frame_prepared = pyqtSignal(QVideoFrame)
 
-    def __init__(self, parent: QObject):
+    def __init__(self, parent: QObject) -> None:
         super().__init__(parent)
 
         self.scene = QGraphicsScene(self)
@@ -479,21 +460,17 @@ class Js06VideoWidget(QWidget):
         self.probe = QVideoProbe(self)
         self.probe.videoFrameProbed.connect(self.on_videoFrameProbed)
         self.probe.setSource(self.player)
-    # end of __init__
 
-    def fit_in_view(self):
+    def fit_in_view(self) -> None:
         self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
-    # end of fit_in_view
 
-    def resizeEvent(self, a0: QResizeEvent) -> None:
+    def resizeEvent(self, a0: QResizeEvent):
         self.fit_in_view()
         return super().resizeEvent(a0)
-    # end of resizeEvent
 
     @pyqtSlot(QVideoFrame)
     def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
         self.video_frame_prepared.emit(frame)
-    # end of on_videoFrameProbed
 
     @pyqtSlot(str)
     def on_camera_change(self, uri: str) -> None:
@@ -503,11 +480,8 @@ class Js06VideoWidget(QWidget):
         # Wait till the video stream arrives before fitting the video
         for i in [500, 1000, 1500, 2000, 2500]:
             QTimer.singleShot(i, self.fit_in_view)
-    # end of on_camera_change
 
-    # end of slots
-
-    def draw_roi(self, point: tuple, size: tuple):
+    def draw_roi(self, point: tuple, size: tuple) -> None:
         """Draw a boundary rectangle of ROI
         Parameters:
           point: the upper left point of ROI in canonical coordinates
@@ -515,9 +489,6 @@ class Js06VideoWidget(QWidget):
         """
         rectangle = QGraphicsRectItem(*point, *size, self._video_item)
         rectangle.setPen(QPen(Qt.blue))
-    # end of draw_roi
-
-# end of VideoWidget
 
 
 class Js06MainView(QMainWindow):
@@ -525,7 +496,7 @@ class Js06MainView(QMainWindow):
     main_view_closed = pyqtSignal()
     select_camera_requested = pyqtSignal()
 
-    def __init__(self, controller: Js06MainCtrl):
+    def __init__(self, controller: Js06MainCtrl) -> None:
         super().__init__()
 
         if getattr(sys, 'frozen', False):
@@ -577,27 +548,24 @@ class Js06MainView(QMainWindow):
         self.visibility_dock.setWidget(self.visibility_view_widget)
 
         self.show()
-    # end of __init__
 
-    def edit_target(self):
+    def edit_target(self) -> None:
         dlg = Js06TargetView(self)
         dlg.resize(self.width(), self.height())
         dlg.exec_()
 
         # self.setWindowOpacity(0.1)
-    # end of edit_target
 
-    def about_view(self):
+    def about_view(self) -> None:
         dlg = Js06AboutView()
         dlg.exec_()
 
     @pyqtSlot()
-    def edit_camera(self):
+    def edit_camera(self) -> None:
         dlg = Js06CameraView(self)
         dlg.exec_()
-    # end of edit_camera
 
-    def ask_restore_default(self):
+    def ask_restore_default(self) -> None:
         # Check the last shutdown status
         response = QMessageBox.question(
             self,
@@ -607,14 +575,11 @@ class Js06MainView(QMainWindow):
         )
         if response == QMessageBox.Yes:
             self.restore_defaults_requested.emit()
-    # end of ask_restore_default
 
     # TODO(kwchun): its better to emit signal and process at the controller
-    def closeEvent(self, event: QCloseEvent):
+    def closeEvent(self, event: QCloseEvent) -> None:
         self._ctrl.set_normal_shutdown()
-    # end of closeEvent
 
-# end of Js06MainView
 
 if __name__ == '__main__':
     import sys
@@ -624,5 +589,3 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = Js06MainView(Js06MainCtrl)
     sys.exit(app.exec())
-
-# end of view.py

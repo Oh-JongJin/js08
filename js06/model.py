@@ -8,13 +8,13 @@
 import datetime
 import os
 import platform
-import pymongo
 import sys
 
 import numpy as np
+import pymongo
 
-from PyQt5.QtCore import \
-    QAbstractTableModel, QModelIndex, QRect, QRunnable, QStandardPaths, Qt, QSettings
+from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, QRect, QRunnable,
+                          QSettings, QStandardPaths, Qt)
 from PyQt5.QtGui import QImage
 from tflite_runtime.interpreter import Interpreter
 
@@ -49,13 +49,11 @@ class SimpleTarget(QRunnable):
         self.interpreter.allocate_tensors()
 
         self.setAutoDelete(False)
-    # end of __init__
     
     def set_input_tensor(self, interpreter: Interpreter, image: np.ndarray) -> None:
         tensor_index = interpreter.get_input_details()[0]['index']
         input_tensor = interpreter.tensor(tensor_index)()[0]
         input_tensor[:, :] = image
-    # end of set_input_tensor
 
     def classify_image(self, interpreter: Interpreter, image: np.ndarray, top_k: int=1) -> list:
         """Returns a sorted array of classification results."""
@@ -71,14 +69,12 @@ class SimpleTarget(QRunnable):
 
         ordered = np.argpartition(-output, top_k)
         return [(i, output[i]) for i in ordered[:top_k]]
-    # end of classify_image
 
     def clip_roi(self, epoch: int, vista: QImage) -> None:
         self.epoch = epoch
         trimmed = vista.copy(self.roi)
         # multiply self.mask with trimmed
         self.image = trimmed
-    # end of clip_roi
 
     def run(self):
         _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
@@ -111,13 +107,10 @@ class SimpleTarget(QRunnable):
         
         label_id, _ = results[0]
         self.discernment = True if label_id else False
-    # end of run
 
     def save_image(self):
         pass
-    # end of save_image
 
-# end of Target
 
 class Js06CameraTableModel(QAbstractTableModel):
     def __init__(self, data: list):
@@ -439,9 +432,10 @@ class Js06IoRunner(QRunnable):
 # end of Js06IoRunner
 
 if __name__ == '__main__':
-    import faker
     import pprint
     import random
+
+    import faker
 
     fake = faker.Faker()
 
