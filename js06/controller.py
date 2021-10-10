@@ -10,7 +10,7 @@ import json
 import os
 import sys
 
-from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThreadPool, QTime,
+from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread, QThreadPool, QTime,
                           QTimer, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QImage
 from PyQt5.QtMultimedia import QVideoFrame
@@ -30,6 +30,9 @@ class Js06MainCtrl(QObject):
 
     def __init__(self, model: Js06AttrModel):
         super().__init__()
+
+        self.video_thread = QThread()
+        self.plot_thread = QThread()
 
         self.inference_pool = QThreadPool.globalInstance()
         self.set_max_inference_thread()
@@ -170,7 +173,7 @@ class Js06MainCtrl(QObject):
 
         print('DEBUG(start_observation_timer):', QTime.currentTime().toString())
         observation_period = Js06Settings.get('observation_period')
-        self.observation_timer.setInterval(observation_period * 60 * 1000)
+        self.observation_timer.setInterval(observation_period * 1000) #* 60 * 1000)
         self.observation_timer.timeout.connect(self.job_broker)
 
         # # Start repeating timer on time        
@@ -185,9 +188,11 @@ class Js06MainCtrl(QObject):
         self.observation_timer.stop()
 
     def job_broker(self) -> None:
+        print(f'DEBUG(job_broker): {self.front_video_frame}, {self.rear_video_frame}')
         if self.front_video_frame == None or self.rear_video_frame == None:
             return
         
+        print('DEBUG(job_broker): after frame null check')
         epoch = QDateTime.currentSecsSinceEpoch()
         front_image = self.get_front_image()
         rear_image = self.get_rear_image()

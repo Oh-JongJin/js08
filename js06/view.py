@@ -7,7 +7,9 @@
 #     5jx2oh@gmail.com (Jongjin Oh)
 
 import collections
+import math
 import os
+import random
 import sys
 
 from PyQt5 import uic
@@ -35,7 +37,7 @@ class Js06DiscernmentView(QChartView):
         self.setRenderHint(QPainter.Antialiasing)
 
         chart = QPolarChart(title=title)
-        # chart.setAnimationOptions(QChart.AllAnimations)
+        chart.setAnimationOptions(QChart.AllAnimations)
         chart.legend().setAlignment(Qt.AlignRight)
         chart.legend().setMarkerShape(QLegend.MarkerShapeCircle)
         self.setChart(chart)
@@ -44,6 +46,8 @@ class Js06DiscernmentView(QChartView):
         self.negatives = QScatterSeries(name='Negative')
         self.positives.setColor(QColor('green'))
         self.negatives.setColor(QColor('red'))
+        self.positives.setMarkerSize(10)
+        self.negatives.setMarkerSize(10)
         chart.addSeries(self.positives)
         chart.addSeries(self.negatives)
         
@@ -62,6 +66,12 @@ class Js06DiscernmentView(QChartView):
         axis_y.setTitleVisible(False)
         chart.setAxisY(axis_y, self.positives)
         chart.setAxisY(axis_y, self.negatives)
+
+        # DEBUG
+        pos_point = [QPointF(random.uniform(0, 360), random.uniform(0, 20)) for x in range(100)]
+        self.positives.append(pos_point)
+        neg_point = [QPointF(random.uniform(0, 360), random.uniform(0, 20)) for x in range(100)]
+        self.negatives.append(neg_point)
 
     def keyPressEvent(self, event):
         keymap = {
@@ -90,20 +100,24 @@ class Js06VisibilityView(QChartView):
         super().__init__(parent)
 
         now = QDateTime.currentSecsSinceEpoch()
-        zeros = [(t * 1000, 0) for t in range(now - maxlen * 60, now, 60)]
+        # zeros = [(t * 1000, 0) for t in range(now - maxlen * 60, now, 60)]
+        zeros = [
+            (t * 1000, 10 + 10 * math.sin(t / 10000)) 
+            for t in range(now - maxlen * 60, now, 60)
+            ] # DEBUG
         self.data = collections.deque(zeros, maxlen=maxlen)
         
         self.setRenderHint(QPainter.Antialiasing)
 
         chart = QChart(title=title)
-        # chart.setAnimationOptions(QChart.AllAnimations)
+        chart.setAnimationOptions(QChart.AllAnimations)
         chart.legend().setVisible(False)
         self.setChart(chart)
         self.series = QLineSeries(name='Prevailing Visibility')
         chart.addSeries(self.series)
 
         axis_x = QDateTimeAxis()
-        axis_x.setFormat('yyyy-MM-dd hh:mm')
+        axis_x.setFormat('hh:mm')
         axis_x.setTitleText('Time')
         left = QDateTime.fromMSecsSinceEpoch(self.data[0][0])
         right = QDateTime.fromMSecsSinceEpoch(self.data[-1][0])
@@ -117,9 +131,9 @@ class Js06VisibilityView(QChartView):
         chart.setAxisY(axis_y, self.series)
 
         data_point = [QPointF(t, v) for t, v in self.data]
-        self.series.replace(data_point)
-        for t, v in self.data:
-            self.series.append(t, v)
+        self.series.append(data_point)
+        # for t, v in self.data:
+        #     self.series.append(t, v)
 
     def keyPressEvent(self, event):
         keymap = {
@@ -525,28 +539,35 @@ class Js06MainView(QMainWindow):
         # Front video
         # self.front_video_dock.setTitleBarWidget(QWidget(self))
         self.front_video_widget = Js06VideoWidget(self)
+        # self.front_video_widget.moveToThread(self._ctrl.video_thread)
         self.front_video_dock.setWidget(self.front_video_widget)
         self.front_video_widget.video_frame_prepared.connect(self._ctrl.update_front_video_frame)
         self._ctrl.front_camera_changed.connect(self.front_video_widget.on_camera_change)
         self._ctrl.front_camera_changed.emit(self._ctrl.get_front_camera_uri())
+        # self._ctrl.video_thread.start()
 
         # Rear video
         # self.rear_video_dock.setTitleBarWidget(QWidget(self))
         self.rear_video_widget = Js06VideoWidget(self)
+        # self.rear_video_widget.moveToThread(self._ctrl.video_thread)
         self.rear_video_dock.setWidget(self.rear_video_widget)
         self.rear_video_widget.video_frame_prepared.connect(self._ctrl.update_rear_video_frame)
         self._ctrl.rear_camera_changed.connect(self.rear_video_widget.on_camera_change)
         self._ctrl.rear_camera_changed.emit(self._ctrl.get_rear_camera_uri())
+        # self._ctrl.video_thread.start()
 
         # Discernment status
-        self.discernment_widet = Js06DiscernmentView(self)
-        self.discernment_dock.setWidget(self.discernment_widet)
-        self._ctrl.target_discerned.connect(self.discernment_widet.refresh_stats)
+        self.discernment_widget = Js06DiscernmentView(self)
+        # self.discernment_widget.moveToThread(self._ctrl.plot_thread)
+        self.discernment_dock.setWidget(self.discernment_widget)
+        self._ctrl.target_discerned.connect(self.discernment_widget.refresh_stats)
 
         # Prevailing visibility
         self.visibility_widget = Js06VisibilityView(self, 1440)
+        # self.visibility_widget.moveToThread(self._ctrl.plot_thread)
         self.visibility_dock.setWidget(self.visibility_widget)
         self._ctrl.prevailing_visibility_prepared.connect(self.visibility_widget.refresh_stats)
+        # self._ctrl.plot_thread.start()
 
         self.show()
 
