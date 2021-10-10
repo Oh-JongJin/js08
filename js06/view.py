@@ -544,8 +544,9 @@ class Js06MainView(QMainWindow):
         self._ctrl.target_discerned.connect(self.discernment_widet.refresh_stats)
 
         # Prevailing visibility
-        self.visibility_view_widget = Js06VisibilityView(self, 1440)
-        self.visibility_dock.setWidget(self.visibility_view_widget)
+        self.visibility_widget = Js06VisibilityView(self, 1440)
+        self.visibility_dock.setWidget(self.visibility_widget)
+        self._ctrl.prevailing_visibility_prepared.connect(self.visibility_widget.refresh_stats)
 
         self.show()
 
