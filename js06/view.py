@@ -553,18 +553,18 @@ class Js06MainView(QMainWindow):
     def edit_target(self) -> None:
         dlg = Js06TargetView(self)
         dlg.resize(self.width(), self.height())
-        dlg.exec_()
+        dlg.exec()
 
         # self.setWindowOpacity(0.1)
 
     def about_view(self) -> None:
         dlg = Js06AboutView()
-        dlg.exec_()
+        dlg.exec()
 
     @pyqtSlot()
     def edit_camera(self) -> None:
         dlg = Js06CameraView(self)
-        dlg.exec_()
+        dlg.exec()
 
     def ask_restore_default(self) -> None:
         # Check the last shutdown status
