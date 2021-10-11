@@ -201,13 +201,14 @@ class Js06TargetView(QDialog):
     # end of paintEvent
 
     def blank_mousePressEvent(self, event):
-        # self.update()
+        self.update()
 
         x = int(event.pos().x() / self.blank_lbl.width() * self.image.width())
         y = int(event.pos().y() / self.blank_lbl.height() * self.image.height())
-
-        print(event.pos())
-        print(self.image_label.size())
+        # TODO(Oh Jongjin): Must fix mouse click coordinates and target coordinates to be the same.
+        print(f"image label: {self.image_label.geometry()}")
+        print(f"blank label: {self.blank_lbl.geometry()}")
+        print(f"current position: {x, y}")
 
         for i in range(len(self.target)):
             self.target[i] = i + 1
@@ -220,15 +221,15 @@ class Js06TargetView(QDialog):
 
             self.point_x.append(int(x))
             self.point_y.append(int(y))
-            self.size_x.append(0.3)
-            self.size_y.append(0.3)
+
             self.target.append(len(self.point_x))
             self.distance.append(0)
 
             self.combo_changed()
+            self.coordinator()
 
             print("mousePressEvent - ", len(self.target))
-            # self.save_target()
+            self.save_target()
             # self.get_target()
 
         if event.buttons() == Qt.RightButton:
@@ -260,13 +261,13 @@ class Js06TargetView(QDialog):
 
         if self.target:
             for i in range(len(self.target)):
-                pass
-                # self.result[i]['label'] = self.target
-                # # self.result[i]['label_x'] = [int(x * self.width() / self.w) for x in self.target_x][i]
-                # # self.result[i]['label_y'] = [int(y * self.height() / self.h) for y in self.target_y][i]
-                # self.result[i]['roi']['point'][0] = self.label_x
-                # self.result[i]['roi']['point'][1] = self.label_y
-                # self.result[i]["distance"] = self.distance
+                # pass
+                self.result[i]['label'] = self.target
+                # self.result[i]['label_x'] = [int(x * self.width() / self.w) for x in self.target_x][i]
+                # self.result[i]['label_y'] = [int(y * self.height() / self.h) for y in self.target_y][i]
+                self.result[i]['roi']['point'][0] = self.label_x
+                self.result[i]['roi']['point'][1] = self.label_y
+                self.result[i]["distance"] = self.distance
                 # # print(self.target[i])
                 # # print(self.label_x[i])
                 # # print(self.label_y[i])

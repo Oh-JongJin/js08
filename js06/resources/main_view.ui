@@ -27,7 +27,11 @@
   </property>
   <property name="font">
    <font>
-    <family>Bahnschrift Light</family>
+    <family>Noto Sans KR</family>
+    <pointsize>9</pointsize>
+    <weight>7</weight>
+    <italic>false</italic>
+    <bold>false</bold>
    </font>
   </property>
   <property name="mouseTracking">
@@ -37,7 +41,7 @@
    <string>JS-08</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">font: 57 9pt &quot;Noto Sans KR&quot;;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="maximumSize">
@@ -50,8 +54,7 @@
     <bool>false</bool>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(39, 44, 86);
-color: rgb(255, 255, 255);</string>
+    <string notr="true"/>
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <property name="leftMargin">
@@ -91,9 +94,11 @@ color: rgb(255, 255, 255);</string>
            <widget class="QLabel" name="label_2">
             <property name="font">
              <font>
+              <family>Noto Sans KR</family>
               <pointsize>9</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
+              <weight>7</weight>
+              <italic>false</italic>
+              <bold>false</bold>
              </font>
             </property>
             <property name="styleSheet">
@@ -121,7 +126,19 @@ color: rgb(255, 255, 255);</string>
       <item>
        <widget class="QFrame" name="vertical_visibility">
         <property name="styleSheet">
-         <string notr="true">background-color: rgb(55, 64, 121);</string>
+         <string notr="true"/>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::Panel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Plain</enum>
+        </property>
+        <property name="lineWidth">
+         <number>1</number>
+        </property>
+        <property name="midLineWidth">
+         <number>0</number>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <property name="spacing">
@@ -212,15 +229,14 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>783</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="autoFillBackground">
     <bool>false</bool>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(48, 55, 100);
-color: rgb(255, 255, 255);</string>
+    <string notr="true"/>
    </property>
    <property name="nativeMenuBar">
     <bool>false</bool>
