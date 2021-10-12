@@ -21,12 +21,12 @@ from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner,
 
 class Js06MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
-    front_camera_changed = pyqtSignal(str)
-    rear_camera_changed = pyqtSignal(str)
+    front_camera_changed = pyqtSignal(str) # uri
+    rear_camera_changed = pyqtSignal(str) # uri
     front_target_decomposed = pyqtSignal()
     rear_target_decomposed = pyqtSignal()
-    target_discerned = pyqtSignal(list, list)
-    prevailing_visibility_prepared = pyqtSignal(int, float)
+    target_discerned = pyqtSignal(list, list) # positives, negatives
+    prevailing_visibility_prepared = pyqtSignal(int, float) # epoch, prevailing visibility
 
     def __init__(self, model: Js06AttrModel):
         super().__init__()
@@ -154,13 +154,13 @@ class Js06MainCtrl(QObject):
 
         self.rear_target_decomposed.emit()
 
-    def prevailing_visibility(self) -> float:
-        vis = list(self.directional_visibility.values())
-        if None in vis:
-            return None
-        vis.sort(reverse=True)
-        prevailing = vis[(len(vis) - 1) // 2]
-        return prevailing
+    # def prevailing_visibility(self) -> float:
+    #     vis = list(self.directional_visibility.values())
+    #     if None in vis:
+    #         return None
+    #     vis.sort(reverse=True)
+    #     prevailing = vis[(len(vis) - 1) // 2]
+    #     return prevailing
 
     @pyqtSlot()
     def start_observation_timer(self) -> None:
@@ -244,7 +244,10 @@ class Js06MainCtrl(QObject):
     def write_visibilitiy(self, epoch: int, wedge_visibility: dict) -> None:
         vis_list = list(wedge_visibility.values())
         prevailing = self.prevailing_visibility(vis_list)
-        self.prevailing_visibility_prepared.emit(epoch, prevailing)
+        if prevailing is None:
+            self.prevailing_visibility_prepared.emit(epoch, 0)
+        else:
+            self.prevailing_visibility_prepared.emit(epoch, prevailing)
         wedge_visibility['epoch'] = epoch
         wedge_visibility['prevailing'] = prevailing
         print('DEBUG:', wedge_visibility)
