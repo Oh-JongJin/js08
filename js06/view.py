@@ -37,7 +37,6 @@ class Js06DiscernmentView(QChartView):
         self.setRenderHint(QPainter.Antialiasing)
 
         chart = QPolarChart(title=title)
-        chart.setAnimationOptions(QChart.AllAnimations)
         chart.legend().setAlignment(Qt.AlignRight)
         chart.legend().setMarkerShape(QLegend.MarkerShapeCircle)
         self.setChart(chart)
@@ -60,7 +59,7 @@ class Js06DiscernmentView(QChartView):
         chart.setAxisX(axis_x, self.negatives)
 
         axis_y = QValueAxis()
-        axis_y.setRange(0, 20)
+        axis_y.setRange(0, 20.2)
         axis_y.setLabelFormat('%d')
         axis_y.setTitleText('Distance (km)')
         axis_y.setTitleVisible(False)
@@ -110,7 +109,6 @@ class Js06VisibilityView(QChartView):
         self.setRenderHint(QPainter.Antialiasing)
 
         chart = QChart(title=title)
-        chart.setAnimationOptions(QChart.AllAnimations)
         chart.legend().setVisible(False)
         self.setChart(chart)
         self.series = QLineSeries(name='Prevailing Visibility')
@@ -125,7 +123,7 @@ class Js06VisibilityView(QChartView):
         chart.setAxisX(axis_x, self.series)
 
         axis_y = QValueAxis()
-        axis_y.setRange(0, 20)
+        axis_y.setRange(-0.2, 20.2)
         axis_y.setLabelFormat('%d')
         axis_y.setTitleText('Distance (km)')
         chart.setAxisY(axis_y, self.series)
@@ -146,9 +144,11 @@ class Js06VisibilityView(QChartView):
         if callback:
             callback()
 
-    @pyqtSlot(int, float)
-    def refresh_stats(self, epoch: int, data: float):
-        self.data.append((epoch * 1000, data))
+    @pyqtSlot(int, dict)
+    def refresh_stats(self, epoch: int, wedge_vis: dict):
+        wedge_vis_list = list(wedge_vis.values())
+        prev_vis = self.prevailing_visibility(wedge_vis_list)
+        self.data.append((epoch * 1000, prev_vis))
         
         left = QDateTime.fromMSecsSinceEpoch(self.data[0][0])
         right = QDateTime.fromMSecsSinceEpoch(self.data[-1][0])
@@ -156,6 +156,13 @@ class Js06VisibilityView(QChartView):
         
         data_point = [QPointF(t, v) for t, v in self.data]
         self.series.replace(data_point)
+        
+    def prevailing_visibility(self, wedge_vis: list) -> float:
+        if None in wedge_vis:
+            return 0
+        sorted_vis = sorted(wedge_vis, reverse=True)
+        prevailing = sorted_vis[(len(sorted_vis) - 1) // 2]
+        return prevailing
 
 
 class Js06CameraView(QDialog):
@@ -482,7 +489,6 @@ class Js06VideoWidget(QWidget):
 
     @pyqtSlot(QVideoFrame)
     def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
-        print('DEBUG(on_videoFrameProbed)')
         self.video_frame_prepared.emit(frame)
 
     @pyqtSlot(str)
@@ -559,13 +565,13 @@ class Js06MainView(QMainWindow):
         self.discernment_widget = Js06DiscernmentView(self)
         # self.discernment_widget.moveToThread(self._ctrl.plot_thread)
         self.discernment_dock.setWidget(self.discernment_widget)
-        self._ctrl.target_discerned.connect(self.discernment_widget.refresh_stats)
+        self._ctrl.target_assorted.connect(self.discernment_widget.refresh_stats)
 
         # Prevailing visibility
         self.visibility_widget = Js06VisibilityView(self, 1440)
         # self.visibility_widget.moveToThread(self._ctrl.plot_thread)
         self.visibility_dock.setWidget(self.visibility_widget)
-        self._ctrl.prevailing_visibility_prepared.connect(self.visibility_widget.refresh_stats)
+        self._ctrl.wedge_vis_ready.connect(self.visibility_widget.refresh_stats)
         # self._ctrl.plot_thread.start()
 
         self.show()

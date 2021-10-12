@@ -15,8 +15,8 @@ from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread, QThreadPool,
 from PyQt5.QtGui import QImage
 from PyQt5.QtMultimedia import QVideoFrame
 
-from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner,
-                    Js06Settings, Js06Wedge, SimpleTarget)
+from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner, Js06InferenceBroker,
+                    Js06Settings, Js06Wedge, Js06SimpleTarget)
 
 
 class Js06MainCtrl(QObject):
@@ -25,17 +25,14 @@ class Js06MainCtrl(QObject):
     rear_camera_changed = pyqtSignal(str) # uri
     front_target_decomposed = pyqtSignal()
     rear_target_decomposed = pyqtSignal()
-    target_discerned = pyqtSignal(list, list) # positives, negatives
-    prevailing_visibility_prepared = pyqtSignal(int, float) # epoch, prevailing visibility
+    target_assorted = pyqtSignal(list, list) # positives, negatives
+    wedge_vis_ready = pyqtSignal(int, dict) # epoch, wedge visibility
 
     def __init__(self, model: Js06AttrModel):
         super().__init__()
 
         self.video_thread = QThread()
         self.plot_thread = QThread()
-
-        self.inference_pool = QThreadPool.globalInstance()
-        self.set_max_inference_thread()
 
         self.writer_pool = QThreadPool.globalInstance()
         self.writer_pool.setMaxThreadCount(1)
@@ -54,12 +51,10 @@ class Js06MainCtrl(QObject):
         self.observation_timer = QTimer()
         self.front_camera_changed.connect(self.decompose_front_targets)
         self.rear_camera_changed.connect(self.decompose_rear_targets)
-        self.front_target_decomposed.connect(self.start_observation_timer)
-        self.rear_target_decomposed.connect(self.start_observation_timer)
-    
-    def set_max_inference_thread(self):
-        threads = Js06Settings.get('thread_count')
-        self.inference_pool.setMaxThreadCount(threads)
+        # self.front_target_decomposed.connect(self.start_broker)
+        # self.rear_target_decomposed.connect(self.start_broker)
+
+        self.start_observation_timer()
 
     def init_db(self):
         db_host = Js06Settings.get('db_host')
@@ -103,7 +98,7 @@ class Js06MainCtrl(QObject):
                 label = tg['label']
                 distance = tg['distance']
                 mask = None # read mask from disk
-                st = SimpleTarget(label, wedge, azimuth, distance, roi, mask)
+                st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
                 self.front_decomposed_targets.append(st)
                 # continue
             
@@ -112,7 +107,7 @@ class Js06MainCtrl(QObject):
                     label = f"{tg['label']}_{i}"
                     distance = tg['distance'][i]
                     mask = None # read mask from disk
-                    st = SimpleTarget(label, wedge, azimuth, distance, roi, mask)
+                    st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
                     self.front_decomposed_targets.append(st)
 
         self.front_target_decomposed.emit()
@@ -140,7 +135,7 @@ class Js06MainCtrl(QObject):
                 label = tg['label']
                 distance = tg['distance']
                 mask = None # read mask from disk
-                st = SimpleTarget(label, wedge, azimuth, distance, roi, mask)
+                st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
                 self.rear_decomposed_targets.append(st)
                 # continue
             
@@ -149,7 +144,7 @@ class Js06MainCtrl(QObject):
                     label = f"{tg['label']}_{i}"
                     distance = tg['distance'][i]
                     mask = None # read mask from disk
-                    st = SimpleTarget(label, wedge, azimuth, distance, roi, mask)
+                    st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
                     self.rear_decomposed_targets.append(st)
 
         self.rear_target_decomposed.emit()
@@ -162,19 +157,12 @@ class Js06MainCtrl(QObject):
     #     prevailing = vis[(len(vis) - 1) // 2]
     #     return prevailing
 
-    @pyqtSlot()
     def start_observation_timer(self) -> None:
-        # Start timer only when both cameras are ready.
-        if self.num_working_cam < 1:
-            self.num_working_cam += 1
-            return
-        else:
-            self.num_working_cam = 0
-
         print('DEBUG(start_observation_timer):', QTime.currentTime().toString())
+        self.init_broker()
         observation_period = Js06Settings.get('observation_period')
-        self.observation_timer.setInterval(observation_period * 1000) #* 60 * 1000)
-        self.observation_timer.timeout.connect(self.job_broker)
+        self.observation_timer.setInterval(observation_period * 1000)
+        self.observation_timer.timeout.connect(self.start_broker)
 
         # # Start repeating timer on time        
         # now = QTime.currentTime()
@@ -184,14 +172,23 @@ class Js06MainCtrl(QObject):
         # QTimer.singleShot(timeout_in_sec * 1000, self.observation_timer.start)
         self.observation_timer.start()
 
-    def stop_timer(self) -> None:
-        self.observation_timer.stop()
-
-    def job_broker(self) -> None:
-        print(f'DEBUG(job_broker): {self.front_video_frame}, {self.rear_video_frame}')
+    @pyqtSlot()
+    def start_broker(self) -> None:
+        # If broker is already running, quit.
+        print(f'DEBUG(start_broker): {self.broker}')
+        if self.broker:
+            return
+        
+        # If both video frames are not ready, quit.
+        print(f'DEBUG(start_broker): {self.front_video_frame}, {self.rear_video_frame}')
         if self.front_video_frame == None or self.rear_video_frame == None:
             return
         
+        # if decomposed targets are not ready, quit.
+        print(f'DEBUG(start_broker): {len(self.front_decomposed_targets)}, {len(self.rear_decomposed_targets)}')
+        if len(self.front_decomposed_targets) == 0 or len(self.rear_decomposed_targets) == 0:
+            return
+
         print('DEBUG(job_broker): after frame null check')
         epoch = QDateTime.currentSecsSinceEpoch()
         front_image = self.get_front_image()
@@ -206,23 +203,78 @@ class Js06MainCtrl(QObject):
             filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
             self.save_image(dir, filename, rear_image)
 
-        for stg in self.front_decomposed_targets:
-            stg.clip_roi(epoch, front_image)
-            self.inference_pool.start(stg)
+        print('DEBUG: before broker')
+        self.broker = Js06InferenceBroker(
+            epoch, 
+            front_image, self.front_decomposed_targets,
+            rear_image,  self.rear_decomposed_targets
+            )
+        self.broker_thread = QThread()
+        self.broker.moveToThread(self.broker_thread)
+        self.broker_thread.started.connect(self.broker.run)
+        self.broker.finished.connect(self.broker_thread.quit)
+        self.broker.finished.connect(self.postprocessing)
+        self.broker.finished.connect(self.init_broker)
+        self.broker_thread.start()
 
-        for stg in self.rear_decomposed_targets:
-            stg.clip_roi(epoch, rear_image)
-            self.inference_pool.start(stg)
+    @pyqtSlot()
+    def init_broker(self):
+        self.broker = None
 
-        self.inference_pool.waitForDone()
-        
+    @pyqtSlot()
+    def postprocessing(self):
+        """
+        epoch: seconds since epoch
+        """
+        epoch = self.front_decomposed_targets[0].epoch
+            
         pos, neg = self.assort_discernment()
-        self.target_discerned.emit(pos, neg)
+        self.target_assorted.emit(pos, neg)
+        wedge_vis = self.wedge_visibility()
+        self.wedge_vis_ready.emit(epoch, wedge_vis)
 
-        wedge_visibility = self.wedge_visibility()
-        self.write_visibilitiy(epoch, wedge_visibility)
+    @pyqtSlot()
+    def stop_timer(self) -> None:
+        self.observation_timer.stop()
+
+    # def job_broker(self) -> None:
+    #     print(f'DEBUG(job_broker): {self.front_video_frame}, {self.rear_video_frame}')
+    #     if self.front_video_frame == None or self.rear_video_frame == None:
+    #         return
+        
+    #     print('DEBUG(job_broker): after frame null check')
+    #     epoch = QDateTime.currentSecsSinceEpoch()
+    #     front_image = self.get_front_image()
+    #     rear_image = self.get_rear_image()
+
+    #     if Js06Settings.get('save_vista'):
+    #         basepath = Js06Settings.get('image_base_path')
+    #         now = QDateTime.fromSecsSinceEpoch(epoch)
+    #         dir = os.path.join(basepath, 'vista', now.toString("yyyy-MM-dd"))
+    #         filename = f'vista-front-{now.toString("yyyy-MM-dd-hh-mm")}.png'
+    #         self.save_image(dir, filename, front_image)
+    #         filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
+    #         self.save_image(dir, filename, rear_image)
+
+    #     for stg in self.front_decomposed_targets:
+    #         stg.clip_roi(epoch, front_image)
+    #         self.inference_pool.start(stg)
+
+    #     for stg in self.rear_decomposed_targets:
+    #         stg.clip_roi(epoch, rear_image)
+    #         self.inference_pool.start(stg)
+
+    #     self.inference_pool.waitForDone()
+        
+    #     pos, neg = self.assort_discernment()
+    #     self.target_discerned.emit(pos, neg)
+
+    #     wedge_visibility = self.wedge_visibility()
+    #     self.write_visibilitiy(epoch, wedge_visibility)
 
     def assort_discernment(self) -> tuple:
+        """Assort targets in positive or negative according to the discernment result
+        """
         pos, neg = [], []
 
         for t in self.front_decomposed_targets:
@@ -242,12 +294,9 @@ class Js06MainCtrl(QObject):
         return pos, neg
 
     def write_visibilitiy(self, epoch: int, wedge_visibility: dict) -> None:
+        wedge_visibility = wedge_visibility.copy()
         vis_list = list(wedge_visibility.values())
         prevailing = self.prevailing_visibility(vis_list)
-        if prevailing is None:
-            self.prevailing_visibility_prepared.emit(epoch, 0)
-        else:
-            self.prevailing_visibility_prepared.emit(epoch, prevailing)
         wedge_visibility['epoch'] = epoch
         wedge_visibility['prevailing'] = prevailing
         print('DEBUG:', wedge_visibility)
