@@ -291,16 +291,20 @@ class Js06MainCtrl(QObject):
         image = self.rear_video_frame.image().mirrored(False, True)
         return image
 
+    @pyqtSlot(QVideoFrame)
     def update_front_video_frame(self, video_frame: QVideoFrame) -> None:
         self.front_video_frame = video_frame
 
+    @pyqtSlot(QVideoFrame)
     def update_rear_video_frame(self, video_frame: QVideoFrame) -> None:
         self.rear_video_frame = video_frame
 
+    @pyqtSlot()
     def get_front_camera_uri(self) -> str:
         attr = self._model.read_attr()
         return attr['front_camera']['uri']
 
+    @pyqtSlot()
     def get_rear_camera_uri(self) -> str:
         attr = self._model.read_attr()
         return attr['rear_camera']['uri']

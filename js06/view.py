@@ -132,8 +132,6 @@ class Js06VisibilityView(QChartView):
 
         data_point = [QPointF(t, v) for t, v in self.data]
         self.series.append(data_point)
-        # for t, v in self.data:
-        #     self.series.append(t, v)
 
     def keyPressEvent(self, event):
         keymap = {
@@ -484,6 +482,7 @@ class Js06VideoWidget(QWidget):
 
     @pyqtSlot(QVideoFrame)
     def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
+        print('DEBUG(on_videoFrameProbed)')
         self.video_frame_prepared.emit(frame)
 
     @pyqtSlot(str)
@@ -492,7 +491,7 @@ class Js06VideoWidget(QWidget):
         self.player.play()
 
         # Wait till the video stream arrives before fitting the video
-        for i in [500, 1000, 1500, 2000, 2500]:
+        for i in range(500, 3500, 500):
             QTimer.singleShot(i, self.fit_in_view)
 
     def draw_roi(self, point: tuple, size: tuple) -> None:

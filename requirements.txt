@@ -1,5 +1,6 @@
 --extra-index-url https://google-coral.github.io/py-repo/
-PyQt5
+PyQt5 >= 5.13
+PyQtChart
 pymongo
 numpy
 tflite_runtime
