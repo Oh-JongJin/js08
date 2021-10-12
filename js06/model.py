@@ -8,19 +8,61 @@
 import datetime
 import os
 import platform
-import pymongo
+import sys
 
 import numpy as np
+import pymongo
 
-from PyQt5.QtCore import \
-    QAbstractTableModel, QModelIndex, QRect, QRunnable, QStandardPaths, Qt, QSettings
+from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, QObject, QRect, QRunnable,
+                          QSettings, QStandardPaths, QThreadPool, Qt, pyqtSignal)
 from PyQt5.QtGui import QImage
 from tflite_runtime.interpreter import Interpreter
 
 Js06TargetCategory = ['single', 'compound']
 Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 
-class SimpleTarget(QRunnable):
+class Js06InferenceBroker(QObject):
+    finished = pyqtSignal()
+    
+    def __init__(
+        self, epoch: int, 
+        front_image: QImage, front_targets: list, 
+        rear_image: QImage, rear_targets: list
+        ):
+        """
+        epoch: current time since epoch in seconds
+        front_image: video stream capture from the front camera
+        front_targets: list of Js06SingleTarget, decomposed targets in front image
+        rear_image: video stream capture from the rear camera
+        rear_targets: list of Js06SingleTarget, decomposed targets in front image
+        """
+        super().__init__()
+        print('DEBUG(Js06InferenceBroker): constructor')
+        self.epoch = epoch
+        self.front_targets = front_targets
+        self.rear_targets = rear_targets
+        self.front_image = front_image
+        self.rear_image = rear_image
+
+        self.pool = QThreadPool.globalInstance()
+        num_threads = Js06Settings.get('inferece_thread_count')
+        self.pool.setMaxThreadCount(num_threads)
+
+    def run(self):
+        print('DEBUG(Js06InferenceBroker): run')
+        for target in self.front_targets:
+            target.clip_roi(self.epoch, self.front_image)
+            self.pool.start(target)
+
+        for target in self.rear_targets:
+            target.clip_roi(self.epoch, self.rear_image)
+            self.pool.start(target)
+
+        self.pool.waitForDone()
+        self.finished.emit()
+
+
+class Js06SimpleTarget(QRunnable):
     """Simple target"""
 
     def __init__(self, label: str, wedge: str, azimuth: float, distance: float, roi: QRect, mask: QImage):
@@ -39,22 +81,20 @@ class SimpleTarget(QRunnable):
         self.discernment = None
 
         # TODO(Kyungwon): Put the model file into Qt Resource Collection.
-        model_path = os.path.join(
-            os.path.dirname(__file__), 
-            'resources', 
-            'js02.tflite'
-            )
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        model_path = os.path.join(directory, 'resources', 'js02.tflite')
         self.interpreter = Interpreter(model_path=model_path)
         self.interpreter.allocate_tensors()
 
         self.setAutoDelete(False)
-    # end of __init__
     
     def set_input_tensor(self, interpreter: Interpreter, image: np.ndarray) -> None:
         tensor_index = interpreter.get_input_details()[0]['index']
         input_tensor = interpreter.tensor(tensor_index)()[0]
         input_tensor[:, :] = image
-    # end of set_input_tensor
 
     def classify_image(self, interpreter: Interpreter, image: np.ndarray, top_k: int=1) -> list:
         """Returns a sorted array of classification results."""
@@ -70,14 +110,12 @@ class SimpleTarget(QRunnable):
 
         ordered = np.argpartition(-output, top_k)
         return [(i, output[i]) for i in ordered[:top_k]]
-    # end of classify_image
 
     def clip_roi(self, epoch: int, vista: QImage) -> None:
         self.epoch = epoch
         trimmed = vista.copy(self.roi)
         # multiply self.mask with trimmed
         self.image = trimmed
-    # end of clip_roi
 
     def run(self):
         _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
@@ -110,13 +148,10 @@ class SimpleTarget(QRunnable):
         
         label_id, _ = results[0]
         self.discernment = True if label_id else False
-    # end of run
 
     def save_image(self):
         pass
-    # end of save_image
 
-# end of Target
 
 class Js06CameraTableModel(QAbstractTableModel):
     def __init__(self, data: list):
@@ -233,12 +268,12 @@ class Js06AttrModel:
             attr_json: list of attribute dictionary
             camera_json: list of camerae dictionary
         """
-        collections = self.db.list_collection_names()
+        coll = self.db.list_collection_names()
         
-        if 'camera' not in collections or self.db.camera.count_documents({}) == 0:
+        if 'camera' not in coll or self.db.camera.count_documents({}) == 0:
             self.db.camera.insert_many(camera_json)
     
-        if 'attr' not in collections or self.db.attr.count_documents({}) == 0:
+        if 'attr' not in coll or self.db.attr.count_documents({}) == 0:
             front_cam = self.db.camera.find_one({'placement': 'front'})
             front_cam['camera_id'] = front_cam.pop('_id')
 
@@ -251,7 +286,7 @@ class Js06AttrModel:
 
             self.db.attr.insert_many(attr_json)
 
-        if 'visibility' not in collections:
+        if 'visibility' not in coll:
             self.db.create_collection('visibility',
                 timeseries = {
                   'timeField': 'timestamp',
@@ -385,7 +420,7 @@ class Js06Settings:
             QStandardPaths.writableLocation(QStandardPaths.PicturesLocation),
             'js06'
         ),
-        'thread_count': 2,
+        'inferece_thread_count': 2,
         # Database settings
         'db_host': 'localhost',
         'db_port': 27017,
@@ -438,9 +473,10 @@ class Js06IoRunner(QRunnable):
 # end of Js06IoRunner
 
 if __name__ == '__main__':
-    import faker
     import pprint
     import random
+
+    import faker
 
     fake = faker.Faker()
 

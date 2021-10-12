@@ -42,8 +42,8 @@
   <widget class="QWidget" name="centralwidget">
    <property name="maximumSize">
     <size>
-     <width>1920</width>
-     <height>1080</height>
+     <width>16777215</width>
+     <height>16777215</height>
     </size>
    </property>
    <property name="mouseTracking">
@@ -86,75 +86,42 @@ color: rgb(255, 255, 255);</string>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <widget class="QLabel" name="label_2">
-            <property name="font">
-             <font>
-              <pointsize>9</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">background-color: rgba(255, 255, 255, 0);</string>
-            </property>
-            <property name="text">
-             <string>Video</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
          <widget class="QDockWidget" name="front_video_dock">
+          <property name="windowTitle">
+           <string>Front Video</string>
+          </property>
           <widget class="QWidget" name="dockWidgetContents_3"/>
          </widget>
         </item>
         <item>
          <widget class="QDockWidget" name="rear_video_dock">
+          <property name="windowTitle">
+           <string>Rear Video</string>
+          </property>
           <widget class="QWidget" name="dockWidgetContents_2"/>
          </widget>
         </item>
        </layout>
       </item>
       <item>
-       <widget class="QFrame" name="verticalFrame_2">
-        <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <widget class="QLabel" name="label">
-           <property name="styleSheet">
-            <string notr="true">background-color: rgb(55, 64, 121);</string>
-           </property>
-           <property name="frameShape">
-            <enum>QFrame::NoFrame</enum>
-           </property>
-           <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Directional visibility&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-           </property>
-           <property name="textInteractionFlags">
-            <set>Qt::LinksAccessibleByMouse</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_3">
-           <property name="styleSheet">
-            <string notr="true">background-color: rgb(55, 64, 121);</string>
-           </property>
-           <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;Prevailing visibility&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QDockWidget" name="visibility_dock">
+          <property name="windowTitle">
+           <string>Prevailing Visibility</string>
+          </property>
+          <widget class="QWidget" name="dockWidgetContents"/>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDockWidget" name="discernment_dock">
+          <property name="windowTitle">
+           <string>Discernment Status</string>
+          </property>
+          <widget class="QWidget" name="dockWidgetContents_4"/>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
