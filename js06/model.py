@@ -12,54 +12,13 @@ import sys
 
 import numpy as np
 import pymongo
-
-from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, QObject, QRect, QRunnable,
-                          QSettings, QStandardPaths, QThreadPool, Qt, pyqtSignal)
+from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, QRect, QRunnable,
+                          QSettings, QStandardPaths, Qt)
 from PyQt5.QtGui import QImage
 from tflite_runtime.interpreter import Interpreter
 
 Js06TargetCategory = ['single', 'compound']
 Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-
-class Js06InferenceBroker(QObject):
-    finished = pyqtSignal()
-    
-    def __init__(
-        self, epoch: int, 
-        front_image: QImage, front_targets: list, 
-        rear_image: QImage, rear_targets: list
-        ):
-        """
-        epoch: current time since epoch in seconds
-        front_image: video stream capture from the front camera
-        front_targets: list of Js06SingleTarget, decomposed targets in front image
-        rear_image: video stream capture from the rear camera
-        rear_targets: list of Js06SingleTarget, decomposed targets in front image
-        """
-        super().__init__()
-        print('DEBUG(Js06InferenceBroker): constructor')
-        self.epoch = epoch
-        self.front_targets = front_targets
-        self.rear_targets = rear_targets
-        self.front_image = front_image
-        self.rear_image = rear_image
-
-        self.pool = QThreadPool.globalInstance()
-        num_threads = Js06Settings.get('inferece_thread_count')
-        self.pool.setMaxThreadCount(num_threads)
-
-    def run(self):
-        print('DEBUG(Js06InferenceBroker): run')
-        for target in self.front_targets:
-            target.clip_roi(self.epoch, self.front_image)
-            self.pool.start(target)
-
-        for target in self.rear_targets:
-            target.clip_roi(self.epoch, self.rear_image)
-            self.pool.start(target)
-
-        self.pool.waitForDone()
-        self.finished.emit()
 
 
 class Js06SimpleTarget(QRunnable):

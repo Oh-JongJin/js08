@@ -11,14 +11,13 @@ import os
 import sys
 
 import cv2
-
-from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread, QThreadPool, QTime,
-                          QTimer, pyqtSignal, pyqtSlot)
+from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread,
+                          QThreadPool, QTime, QTimer, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QImage
 from PyQt5.QtMultimedia import QVideoFrame
 
-from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner, Js06InferenceBroker,
-                    Js06Settings, Js06Wedge, Js06SimpleTarget)
+from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner,
+                    Js06Settings, Js06SimpleTarget, Js06Wedge)
 
 
 class Js06MainCtrl(QObject):
@@ -151,27 +150,12 @@ class Js06MainCtrl(QObject):
 
         self.rear_target_decomposed.emit()
 
-    # def prevailing_visibility(self) -> float:
-    #     vis = list(self.directional_visibility.values())
-    #     if None in vis:
-    #         return None
-    #     vis.sort(reverse=True)
-    #     prevailing = vis[(len(vis) - 1) // 2]
-    #     return prevailing
-
     def start_observation_timer(self) -> None:
         print('DEBUG(start_observation_timer):', QTime.currentTime().toString())
         self.init_broker()
         observation_period = Js06Settings.get('observation_period')
         self.observation_timer.setInterval(observation_period * 1000)
         self.observation_timer.timeout.connect(self.start_broker)
-
-        # # Start repeating timer on time        
-        # now = QTime.currentTime()
-        # minute_left = observation_period - (now.minute() % observation_period) - 1
-        # second_left = 60 - now.second()
-        # timeout_in_sec = minute_left * 60 + second_left
-        # QTimer.singleShot(timeout_in_sec * 1000, self.observation_timer.start)
         self.observation_timer.start()
 
     @pyqtSlot()
@@ -191,26 +175,22 @@ class Js06MainCtrl(QObject):
         if len(self.front_decomposed_targets) == 0 or len(self.rear_decomposed_targets) == 0:
             return
 
-        print('DEBUG(job_broker): after frame null check')
-        epoch = QDateTime.currentSecsSinceEpoch()
-        front_image = self.get_front_image()
-        rear_image = self.get_rear_image()
+        # print('DEBUG(job_broker): after frame null check')
+        # epoch = QDateTime.currentSecsSinceEpoch()
+        # front_image = self.get_front_image()
+        # rear_image = self.get_rear_image()
 
-        if Js06Settings.get('save_vista'):
-            basepath = Js06Settings.get('image_base_path')
-            now = QDateTime.fromSecsSinceEpoch(epoch)
-            dir = os.path.join(basepath, 'vista', now.toString("yyyy-MM-dd"))
-            filename = f'vista-front-{now.toString("yyyy-MM-dd-hh-mm")}.png'
-            self.save_image(dir, filename, front_image)
-            filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
-            self.save_image(dir, filename, rear_image)
+        # if Js06Settings.get('save_vista'):
+        #     basepath = Js06Settings.get('image_base_path')
+        #     now = QDateTime.fromSecsSinceEpoch(epoch)
+        #     dir = os.path.join(basepath, 'vista', now.toString("yyyy-MM-dd"))
+        #     filename = f'vista-front-{now.toString("yyyy-MM-dd-hh-mm")}.png'
+        #     self.save_image(dir, filename, front_image)
+        #     filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
+        #     self.save_image(dir, filename, rear_image)
 
         print('DEBUG: before broker')
-        self.broker = Js06InferenceBroker(
-            epoch, 
-            front_image, self.front_decomposed_targets,
-            rear_image,  self.rear_decomposed_targets
-            )
+        self.broker = Js06InferenceBroker(self)
         self.broker_thread = QThread()
         self.broker.moveToThread(self.broker_thread)
         self.broker_thread.started.connect(self.broker.run)
@@ -238,41 +218,6 @@ class Js06MainCtrl(QObject):
     @pyqtSlot()
     def stop_timer(self) -> None:
         self.observation_timer.stop()
-
-    # def job_broker(self) -> None:
-    #     print(f'DEBUG(job_broker): {self.front_video_frame}, {self.rear_video_frame}')
-    #     if self.front_video_frame == None or self.rear_video_frame == None:
-    #         return
-        
-    #     print('DEBUG(job_broker): after frame null check')
-    #     epoch = QDateTime.currentSecsSinceEpoch()
-    #     front_image = self.get_front_image()
-    #     rear_image = self.get_rear_image()
-
-    #     if Js06Settings.get('save_vista'):
-    #         basepath = Js06Settings.get('image_base_path')
-    #         now = QDateTime.fromSecsSinceEpoch(epoch)
-    #         dir = os.path.join(basepath, 'vista', now.toString("yyyy-MM-dd"))
-    #         filename = f'vista-front-{now.toString("yyyy-MM-dd-hh-mm")}.png'
-    #         self.save_image(dir, filename, front_image)
-    #         filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
-    #         self.save_image(dir, filename, rear_image)
-
-    #     for stg in self.front_decomposed_targets:
-    #         stg.clip_roi(epoch, front_image)
-    #         self.inference_pool.start(stg)
-
-    #     for stg in self.rear_decomposed_targets:
-    #         stg.clip_roi(epoch, rear_image)
-    #         self.inference_pool.start(stg)
-
-    #     self.inference_pool.waitForDone()
-        
-    #     pos, neg = self.assort_discernment()
-    #     self.target_discerned.emit(pos, neg)
-
-    #     wedge_visibility = self.wedge_visibility()
-    #     self.write_visibilitiy(epoch, wedge_visibility)
 
     def assort_discernment(self) -> tuple:
         """Assort targets in positive or negative according to the discernment result
@@ -334,8 +279,8 @@ class Js06MainCtrl(QObject):
         self.writer_pool.start(runner)
     
     def get_front_image(self) -> QImage:
-        front_uri = self.get_front_camera_uri()
-        cap = cv2.VideoCapture(front_uri)
+        uri = self.get_front_camera_uri()
+        cap = cv2.VideoCapture(uri)
         ret, frame = cap.read()
         image = None
         if ret:
@@ -344,8 +289,8 @@ class Js06MainCtrl(QObject):
         return image
 
     def get_rear_image(self) -> QImage:
-        front_uri = self.get_rear_camera_uri()
-        cap = cv2.VideoCapture(front_uri)
+        uri = self.get_rear_camera_uri()
+        cap = cv2.VideoCapture(uri)
         ret, frame = cap.read()
         image = None
         if ret:
@@ -425,3 +370,44 @@ class Js06MainCtrl(QObject):
 
     def get_cameras(self) -> list:
         return self._model.read_cameras()
+
+
+class Js06InferenceBroker(QObject):
+    finished = pyqtSignal()
+    
+    def __init__(self, ctrl: Js06MainCtrl):
+        """
+
+        """
+        super().__init__()
+    
+        self._ctrl = ctrl
+    
+        self.pool = QThreadPool.globalInstance()
+        num_threads = Js06Settings.get('inferece_thread_count')
+        self.pool.setMaxThreadCount(num_threads)
+        
+    def run(self):
+        epoch = QDateTime.currentSecsSinceEpoch()
+        front_image = self._ctrl.get_front_image()
+        rear_image = self._ctrl.get_rear_image()
+
+        if Js06Settings.get('save_vista'):
+            basepath = Js06Settings.get('image_base_path')
+            now = QDateTime.fromSecsSinceEpoch(epoch)
+            dir = os.path.join(basepath, 'vista', now.toString("yyyy-MM-dd"))
+            filename = f'vista-front-{now.toString("yyyy-MM-dd-hh-mm")}.png'
+            self._ctrl.save_image(dir, filename, front_image)
+            filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
+            self._ctrl.save_image(dir, filename, rear_image)
+        
+        for target in self._ctrl.front_decomposed_targets:
+            target.clip_roi(epoch, front_image)
+            self.pool.start(target)
+
+        for target in self._ctrl.rear_decomposed_targets:
+            target.clip_roi(epoch, rear_image)
+            self.pool.start(target)
+
+        self.pool.waitForDone()
+        self.finished.emit()
