@@ -27,6 +27,8 @@ from PyQt5.QtWidgets import (QDialog, QGraphicsRectItem, QGraphicsScene,
                              QGraphicsView, QLabel, QMainWindow, QMessageBox,
                              QVBoxLayout, QWidget)
 
+from js06.model import Js06Settings
+
 from .controller import Js06MainCtrl
 
 
@@ -480,6 +482,27 @@ class Js06VideoWidget(QWidget):
         self.probe.videoFrameProbed.connect(self.on_videoFrameProbed)
         self.probe.setSource(self.player)
 
+        self.uri = None
+        self.frame_received = False
+        self.recover_timer = QTimer(self)
+        recover_interval = Js06Settings.get('media_recover_interval')
+        self.recover_timer.setInterval(recover_interval * 1000)
+        self.recover_timer.timeout.connect(self.recover_media)
+        self.recover_timer.start()
+
+    def recover_media(self):
+        """Try to reconnect if we can not receive video stream
+        """
+        if self.uri is None:
+            return
+        
+        if self.frame_received:
+            return
+        
+        print(f'DEBUG: Try to recover video stream from {self.uri}')
+        self.on_camera_change(self.uri)
+        self.frame_recevied = False
+
     def fit_in_view(self) -> None:
         self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
 
@@ -489,15 +512,17 @@ class Js06VideoWidget(QWidget):
 
     @pyqtSlot(QVideoFrame)
     def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
+        self.frame_received = True
         self.video_frame_prepared.emit(frame)
 
     @pyqtSlot(str)
     def on_camera_change(self, uri: str) -> None:
+        self.uri = uri
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
 
         # Wait till the video stream arrives before fitting the video
-        for i in range(500, 3500, 500):
+        for i in range(500, 5000, 500):
             QTimer.singleShot(i, self.fit_in_view)
 
     def draw_roi(self, point: tuple, size: tuple) -> None:
