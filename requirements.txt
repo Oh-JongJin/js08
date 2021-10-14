@@ -4,3 +4,4 @@ PyQtChart
 pymongo
 numpy
 tflite_runtime
+opencv-python

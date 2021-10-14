@@ -10,6 +10,8 @@ import json
 import os
 import sys
 
+import cv2
+
 from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread, QThreadPool, QTime,
                           QTimer, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QImage
@@ -330,17 +332,25 @@ class Js06MainCtrl(QObject):
         path = QDir.cleanPath(os.path.join(dir, filename))
         runner = Js06IoRunner(path, image)
         self.writer_pool.start(runner)
-
+    
     def get_front_image(self) -> QImage:
-        if self.front_video_frame == None:
-            return None
-        image = self.front_video_frame.image().mirrored(False, True)
+        front_uri = self.get_front_camera_uri()
+        cap = cv2.VideoCapture(front_uri)
+        ret, frame = cap.read()
+        image = None
+        if ret:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            image = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
         return image
 
     def get_rear_image(self) -> QImage:
-        if self.rear_video_frame == None:
-            return None
-        image = self.rear_video_frame.image().mirrored(False, True)
+        front_uri = self.get_rear_camera_uri()
+        cap = cv2.VideoCapture(front_uri)
+        ret, frame = cap.read()
+        image = None
+        if ret:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            image = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
         return image
 
     @pyqtSlot(QVideoFrame)
