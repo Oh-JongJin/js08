@@ -97,8 +97,8 @@ class Js06TargetView(QDialog):
         self.target_y = []
         self.point_x = []
         self.point_y = []
-        self.size_x = []
-        self.size_y = []
+        self.label_x = []
+        self.label_y = []
         self.ordinal = []
         self.category = []
         self.distance = []
@@ -188,8 +188,12 @@ class Js06TargetView(QDialog):
         self.painter = QPainter(self.blank_lbl)
 
         self.painter.setPen(QPen(Qt.black, 1, Qt.DotLine))
-        self.painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
-                              self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
+        x1 = self.painter.drawLine(self.blank_lbl.width() * (1 / 4), 0,
+                                   self.blank_lbl.width() * (1 / 4), self.blank_lbl.height())
+        x2 = self.painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
+                                   self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
+        x3 = self.painter.drawLine(self.blank_lbl.width() * (3 / 4), 0,
+                                   self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
 
         self.painter.setPen(QPen(Qt.black, 2))
         for name, x, y in zip(self.target, self.point_x, self.point_y):
@@ -229,7 +233,7 @@ class Js06TargetView(QDialog):
             self.coordinator()
 
             print("mousePressEvent - ", len(self.target))
-            self.save_target()
+            # self.save_target()
             # self.get_target()
 
         if event.buttons() == Qt.RightButton:
@@ -265,8 +269,8 @@ class Js06TargetView(QDialog):
                 self.result[i]['label'] = self.target
                 # self.result[i]['label_x'] = [int(x * self.width() / self.w) for x in self.target_x][i]
                 # self.result[i]['label_y'] = [int(y * self.height() / self.h) for y in self.target_y][i]
-                self.result[i]['roi']['point'][0] = self.label_x
-                self.result[i]['roi']['point'][1] = self.label_y
+                self.result[i]['roi']['point'][0] = self.point_x
+                self.result[i]['roi']['point'][1] = self.point_y
                 self.result[i]["distance"] = self.distance
                 # # print(self.target[i])
                 # # print(self.label_x[i])
@@ -286,8 +290,6 @@ class Js06TargetView(QDialog):
             self.target.append(self.result[i]['label'])
             self.point_x.append(self.result[i]['roi']['point'][0])
             self.point_y.append(self.result[i]['roi']['point'][1])
-            self.size_x.append(self.result[i]['roi']['size'][0])
-            self.size_y.append(self.result[i]['roi']['size'][1])
             self.distance.append(self.result[i]['distance'])
     # end of get_target
 

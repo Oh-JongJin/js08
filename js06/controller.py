@@ -170,12 +170,12 @@ class Js06MainCtrl(QObject):
         self.observation_timer.setInterval(observation_period * 60 * 1000)
         self.observation_timer.timeout.connect(self.job_broker)
 
-        # # Start repeating timer on time        
-        # now = QTime.currentTime()
-        # minute_left = observation_period - (now.minute() % observation_period) - 1
-        # second_left = 60 - now.second()
-        # timeout_in_sec = minute_left * 60 + second_left
-        # QTimer.singleShot(timeout_in_sec * 1000, self.observation_timer.start)
+        # Start repeating timer on time
+        now = QTime.currentTime()
+        minute_left = observation_period - (now.minute() % observation_period) - 1
+        second_left = 60 - now.second()
+        timeout_in_sec = minute_left * 60 + second_left
+        QTimer.singleShot(timeout_in_sec * 1000, self.observation_timer.start)
         self.observation_timer.start()
     # end of start_timer
 

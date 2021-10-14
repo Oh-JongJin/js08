@@ -25,15 +25,6 @@
     <height>300</height>
    </size>
   </property>
-  <property name="font">
-   <font>
-    <family>Noto Sans KR</family>
-    <pointsize>9</pointsize>
-    <weight>7</weight>
-    <italic>false</italic>
-    <bold>false</bold>
-   </font>
-  </property>
   <property name="mouseTracking">
    <bool>false</bool>
   </property>
@@ -41,7 +32,7 @@
    <string>JS-08</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">font: 57 9pt &quot;Noto Sans KR&quot;;</string>
+   <string notr="true">font: 9pt &quot;Noto Sans&quot;;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="maximumSize">
@@ -94,9 +85,9 @@
            <widget class="QLabel" name="label_2">
             <property name="font">
              <font>
-              <family>Noto Sans KR</family>
+              <family>Noto Sans</family>
               <pointsize>9</pointsize>
-              <weight>7</weight>
+              <weight>50</weight>
               <italic>false</italic>
               <bold>false</bold>
              </font>
@@ -174,7 +165,10 @@
            <item>
             <widget class="QLabel" name="dir_vis_label">
              <property name="text">
-              <string/>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:28pt; font-weight:600; color:#ff0000;&quot;&gt;- km&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </item>
@@ -204,7 +198,7 @@
            <item>
             <widget class="QLabel" name="pre_vis_label">
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:28pt; font-weight:600; color:#ff0000;&quot;&gt;20 km&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:28pt; font-weight:600; color:#ff0000;&quot;&gt;- km&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
