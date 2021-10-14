@@ -34,7 +34,7 @@ JS-08 supports Windows 10 and Ubuntu 18.04 on usual personal computer platforms,
 We recommend using Anaconda Python distribution for the Windows environment.
 - Anaconda Python 3.8 64-bit or later
 - Required Python packages that can be installed using `conda`:
-  - pyqt >= 5.9.2
+  - pyqt >= 5.13
   - pymongo >= 3.12.0
 
 #### Ubuntu 18.04

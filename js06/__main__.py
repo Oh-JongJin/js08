@@ -6,7 +6,6 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-import cProfile
 import sys
 
 from PyQt5.QtGui import QIcon
@@ -37,6 +36,7 @@ def main():
 if __name__ == '__main__':
     do_profiling = True
     if do_profiling:
+        import cProfile
         cProfile.run('main()', 'restats')
     else:
         main()

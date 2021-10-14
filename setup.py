@@ -71,7 +71,7 @@ setup(
         'Source Code': 'https://github.com/sijung21/js06'
     },
     packages=find_packages(),
-    install_requires=['PyQt5', 'pymongo', 'numpy', tflite_req],
+    install_requires=['PyQt5', 'PyQtChart', 'pymongo', 'numpy', 'opencv-python', tflite_req],
     package_data={'js06.resources': ['*.ui', '*.json', 'js02.tflite']},
     python_requires='>=3.6',
     entry_points={
