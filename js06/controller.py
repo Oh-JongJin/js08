@@ -52,8 +52,6 @@ class Js06MainCtrl(QObject):
         self.observation_timer = QTimer(self)
         self.front_camera_changed.connect(self.decompose_front_targets)
         self.rear_camera_changed.connect(self.decompose_rear_targets)
-        # self.front_target_decomposed.connect(self.start_broker)
-        # self.rear_target_decomposed.connect(self.start_broker)
 
         self.start_observation_timer()
 
@@ -77,54 +75,34 @@ class Js06MainCtrl(QObject):
         self._model.setup_db(attr_json, camera_json)
 
     @pyqtSlot(str)
-    def decompose_front_targets(self, _:str) -> None:
+    def decompose_front_targets(self, _: str) -> None:
         """Make list of SimpleTarget by decoposing compound targets.
 
         Parameters:
-            epoch: timestamp when the vista taken
-            vista: vista image
         """
-        # Discard existing targets
-        self.front_decomposed_targets = []
-        attr = self._model.read_attr()
-        targets = attr['front_camera']['targets']
-        for tg in targets:
-            wedge = tg['wedge']
-            azimuth = tg['azimuth']
-            point = tg['roi']['point']
-            size = tg['roi']['size']
-            roi = QRect(*point, *size)
-
-            if tg['category'] == 'simple':
-                label = tg['label']
-                distance = tg['distance']
-                mask = None # read mask from disk
-                st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
-                self.front_decomposed_targets.append(st)
-                # continue
-            
-            elif tg['category'] == 'compound':
-                for i in range(len(tg['mask'])):
-                    label = f"{tg['label']}_{i}"
-                    distance = tg['distance'][i]
-                    mask = None # read mask from disk
-                    st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
-                    self.front_decomposed_targets.append(st)
-
-        self.front_target_decomposed.emit()
+        self.decompose_targets('front')
 
     @pyqtSlot(str)
-    def decompose_rear_targets(self, _:str) -> None:
+    def decompose_rear_targets(self, _: str) -> None:
         """Make list of SimpleTarget by decoposing compound targets.
 
         Parameters:
-            epoch: timestamp when the vista taken
-            vista: vista image
         """
-        # Discard existing targets
-        self.rear_decomposed_targets = []
+        self.decompose_targets('rear')
+
+    def decompose_targets(self, direction: str = 'front') -> None:
+        """Make list of SimpleTarget by decoposing compound targets.
+
+        Parameters:
+            direction:
+        """
+        decomposed_targets = []
         attr = self._model.read_attr()
-        targets = attr['rear_camera']['targets']
+        if direction == 'front':
+            targets = attr['front_camera']['targets']
+        elif direction == 'rear':
+            targets = attr['rear_camera']['targets']
+
         for tg in targets:
             wedge = tg['wedge']
             azimuth = tg['azimuth']
@@ -137,7 +115,7 @@ class Js06MainCtrl(QObject):
                 distance = tg['distance']
                 mask = None # read mask from disk
                 st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
-                self.rear_decomposed_targets.append(st)
+                decomposed_targets.append(st)
                 # continue
             
             elif tg['category'] == 'compound':
@@ -146,7 +124,12 @@ class Js06MainCtrl(QObject):
                     distance = tg['distance'][i]
                     mask = None # read mask from disk
                     st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
-                    self.rear_decomposed_targets.append(st)
+                    decomposed_targets.append(st)
+
+        if direction == 'front':
+            self.front_decomposed_targets = decomposed_targets
+        elif direction == 'rear':
+            self.rear_decomposed_targets = decomposed_targets
 
         self.rear_target_decomposed.emit()
 
@@ -174,20 +157,6 @@ class Js06MainCtrl(QObject):
         print(f'DEBUG(start_broker): {len(self.front_decomposed_targets)}, {len(self.rear_decomposed_targets)}')
         if len(self.front_decomposed_targets) == 0 or len(self.rear_decomposed_targets) == 0:
             return
-
-        # print('DEBUG(job_broker): after frame null check')
-        # epoch = QDateTime.currentSecsSinceEpoch()
-        # front_image = self.get_front_image()
-        # rear_image = self.get_rear_image()
-
-        # if Js06Settings.get('save_vista'):
-        #     basepath = Js06Settings.get('image_base_path')
-        #     now = QDateTime.fromSecsSinceEpoch(epoch)
-        #     dir = os.path.join(basepath, 'vista', now.toString("yyyy-MM-dd"))
-        #     filename = f'vista-front-{now.toString("yyyy-MM-dd-hh-mm")}.png'
-        #     self.save_image(dir, filename, front_image)
-        #     filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
-        #     self.save_image(dir, filename, rear_image)
 
         print('DEBUG: before broker')
         self.broker = Js06InferenceBroker(self)
@@ -278,18 +247,11 @@ class Js06MainCtrl(QObject):
         runner = Js06IoRunner(path, image)
         self.writer_pool.start(runner)
     
-    def get_front_image(self) -> QImage:
-        uri = self.get_front_camera_uri()
-        cap = cv2.VideoCapture(uri)
-        ret, frame = cap.read()
-        image = None
-        if ret:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            image = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
-        return image
-
-    def get_rear_image(self) -> QImage:
-        uri = self.get_rear_camera_uri()
+    def grap_image(self, direction: str = 'front') -> QImage:
+        if direction == 'front':
+            uri = self.get_front_camera_uri()
+        elif direction == 'rear':
+            uri = self.get_rear_camera_uri()
         cap = cv2.VideoCapture(uri)
         ret, frame = cap.read()
         image = None
@@ -389,8 +351,8 @@ class Js06InferenceBroker(QObject):
         
     def run(self):
         epoch = QDateTime.currentSecsSinceEpoch()
-        front_image = self._ctrl.get_front_image()
-        rear_image = self._ctrl.get_rear_image()
+        front_image = self._ctrl.grap_image('front')
+        rear_image = self._ctrl.grap_image('rear')
 
         if Js06Settings.get('save_vista'):
             basepath = Js06Settings.get('image_base_path')
