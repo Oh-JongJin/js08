@@ -48,7 +48,7 @@ class Js06MainCtrl(QObject):
 
         self.init_db()
 
-        self.observation_timer = QTimer()
+        self.observation_timer = QTimer(self)
         self.front_camera_changed.connect(self.decompose_front_targets)
         self.rear_camera_changed.connect(self.decompose_rear_targets)
         # self.front_target_decomposed.connect(self.start_broker)
