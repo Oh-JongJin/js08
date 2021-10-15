@@ -31,7 +31,6 @@ class Js06SimpleTarget(QRunnable):
         self.azimuth = azimuth
         self.distance = distance
         self.roi = roi
-        self.mask = mask
 
         # epoch and image are set using clip_roi
         self.epoch = 0
@@ -47,6 +46,8 @@ class Js06SimpleTarget(QRunnable):
         model_path = os.path.join(directory, 'resources', 'js02.tflite')
         self.interpreter = Interpreter(model_path=model_path)
         self.interpreter.allocate_tensors()
+        _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
+        self.mask = self.img_to_arr(mask, width, height)
 
         self.setAutoDelete(False)
     
@@ -76,9 +77,14 @@ class Js06SimpleTarget(QRunnable):
         # multiply self.mask with trimmed
         self.image = trimmed
 
-    def run(self):
-        _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
-        image = self.image.scaled(
+    def img_to_arr(self, image: QImage, width: int, height: int) -> np.ndarray:
+        """
+        Parameters:
+            image: mask image in RGB format
+            width: width of mask array
+            height: height of mask array
+        """
+        img = image.scaled(
             width, 
             height,
             Qt.IgnoreAspectRatio, 
@@ -87,10 +93,10 @@ class Js06SimpleTarget(QRunnable):
         
         # The following code is referring to:
         # https://stackoverflow.com/questions/19902183/qimage-to-numpy-array-using-pyside
-        ptr = image.bits()
+        ptr = img.bits()
         ptr.setsize(int(height * width * 3))
         arr = np.frombuffer(ptr, np.uint8).reshape((height, width, 3))
-
+        
         # # The following code is referring to:
         # # https://newbedev.com/convert-pyqt5-qpixmap-to-numpy-ndarray
         # bits = image.bits()
@@ -103,7 +109,14 @@ class Js06SimpleTarget(QRunnable):
         # img_arr = np.frombuffer(tmp, np.uint8).reshape((self._height, self._width, 3))
         # img_arr = img_arr.astype(np.float32) / 255
 
-        results = self.classify_image(self.interpreter, arr)
+        return arr
+
+    def run(self):
+        _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
+        arr = self.img_to_arr(self.image, width, height)
+
+        masked_arr = arr * self.mask
+        results = self.classify_image(self.interpreter, masked_arr)
         
         label_id, _ = results[0]
         self.discernment = True if label_id else False

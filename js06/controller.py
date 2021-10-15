@@ -11,6 +11,7 @@ import os
 import sys
 
 import cv2
+import numpy as np
 from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread,
                           QThreadPool, QTime, QTimer, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QImage
@@ -100,9 +101,13 @@ class Js06MainCtrl(QObject):
         attr = self._model.read_attr()
         if direction == 'front':
             targets = attr['front_camera']['targets']
+            id = str(attr['front_camera']['camera_id'])
         elif direction == 'rear':
             targets = attr['rear_camera']['targets']
-
+            id = str(attr['rear_camera']['camera_id'])
+        
+        base_path = Js06Settings.get('image_base_path') 
+        
         for tg in targets:
             wedge = tg['wedge']
             azimuth = tg['azimuth']
@@ -113,7 +118,8 @@ class Js06MainCtrl(QObject):
             for i in range(len(tg['mask'])):
                 label = f"{tg['label']}_{i}"
                 distance = tg['distance'][i]
-                mask = None # read mask from disk
+                mask_path = os.path.join(base_path, 'mask', id, tg['mask'][i])
+                mask = self.read_mask(mask_path)
                 st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
                 decomposed_targets.append(st)
 
@@ -123,6 +129,22 @@ class Js06MainCtrl(QObject):
             self.rear_decomposed_targets = decomposed_targets
 
         self.rear_target_decomposed.emit()
+
+    def read_mask(self, path: str) -> np.ndarray:
+        """Read mask image and return 
+
+        Parameters:
+            path: path to mask file
+        """
+        # img = cv2.imread(path)
+        # arr = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # mask = arr // 255
+        # return mask
+        with open(path, 'rb') as f:
+            content = f.read()
+        image = QImage()
+        image.loadFromData(content)
+        return image
 
     def start_observation_timer(self) -> None:
         print('DEBUG(start_observation_timer):', QTime.currentTime().toString())
@@ -354,7 +376,8 @@ class Js06InferenceBroker(QObject):
     
     def __init__(self, ctrl: Js06MainCtrl):
         """
-
+        Parameters:
+            ctrl:
         """
         super().__init__()
     
