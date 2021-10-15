@@ -22,12 +22,12 @@ from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner,
 
 class Js06MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
-    front_camera_changed = pyqtSignal(str)  # uri
-    rear_camera_changed = pyqtSignal(str)  # uri
+    front_camera_changed = pyqtSignal(str) # uri
+    rear_camera_changed = pyqtSignal(str) # uri
     front_target_decomposed = pyqtSignal()
     rear_target_decomposed = pyqtSignal()
-    target_assorted = pyqtSignal(list, list)  # positives, negatives
-    wedge_vis_ready = pyqtSignal(int, dict)  # epoch, wedge visibility
+    target_assorted = pyqtSignal(list, list) # positives, negatives
+    wedge_vis_ready = pyqtSignal(int, dict) # epoch, wedge visibility
 
     def __init__(self, model: Js06AttrModel):
         super().__init__()
@@ -113,16 +113,16 @@ class Js06MainCtrl(QObject):
             if tg['category'] == 'simple':
                 label = tg['label']
                 distance = tg['distance']
-                mask = None  # read mask from disk
+                mask = None # read mask from disk
                 st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
                 decomposed_targets.append(st)
                 # continue
-
+            
             elif tg['category'] == 'compound':
                 for i in range(len(tg['mask'])):
                     label = f"{tg['label']}_{i}"
                     distance = tg['distance'][i]
-                    mask = None  # read mask from disk
+                    mask = None # read mask from disk
                     st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
                     decomposed_targets.append(st)
 
@@ -147,12 +147,12 @@ class Js06MainCtrl(QObject):
         print(f'DEBUG(start_broker): {self.broker}')
         if self.broker:
             return
-
+        
         # If both video frames are not ready, quit.
         print(f'DEBUG(start_broker): {self.front_video_frame}, {self.rear_video_frame}')
         if self.front_video_frame == None or self.rear_video_frame == None:
             return
-
+        
         # if decomposed targets are not ready, quit.
         print(f'DEBUG(start_broker): {len(self.front_decomposed_targets)}, {len(self.rear_decomposed_targets)}')
         if len(self.front_decomposed_targets) == 0 or len(self.rear_decomposed_targets) == 0:
@@ -178,7 +178,7 @@ class Js06MainCtrl(QObject):
         epoch: seconds since epoch
         """
         epoch = self.front_decomposed_targets[0].epoch
-
+            
         pos, neg = self.assort_discernment()
         self.target_assorted.emit(pos, neg)
         wedge_vis = self.wedge_visibility()
@@ -246,7 +246,7 @@ class Js06MainCtrl(QObject):
         path = QDir.cleanPath(os.path.join(dir, filename))
         runner = Js06IoRunner(path, image)
         self.writer_pool.start(runner)
-
+    
     def grap_image(self, direction: str = 'front') -> QImage:
         if direction == 'front':
             uri = self.get_front_camera_uri()
@@ -288,7 +288,7 @@ class Js06MainCtrl(QObject):
 
     def get_camera_table_model(self) -> dict:
         cameras = self.get_cameras()
-        table_model = Js06CameraTableModel(cameras)
+        table_model =  Js06CameraTableModel(cameras)
         return table_model
 
     def check_exit_status(self) -> bool:
@@ -318,7 +318,7 @@ class Js06MainCtrl(QObject):
         if self._attr.count_documents({}):
             attr_doc = list(self._attr.find().sort("_id", -1).limit(1))[0]
         return attr_doc
-
+    
     def set_attr(self, model: dict) -> None:
         self._model.update_attr(model)
 
@@ -328,7 +328,7 @@ class Js06MainCtrl(QObject):
 
     @pyqtSlot(bool)
     def set_normal_shutdown(self) -> None:
-        Js06Settings.set('normal_shutdown', True)
+         Js06Settings.set('normal_shutdown', True)
 
     def get_cameras(self) -> list:
         return self._model.read_cameras()
@@ -336,19 +336,19 @@ class Js06MainCtrl(QObject):
 
 class Js06InferenceBroker(QObject):
     finished = pyqtSignal()
-
+    
     def __init__(self, ctrl: Js06MainCtrl):
         """
 
         """
         super().__init__()
-
+    
         self._ctrl = ctrl
-
+    
         self.pool = QThreadPool.globalInstance()
         num_threads = Js06Settings.get('inferece_thread_count')
         self.pool.setMaxThreadCount(num_threads)
-
+        
     def run(self):
         epoch = QDateTime.currentSecsSinceEpoch()
         front_image = self._ctrl.grap_image('front')
@@ -362,7 +362,7 @@ class Js06InferenceBroker(QObject):
             self._ctrl.save_image(dir, filename, front_image)
             filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
             self._ctrl.save_image(dir, filename, rear_image)
-
+        
         for target in self._ctrl.front_decomposed_targets:
             target.clip_roi(epoch, front_image)
             self.pool.start(target)

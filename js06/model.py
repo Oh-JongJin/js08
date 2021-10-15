@@ -49,15 +49,13 @@ class Js06SimpleTarget(QRunnable):
         self.interpreter.allocate_tensors()
 
         self.setAutoDelete(False)
-    # end of __init__
-
+    
     def set_input_tensor(self, interpreter: Interpreter, image: np.ndarray) -> None:
         tensor_index = interpreter.get_input_details()[0]['index']
         input_tensor = interpreter.tensor(tensor_index)()[0]
         input_tensor[:, :] = image
-    # end of set_input_tensor
 
-    def classify_image(self, interpreter: Interpreter, image: np.ndarray, top_k: int = 1) -> list:
+    def classify_image(self, interpreter: Interpreter, image: np.ndarray, top_k: int=1) -> list:
         """Returns a sorted array of classification results."""
         self.set_input_tensor(interpreter, image)
         interpreter.invoke()
@@ -71,24 +69,22 @@ class Js06SimpleTarget(QRunnable):
 
         ordered = np.argpartition(-output, top_k)
         return [(i, output[i]) for i in ordered[:top_k]]
-    # end of classify_image
 
     def clip_roi(self, epoch: int, vista: QImage) -> None:
         self.epoch = epoch
         trimmed = vista.copy(self.roi)
         # multiply self.mask with trimmed
         self.image = trimmed
-    # end of clip_roi
 
     def run(self):
         _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
         image = self.image.scaled(
-            width,
+            width, 
             height,
-            Qt.IgnoreAspectRatio,
+            Qt.IgnoreAspectRatio, 
             Qt.SmoothTransformation
-        )
-
+            )
+        
         # The following code is referring to:
         # https://stackoverflow.com/questions/19902183/qimage-to-numpy-array-using-pyside
         ptr = image.bits()
@@ -100,7 +96,7 @@ class Js06SimpleTarget(QRunnable):
         # bits = image.bits()
         # bits.setsize(self._height * self._width * 3)
         # img_arr = np.frombuffer(bits, np.uint8).reshape((self._height, self._width, 3))
-
+        
         # # The following code is referring to:
         # # https://www.programcreek.com/python/example/106694/PyQt5.QtGui.QImage
         # tmp = image.bits().asstring(image.numBytes())
@@ -108,16 +104,12 @@ class Js06SimpleTarget(QRunnable):
         # img_arr = img_arr.astype(np.float32) / 255
 
         results = self.classify_image(self.interpreter, arr)
-
+        
         label_id, _ = results[0]
         self.discernment = True if label_id else False
-    # end of run
 
     def save_image(self):
         pass
-    # end of save_image
-
-# end of Js06SimpleTarget
 
 
 class Js06CameraTableModel(QAbstractTableModel):
@@ -212,7 +204,6 @@ class Js06CameraTableModel(QAbstractTableModel):
 
 # end of Js06CameraTableModel
 
-
 class Js06AttrModel:
     def __init__(self):
         super().__init__()
@@ -237,10 +228,10 @@ class Js06AttrModel:
             camera_json: list of camerae dictionary
         """
         coll = self.db.list_collection_names()
-
+        
         if 'camera' not in coll or self.db.camera.count_documents({}) == 0:
             self.db.camera.insert_many(camera_json)
-
+    
         if 'attr' not in coll or self.db.attr.count_documents({}) == 0:
             front_cam = self.db.camera.find_one({'placement': 'front'})
             front_cam['camera_id'] = front_cam.pop('_id')
@@ -256,12 +247,12 @@ class Js06AttrModel:
 
         if 'visibility' not in coll:
             self.db.create_collection('visibility',
-                                      timeseries={
-                                          'timeField': 'timestamp',
-                                          'metaField': 'attr_id',
-                                          'granularity': 'minutes'
-                                      }
-                                      )
+                timeseries = {
+                  'timeField': 'timestamp',
+                  'metaField': 'attr_id',
+                  'granularity': 'minutes'
+                }
+            )
     # end of setup_db
 
     def insert_camera(self, camera: dict) -> str:
@@ -304,7 +295,7 @@ class Js06AttrModel:
 
         Parameters:
           _id: _id of cameras to delete.
-
+        
         Return:
           The number of cameras deleted.
         """
@@ -377,12 +368,11 @@ class Js06AttrModel:
 
 # end of Js06Model
 
-
 class Js06Settings:
     settings = QSettings('sijung', 'js06')
 
     defaults = {
-        'observation_period': 1,  # in minutes
+        'observation_period': 1, # in minutes
         'save_vista': True,
         'save_image_patch': True,
         'image_base_path': os.path.join(
@@ -390,7 +380,7 @@ class Js06Settings:
             'js06'
         ),
         'inferece_thread_count': 2,
-        'media_recover_interval': 5,  # in seconds
+        'media_recover_interval': 5, # in seconds
         # Database settings
         'db_host': 'localhost',
         'db_port': 27017,
@@ -426,7 +416,6 @@ class Js06Settings:
 
 # end of Js06Settings
 
-
 class Js06IoRunner(QRunnable):
     def __init__(self, path: str, image: QImage):
         super().__init__()
@@ -442,7 +431,6 @@ class Js06IoRunner(QRunnable):
     # end of run
 
 # end of Js06IoRunner
-
 
 if __name__ == '__main__':
     import pprint
