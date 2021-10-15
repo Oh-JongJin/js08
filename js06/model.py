@@ -8,19 +8,20 @@
 import datetime
 import os
 import platform
-import pymongo
+import sys
 
 import numpy as np
-
-from PyQt5.QtCore import \
-    QAbstractTableModel, QModelIndex, QRect, QRunnable, QStandardPaths, Qt, QSettings
+import pymongo
+from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, QRect, QRunnable,
+                          QSettings, QStandardPaths, Qt)
 from PyQt5.QtGui import QImage
 from tflite_runtime.interpreter import Interpreter
 
 Js06TargetCategory = ['single', 'compound']
 Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 
-class SimpleTarget(QRunnable):
+
+class Js06SimpleTarget(QRunnable):
     """Simple target"""
 
     def __init__(self, label: str, wedge: str, azimuth: float, distance: float, roi: QRect, mask: QImage):
@@ -39,24 +40,24 @@ class SimpleTarget(QRunnable):
         self.discernment = None
 
         # TODO(Kyungwon): Put the model file into Qt Resource Collection.
-        model_path = os.path.join(
-            os.path.dirname(__file__), 
-            'resources',
-            'js02.tflite'
-            )
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        model_path = os.path.join(directory, 'resources', 'js02.tflite')
         self.interpreter = Interpreter(model_path=model_path)
         self.interpreter.allocate_tensors()
 
         self.setAutoDelete(False)
     # end of __init__
-    
+
     def set_input_tensor(self, interpreter: Interpreter, image: np.ndarray) -> None:
         tensor_index = interpreter.get_input_details()[0]['index']
         input_tensor = interpreter.tensor(tensor_index)()[0]
         input_tensor[:, :] = image
     # end of set_input_tensor
 
-    def classify_image(self, interpreter: Interpreter, image: np.ndarray, top_k: int=1) -> list:
+    def classify_image(self, interpreter: Interpreter, image: np.ndarray, top_k: int = 1) -> list:
         """Returns a sorted array of classification results."""
         self.set_input_tensor(interpreter, image)
         interpreter.invoke()
@@ -82,12 +83,12 @@ class SimpleTarget(QRunnable):
     def run(self):
         _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
         image = self.image.scaled(
-            width, 
+            width,
             height,
-            Qt.IgnoreAspectRatio, 
+            Qt.IgnoreAspectRatio,
             Qt.SmoothTransformation
-            )
-        
+        )
+
         # The following code is referring to:
         # https://stackoverflow.com/questions/19902183/qimage-to-numpy-array-using-pyside
         ptr = image.bits()
@@ -99,7 +100,7 @@ class SimpleTarget(QRunnable):
         # bits = image.bits()
         # bits.setsize(self._height * self._width * 3)
         # img_arr = np.frombuffer(bits, np.uint8).reshape((self._height, self._width, 3))
-        
+
         # # The following code is referring to:
         # # https://www.programcreek.com/python/example/106694/PyQt5.QtGui.QImage
         # tmp = image.bits().asstring(image.numBytes())
@@ -107,7 +108,7 @@ class SimpleTarget(QRunnable):
         # img_arr = img_arr.astype(np.float32) / 255
 
         results = self.classify_image(self.interpreter, arr)
-        
+
         label_id, _ = results[0]
         self.discernment = True if label_id else False
     # end of run
@@ -116,7 +117,8 @@ class SimpleTarget(QRunnable):
         pass
     # end of save_image
 
-# end of Target
+# end of Js06SimpleTarget
+
 
 class Js06CameraTableModel(QAbstractTableModel):
     def __init__(self, data: list):
@@ -210,6 +212,7 @@ class Js06CameraTableModel(QAbstractTableModel):
 
 # end of Js06CameraTableModel
 
+
 class Js06AttrModel:
     def __init__(self):
         super().__init__()
@@ -233,12 +236,12 @@ class Js06AttrModel:
             attr_json: list of attribute dictionary
             camera_json: list of camerae dictionary
         """
-        collections = self.db.list_collection_names()
-        
-        if 'camera' not in collections or self.db.camera.count_documents({}) == 0:
+        coll = self.db.list_collection_names()
+
+        if 'camera' not in coll or self.db.camera.count_documents({}) == 0:
             self.db.camera.insert_many(camera_json)
-    
-        if 'attr' not in collections or self.db.attr.count_documents({}) == 0:
+
+        if 'attr' not in coll or self.db.attr.count_documents({}) == 0:
             front_cam = self.db.camera.find_one({'placement': 'front'})
             front_cam['camera_id'] = front_cam.pop('_id')
 
@@ -251,14 +254,14 @@ class Js06AttrModel:
 
             self.db.attr.insert_many(attr_json)
 
-        if 'visibility' not in collections:
+        if 'visibility' not in coll:
             self.db.create_collection('visibility',
-                timeseries = {
-                  'timeField': 'timestamp',
-                  'metaField': 'attr_id',
-                  'granularity': 'minutes'
-                }
-            )
+                                      timeseries={
+                                          'timeField': 'timestamp',
+                                          'metaField': 'attr_id',
+                                          'granularity': 'minutes'
+                                      }
+                                      )
     # end of setup_db
 
     def insert_camera(self, camera: dict) -> str:
@@ -301,7 +304,7 @@ class Js06AttrModel:
 
         Parameters:
           _id: _id of cameras to delete.
-        
+
         Return:
           The number of cameras deleted.
         """
@@ -374,18 +377,20 @@ class Js06AttrModel:
 
 # end of Js06Model
 
+
 class Js06Settings:
     settings = QSettings('sijung', 'js06')
 
     defaults = {
-        'observation_period': 1, # in minute
+        'observation_period': 1,  # in minutes
         'save_vista': True,
         'save_image_patch': True,
         'image_base_path': os.path.join(
             QStandardPaths.writableLocation(QStandardPaths.PicturesLocation),
             'js06'
         ),
-        'thread_count': 2,
+        'inferece_thread_count': 2,
+        'media_recover_interval': 5,  # in seconds
         # Database settings
         'db_host': 'localhost',
         'db_port': 27017,
@@ -421,6 +426,7 @@ class Js06Settings:
 
 # end of Js06Settings
 
+
 class Js06IoRunner(QRunnable):
     def __init__(self, path: str, image: QImage):
         super().__init__()
@@ -437,10 +443,12 @@ class Js06IoRunner(QRunnable):
 
 # end of Js06IoRunner
 
+
 if __name__ == '__main__':
-    import faker
     import pprint
     import random
+
+    import faker
 
     fake = faker.Faker()
 

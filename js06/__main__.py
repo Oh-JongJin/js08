@@ -6,16 +6,16 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-import cProfile
 import sys
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 
-from .view import Js06MainView
-from .model import Js06AttrModel
-from .controller import Js06MainCtrl
 from . import js06_rc
+from .controller import Js06MainCtrl
+from .model import Js06AttrModel
+from .view import Js06MainView
+
 
 def main():
     """Main function"""
@@ -32,13 +32,11 @@ def main():
     view.setWindowIcon(app_icon)
     # Execute calculator's main loop
     sys.exit(app.exec())
-# end of main
 
 if __name__ == '__main__':
     do_profiling = True
     if do_profiling:
+        import cProfile
         cProfile.run('main()', 'restats')
     else:
         main()
-
-# end of __main__.py

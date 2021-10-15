@@ -1,5 +1,14 @@
 --extra-index-url https://google-coral.github.io/py-repo/
+<<<<<<< HEAD
 PyQt5
 pymongo
 numpy
 tflite_runtime
+=======
+PyQt5 >= 5.13
+PyQtChart
+pymongo
+numpy
+tflite_runtime
+opencv-python
+>>>>>>> d7814642be0fbd61c88547691f9285c830f5869a

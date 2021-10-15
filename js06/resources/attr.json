@@ -16,13 +16,7 @@
             "single": "null",
             "compound": "null"
         },
-        "front_camera": {
-            "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp",
-            "targets": []
-        },
-        "rear_camera": {
-            "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
-            "targets": []
-        }
+        "front_camera": {},
+        "rear_camera": {}
     }
 ]
