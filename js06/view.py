@@ -7,9 +7,7 @@
 #     5jx2oh@gmail.com (Jongjin Oh)
 
 import collections
-import math
 import os
-import random
 import sys
 
 from PyQt5 import uic
@@ -27,7 +25,7 @@ from PyQt5.QtWidgets import (QDialog, QGraphicsRectItem, QGraphicsScene,
                              QGraphicsView, QLabel, QMainWindow, QMessageBox,
                              QVBoxLayout, QWidget)
 
-from js06.model import Js06Settings
+from .model import Js06Settings
 
 from .controller import Js06MainCtrl
 
@@ -95,7 +93,7 @@ class Js06VisibilityView(QChartView):
         super().__init__(parent)
 
         now = QDateTime.currentSecsSinceEpoch()
-        zeros = [(t * 1000, 0) for t in range(now - maxlen * 60, now, 60)]
+        zeros = [(t * 1000, -1) for t in range(now - maxlen * 60, now, 60)]
         self.data = collections.deque(zeros, maxlen=maxlen)
         
         self.setRenderHint(QPainter.Antialiasing)
