@@ -9,7 +9,7 @@
 import os
 
 from PyQt5.QtCore import QObject, QTimer, QUrl, Qt, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent, QImage
+from PyQt5.QtGui import QCloseEvent, QPen, QPixmap, QPainter, QPaintEvent, QResizeEvent
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame, QVideoProbe
 from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
 from PyQt5.QtWidgets import QDialog, QGraphicsRectItem, QGraphicsScene, \
@@ -108,14 +108,13 @@ class Js06TargetView(QDialog):
         self.get_target()
 
         self.image = self._ctrl.front_video_frame.image().mirrored(False, True)
-        self.w = self.image.width()
-        self.h = self.image.height()
-
         self.image_label.setPixmap(QPixmap.fromImage(self.image))
         self.image_label.setMaximumSize(self.width(), self.height())
 
+        self.w = self.image.width()
+        self.h = self.image.height()
+
         self.blank_lbl = QLabel(self)
-        self.blank_lbl.setStyleSheet('background-color: rgba(255, 255, 255, 0);')
 
         self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
         self.buttonBox.accepted.connect(self.save_btn)
@@ -209,10 +208,6 @@ class Js06TargetView(QDialog):
 
         x = int(event.pos().x() / self.blank_lbl.width() * self.image.width())
         y = int(event.pos().y() / self.blank_lbl.height() * self.image.height())
-        # TODO(Oh Jongjin): Must fix mouse click coordinates and target coordinates to be the same.
-        print(f"image label: {self.image_label.geometry()}")
-        print(f"blank label: {self.blank_lbl.geometry()}")
-        print(f"current position: {x, y}")
 
         for i in range(len(self.target)):
             self.target[i] = i + 1
@@ -223,8 +218,8 @@ class Js06TargetView(QDialog):
             self.numberCombo.addItem(str(maxVal + 1))
             self.numberCombo.setCurrentIndex(maxVal)
 
-            self.point_x.append(int(x))
-            self.point_y.append(int(y))
+            self.point_x.append(int(event.pos().x()))
+            self.point_y.append(int(event.pos().y()))
 
             self.target.append(len(self.point_x))
             self.distance.append(0)
@@ -233,8 +228,8 @@ class Js06TargetView(QDialog):
             self.coordinator()
 
             print("mousePressEvent - ", len(self.target))
-            # self.save_target()
-            # self.get_target()
+            self.save_target()
+            self.get_target()
 
         if event.buttons() == Qt.RightButton:
             deleteIndex = self.numberCombo.currentIndex() + 1
