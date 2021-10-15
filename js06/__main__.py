@@ -34,7 +34,7 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == '__main__':
-    do_profiling = True
+    do_profiling = False
     if do_profiling:
         import cProfile
         cProfile.run('main()', 'restats')

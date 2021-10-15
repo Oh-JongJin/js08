@@ -1,6 +1,6 @@
 [
     {
-        "label": "headquarters panorama",
+        "label": "headquarters panorama - front",
         "manufacturer": "Hanwha Techwin Co., Ltd.",
         "model": "PNM-9030V",
         "serial_number": "",
@@ -9,10 +9,211 @@
             2540
         ],
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp",
-        "azimuth": 135,
+        "azimuth": 0,
         "view_angle": 220,
-        "placement": "null",
-        "targets": []
+        "placement": "front",
+        "targets": [
+            {
+                "label": "1",
+                "distance": [
+                    5,
+                    10
+                ],
+                "mask": [
+                    "1-1.png",
+                    "1-2.png"
+                ],
+                "wedge": "W",
+                "azimuth": 288,
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "2",
+                "distance": [
+                    5,
+                    10
+                ],
+                "mask": [
+                    "2-1.png",
+                    "2-2.png"
+                ],
+                "wedge": "NW",
+                "azimuth": 300,
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "3",
+                "distance": [
+                    5,
+                    10
+                ],
+                "mask": [
+                    "3-1.png",
+                    "3-2.png"
+                ],
+                "wedge": "N",
+                "azimuth": 0,
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "4",
+                "distance": [
+                    5,
+                    10
+                ],
+                "mask": [
+                    "4-1.png",
+                    "4-2.png"
+                ],
+                "wedge": "NE",
+                "azimuth": 25,
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            }
+        ]
+    },
+    {
+        "label": "headquarters panorama - rear",
+        "manufacturer": "Hanwha Techwin Co., Ltd.",
+        "model": "PNM-9030V",
+        "serial_number": "",
+        "resolution": [
+            6096,
+            2540
+        ],
+        "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:1554/profile2/media.smp",
+        "azimuth": 180,
+        "view_angle": 220,
+        "placement": "rear",
+        "targets": [
+            {
+                "label": "1",
+                "distance": [
+                    5,
+                    10
+                ],
+                "mask": [
+                    "1-1.png",
+                    "1-2.png"
+                ],
+                "wedge": "E",
+                "azimuth": 90,
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "2",
+                "distance": [
+                    5,
+                    10
+                ],
+                "mask": [
+                    "2-1.png",
+                    "2-2.png"
+                ],
+                "wedge": "SE",
+                "azimuth": 150,
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "3",
+                "distance": [
+                    5,
+                    10
+                ],
+                "mask": [
+                    "3-1.png",
+                    "3-2.png"
+                ],
+                "wedge": "S",
+                "azimuth": 180,
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "4",
+                "distance": [
+                    5,
+                    10
+                ],
+                "mask": [
+                    "4-1.png",
+                    "4-2.png"
+                ],
+                "wedge": "SW",
+                "azimuth": 240,
+                "roi": {
+                    "point": [
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            }
+        ]
     },
     {
         "label": "headquarters",
@@ -26,7 +227,7 @@
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:2554/profile2/media.smp",
         "azimuth": 0,
         "view_angle": 79.8,
-        "placement": "null",
+        "placement": "",
         "targets": []
     },
     {
@@ -41,14 +242,18 @@
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
         "azimuth": 135,
         "view_angle": 92.1,
-        "placement": "front",
+        "placement": "",
         "targets": [
             {
                 "label": "1",
-                "distance": 4,
+                "distance": [
+                    4
+                ],
+                "mask": [
+                    "1-1.png"
+                ],
                 "wedge": "E",
                 "azimuth": 87,
-                "category": "single",
                 "roi": {
                     "point": [
                         437,
@@ -72,7 +277,6 @@
                 ],
                 "wedge": "S",
                 "azimuth": 95,
-                "category": "compound",
                 "roi": {
                     "point": [
                         559,
@@ -86,10 +290,14 @@
             },
             {
                 "label": "3",
-                "distance": 1,
+                "distance": [
+                    1
+                ],
+                "mask": [
+                    "3-1.png"
+                ],
                 "wedge": "W",
                 "azimuth": 270,
-                "category": "single",
                 "roi": {
                     "point": [
                         560,
@@ -115,14 +323,18 @@
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:3554/profile2/media.smp",
         "azimuth": 315,
         "view_angle": 92.1,
-        "placement": "rear",
+        "placement": "",
         "targets": [
             {
                 "label": "1",
-                "distance": 4,
+                "distance": [
+                    4
+                ],
+                "mask": [
+                    "1-1.png"
+                ],
                 "wedge": "SW",
                 "azimuth": 267,
-                "category": "single",
                 "roi": {
                     "point": [
                         437,
@@ -146,7 +358,6 @@
                 ],
                 "wedge": "W",
                 "azimuth": 275,
-                "category": "compound",
                 "roi": {
                     "point": [
                         559,
@@ -160,10 +371,14 @@
             },
             {
                 "label": "3",
-                "distance": 1,
+                "distance": [
+                    1
+                ],
+                "mask": [
+                    "3-1.png"
+                ],
                 "wedge": "N",
                 "azimuth": 0,
-                "category": "single",
                 "roi": {
                     "point": [
                         560,
@@ -181,7 +396,7 @@
         "label": "fisheye - dead",
         "manufacturer": "Hanwha Techwin Co., Ltd.",
         "model": "XNP-9010RV",
-        "serial_number": "null",
+        "serial_number": "",
         "resolution": [
             3008,
             3008
@@ -189,14 +404,14 @@
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:4554/profile2/media.smp",
         "azimuth": 0,
         "view_angle": 187,
-        "placement": "null",
+        "placement": "",
         "targets": []
     },
     {
         "label": "indoor panorama",
         "manufacturer": "Hanwha Techwin Co., Ltd.",
         "model": "PNM-9022V",
-        "serial_number": "null",
+        "serial_number": "",
         "resolution": [
             4096,
             1792
@@ -204,7 +419,7 @@
         "uri": "rtsp://admin:sijung5520@d617.asuscomm.com:5554/profile2/media.smp",
         "azimuth": 0,
         "view_angle": 209,
-        "placement": "null",
+        "placement": "",
         "targets": []
     }
 ]
