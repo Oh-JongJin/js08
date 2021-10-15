@@ -94,7 +94,7 @@ class Js06MainCtrl(QObject):
         """Make list of SimpleTarget by decoposing compound targets.
 
         Parameters:
-            direction:
+            direction: 'front' or 'rear', default is 'front'
         """
         decomposed_targets = []
         attr = self._model.read_attr()
@@ -110,21 +110,12 @@ class Js06MainCtrl(QObject):
             size = tg['roi']['size']
             roi = QRect(*point, *size)
 
-            if tg['category'] == 'simple':
-                label = tg['label']
-                distance = tg['distance']
+            for i in range(len(tg['mask'])):
+                label = f"{tg['label']}_{i}"
+                distance = tg['distance'][i]
                 mask = None # read mask from disk
                 st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
                 decomposed_targets.append(st)
-                # continue
-            
-            elif tg['category'] == 'compound':
-                for i in range(len(tg['mask'])):
-                    label = f"{tg['label']}_{i}"
-                    distance = tg['distance'][i]
-                    mask = None # read mask from disk
-                    st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
-                    decomposed_targets.append(st)
 
         if direction == 'front':
             self.front_decomposed_targets = decomposed_targets
@@ -143,22 +134,23 @@ class Js06MainCtrl(QObject):
 
     @pyqtSlot()
     def start_broker(self) -> None:
+        print(
+            f'DEBUG(start_broker): self.broker: {self.broker}, '
+            f'front_frame: {self.front_video_frame}, rear_frame: {self.rear_video_frame} '
+            f'front: {len(self.front_decomposed_targets)}, rear: {len(self.rear_decomposed_targets)}'
+        )
         # If broker is already running, quit.
-        print(f'DEBUG(start_broker): {self.broker}')
         if self.broker:
             return
         
         # If both video frames are not ready, quit.
-        print(f'DEBUG(start_broker): {self.front_video_frame}, {self.rear_video_frame}')
         if self.front_video_frame == None or self.rear_video_frame == None:
             return
         
         # if decomposed targets are not ready, quit.
-        print(f'DEBUG(start_broker): {len(self.front_decomposed_targets)}, {len(self.rear_decomposed_targets)}')
         if len(self.front_decomposed_targets) == 0 or len(self.rear_decomposed_targets) == 0:
             return
 
-        print('DEBUG: before broker')
         self.broker = Js06InferenceBroker(self)
         self.broker_thread = QThread()
         self.broker.moveToThread(self.broker_thread)
@@ -248,6 +240,10 @@ class Js06MainCtrl(QObject):
         self.writer_pool.start(runner)
     
     def grap_image(self, direction: str = 'front') -> QImage:
+        """
+        Parameters:
+            direction: 'front' or 'rear', default is 'front'
+        """
         if direction == 'front':
             uri = self.get_front_camera_uri()
         elif direction == 'rear':
@@ -296,31 +292,50 @@ class Js06MainCtrl(QObject):
         Js06Settings.set('normal_shutdown', False)
         return normal_exit
 
-    def update_cameras(self, cameras: list) -> None:
+    def update_cameras(self, cameras: list, update_target: bool = False) -> None:
         # Remove deleted cameras
         cam_id_in_db = [cam["_id"] for cam in self._model.read_cameras()]
         cam_id_in_arg = [cam["_id"] for cam in cameras]
         for cam_id in cam_id_in_db:
             if cam_id not in cam_id_in_arg:
                 self._model.delete_camera(cam_id)
+    
+        # if `cameras` does not have 'targets' field, add an empty list for it.
+        for cam in cameras:
+            if 'targets' not in cam:
+                cam['targets'] = []
+
+        # Copy targets if `update_target` is False.
+        if update_target == False:
+            cam_in_db = self._model.read_cameras()
+            for c_db in cam_in_db:
+                for c_arg in cameras:
+                    if c_arg['_id'] == c_db['_id']:
+                        c_arg['targets'] = c_db['targets']
+                        continue
+        
+        # if '_id' is empty, delete the field
+        for cam in cameras:
+            if not cam['_id']:
+                del cam['_id']
 
         # Update existing camera or Insert new cameras
         for cam in cameras:
-            self._model.update_camera(cam, upsert=True)
+            self._model.upsert_camera(cam)
 
     @pyqtSlot()
     def close_process(self) -> None:
         Js06Settings.set('normal_shutdown', True)
 
     def get_attr(self) -> dict:
-        self._model.get_attr()
-        attr_doc = None
-        if self._attr.count_documents({}):
-            attr_doc = list(self._attr.find().sort("_id", -1).limit(1))[0]
+        attr_doc = self._model.read_attr()
+        # attr_doc = None
+        # if self._attr.count_documents({}):
+        #     attr_doc = list(self._attr.find().sort("_id", -1).limit(1))[0]
         return attr_doc
     
-    def set_attr(self, model: dict) -> None:
-        self._model.update_attr(model)
+    def insert_attr(self, model: dict) -> None:
+        self._model.insert_attr(model)
 
     @pyqtSlot()
     def restore_defaults(self) -> None:

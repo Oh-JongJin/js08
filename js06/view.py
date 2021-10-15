@@ -61,18 +61,12 @@ class Js06DiscernmentView(QChartView):
         chart.setAxisX(axis_x, self.negatives)
 
         axis_y = QValueAxis()
-        axis_y.setRange(0, 20.2)
+        axis_y.setRange(0, 20)
         axis_y.setLabelFormat('%d')
         axis_y.setTitleText('Distance (km)')
         axis_y.setTitleVisible(False)
         chart.setAxisY(axis_y, self.positives)
         chart.setAxisY(axis_y, self.negatives)
-
-        # DEBUG
-        pos_point = [QPointF(random.uniform(0, 360), random.uniform(0, 20)) for x in range(100)]
-        self.positives.append(pos_point)
-        neg_point = [QPointF(random.uniform(0, 360), random.uniform(0, 20)) for x in range(100)]
-        self.negatives.append(neg_point)
 
     def keyPressEvent(self, event):
         keymap = {
@@ -101,11 +95,7 @@ class Js06VisibilityView(QChartView):
         super().__init__(parent)
 
         now = QDateTime.currentSecsSinceEpoch()
-        # zeros = [(t * 1000, 0) for t in range(now - maxlen * 60, now, 60)]
-        zeros = [
-            (t * 1000, 10 + 10 * math.sin(t / 10000)) 
-            for t in range(now - maxlen * 60, now, 60)
-            ] # DEBUG
+        zeros = [(t * 1000, 0) for t in range(now - maxlen * 60, now, 60)]
         self.data = collections.deque(zeros, maxlen=maxlen)
         
         self.setRenderHint(QPainter.Antialiasing)
@@ -125,7 +115,7 @@ class Js06VisibilityView(QChartView):
         chart.setAxisX(axis_x, self.series)
 
         axis_y = QValueAxis()
-        axis_y.setRange(-0.2, 20.2)
+        axis_y.setRange(0, 20)
         axis_y.setLabelFormat('%d')
         axis_y.setTitleText('Distance (km)')
         chart.setAxisY(axis_y, self.series)
@@ -205,8 +195,10 @@ class Js06CameraView(QDialog):
     def accepted(self) -> None:
         # Update camera db
         cameras = self._model.get_data()
-        # self._ctrl.update_cameras(cameras)
+        # print(f'DEBUG: {cameras}')
+        self._ctrl.update_cameras(cameras, update_target=False)
 
+        # Insert a new attr document, with new front_cam and rear_cam.
         front_cam = {}
         rear_cam = {}
         for cam in cameras:
@@ -222,8 +214,10 @@ class Js06CameraView(QDialog):
         attr = self._ctrl.get_attr()
         attr['front_camera'] = front_cam
         attr['rear_camera'] = rear_cam
+        del attr['_id']
         self._ctrl.insert_attr(attr)
-
+        self._ctrl.front_camera_changed.emit(self._ctrl.get_front_camera_uri())
+        self._ctrl.rear_camera_changed.emit(self._ctrl.get_rear_camera_uri())
 
 class Js06TargetView(QDialog):
     def __init__(self, parent: QWidget) -> None:

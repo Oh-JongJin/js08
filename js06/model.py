@@ -132,27 +132,22 @@ class Js06CameraTableModel(QAbstractTableModel):
         for el in data:
             row = [el[col] for col in self._headers]
             self._data.append(row)
-    # end of __init__
 
     def data(self, index: QModelIndex, role: int):
         if role in (Qt.DisplayRole, Qt.EditRole):
             return str(self._data[index.row()][index.column()])
-    # end of data
 
     def rowCount(self, index: QModelIndex):
         return len(self._data)
-    # end of rowCount
 
     def columnCount(self, index: QModelIndex):
         return len(self._headers)
-    # end of columnCount
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             return self._headers[section]
         else:
             return super().headerData(section, orientation, role)
-    # end of headerData
 
     # TODO(Kyungwon): It may need to keep read-only indexes
     def flags(self, index: QModelIndex):
@@ -160,7 +155,6 @@ class Js06CameraTableModel(QAbstractTableModel):
             return super().flags(index)
         else:
             return super().flags(index) | Qt.ItemIsEditable
-    # end of flags
 
     def setData(self, index: QModelIndex, value: object, role: int):
         if index.isValid() and role == Qt.EditRole:
@@ -169,7 +163,6 @@ class Js06CameraTableModel(QAbstractTableModel):
             return True
         else:
             return False
-    # end of setData
 
     def insertRows(self, position: int, rows: int, parent: object):
         self.beginInsertRows(
@@ -181,7 +174,6 @@ class Js06CameraTableModel(QAbstractTableModel):
             default_row = [''] * len(self._headers)
             self._data.insert(position, default_row)
         self.endInsertRows()
-    # end of insertRows
 
     def removeRows(self, position: int, rows: int, parent: object):
         self.beginRemoveRows(
@@ -192,7 +184,6 @@ class Js06CameraTableModel(QAbstractTableModel):
         for i in range(rows):
             del (self._data[position])
         self.endRemoveRows()
-    # end of removeRows
 
     def get_data(self):
         data_dict = []
@@ -200,20 +191,16 @@ class Js06CameraTableModel(QAbstractTableModel):
             doc = {col: row[i] for i, col in enumerate(self._headers)}
             data_dict.append(doc)
         return data_dict
-    # end of save_data
 
-# end of Js06CameraTableModel
 
 class Js06AttrModel:
     def __init__(self):
         super().__init__()
         self.db = None
-    # end of __init__
 
     def connect_to_db(self, uri: str, port: int, db: str) -> None:
         client = pymongo.MongoClient(uri, port)
         self.db = client[db]
-    # end of connect_to_db
 
     def setup_db(self, attr_json: list, camera_json: list) -> None:
         """Create MongoDB collections for JS-06.
@@ -253,7 +240,6 @@ class Js06AttrModel:
                   'granularity': 'minutes'
                 }
             )
-    # end of setup_db
 
     def insert_camera(self, camera: dict) -> str:
         """Insert a camera.
@@ -266,7 +252,6 @@ class Js06AttrModel:
         """
         response = self.db.camera.insert_one(camera)
         return str(response.inserted_id)
-    # end of insert_camera
 
     def upsert_camera(self, camera: dict) -> str:
         """Update a camera with matched _id or insert one.
@@ -278,17 +263,21 @@ class Js06AttrModel:
             The _id of the inserted camera if an upsert took place.
             Otherwise None.
         """
-        response = self.db.camera.update_one(
-            {"_id": camera["_id"]},
-            {"$set": camera},
-            upsert=True
-        )
+        if '_id' in camera:
+            response = self.db.camera.update_one(
+                {'_id': camera['_id']},
+                {'$set': camera},
+                upsert=True
+            )
+        else:
+            response = self.db.camera.insert_one(camera)
 
-        if response.upserted_id:
+        if type(response) is pymongo.results.UpdateResult and response.upserted_id:
             return str(response.upserted_id)
+        elif type(response) is pymongo.results.InsertOneResult and response.inserted_id:
+            return str(response.inserted_id)
         else:
             return None
-    # end of update_camera
 
     def delete_camera(self, _id: str) -> int:
         """Delete a camera with matching _id.
@@ -303,7 +292,6 @@ class Js06AttrModel:
             {"_id": _id}
         )
         return response.deleted_count
-    # end of delete_camera
 
     def delete_all_cameras(self) -> int:
         """Delete all cameras in the database.
@@ -315,7 +303,6 @@ class Js06AttrModel:
         """
         response = self.db.camera.delete_many({})
         return response.deleted_count
-    # end of delete_all_cameras
 
     def read_cameras(self) -> list:
         """Get all cameras in the database.
@@ -327,7 +314,6 @@ class Js06AttrModel:
         """
         cr = self.db.camera.find()
         return [cam for cam in cr]
-    # end of read_cameras
 
     def read_attr(self) -> dict:
         """Get the latest attribute in the database.
@@ -339,7 +325,6 @@ class Js06AttrModel:
         """
         cr = self.db.attr.find().sort('_id', pymongo.DESCENDING).limit(1)
         return next(cr)
-    # end of read_attr
 
     def insert_attr(self, attr: dict) -> str:
         """Insert a new attribute.
@@ -354,7 +339,6 @@ class Js06AttrModel:
         """
         response = self.db.attr.insert_one(attr)
         return str(response.inserted_id)
-    # end of insert_attr
 
     def write_visibility(self, wedge_visibility: dict):
         attr = self.read_attr()
@@ -364,9 +348,7 @@ class Js06AttrModel:
         wedge_visibility['timestamp'] = datetime.datetime.fromtimestamp(epoch, kst)
         wedge_visibility['timestamp'] = datetime.datetime.fromtimestamp(epoch)
         self.db.visibility.insert_one(wedge_visibility)
-    # end of write_discerment_result
 
-# end of Js06Model
 
 class Js06Settings:
     settings = QSettings('sijung', 'js06')
@@ -390,14 +372,13 @@ class Js06Settings:
         'db_user': 'js06',
         'db_user_password': 'js06_pw',
         # Hidden settings
-        # 'window_size': [800, 600],
+        'window_size': [800, 600],
         'normal_shutdown': False
     }
 
     @classmethod
     def set(cls, key, value):
         cls.settings.setValue(key, value)
-    # end of set
 
     @classmethod
     def get(cls, key):
@@ -406,15 +387,12 @@ class Js06Settings:
             cls.defaults[key],
             type(cls.defaults[key])
         )
-    # end of get
 
     @classmethod
     def restore_defaults(cls):
         for key, value in cls.defaults.items():
             cls.set(key, value)
-    # end of restore_defaults
 
-# end of Js06Settings
 
 class Js06IoRunner(QRunnable):
     def __init__(self, path: str, image: QImage):
@@ -423,14 +401,11 @@ class Js06IoRunner(QRunnable):
 
         self.path = path
         self.image = image
-    # end of __init__
 
     def run(self):
         print(f'DEBUG: {self.path}')
         self.image.save(self.path)
-    # end of run
 
-# end of Js06IoRunner
 
 if __name__ == '__main__':
     import pprint
@@ -484,5 +459,3 @@ if __name__ == '__main__':
     js06_model.insert_attr(js06_attr)
     js06_attr_2 = js06_model.read_attr()
     pprint.pprint(js06_attr_2.to_dict())
-
-# end of model.py
