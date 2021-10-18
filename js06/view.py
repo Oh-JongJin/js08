@@ -258,11 +258,13 @@ class Js06TargetView(QDialog):
         self.get_target()
 
         self.image = self._ctrl.front_video_frame.image().mirrored(False, True)
-        self.image_label.setPixmap(QPixmap.fromImage(self.image))
-        self.image_label.setMaximumSize(self.width(), self.height())
-
         self.w = self.image.width()
         self.h = self.image.height()
+        self.image_label.setPixmap(QPixmap.fromImage(self.image).scaled(self.w, self.h, Qt.KeepAspectRatio))
+        self.image_label.setMaximumSize(self.width(), self.height())
+        # self.image_label.setMaximumHeight(self.height())
+
+        # self.groupBox.setMaximumHeight(self.height() / 2)
 
         self.blank_lbl = QLabel(self)
 
@@ -270,6 +272,7 @@ class Js06TargetView(QDialog):
         self.buttonBox.accepted.connect(self.save_btn)
         self.buttonBox.rejected.connect(self.rejected_btn)
         self.switch_btn.clicked.connect(self.switch_button)
+        self.azimuth_check.stateChanged.connect(self.check)
 
         # for i in range(len(self._ctrl.get_cameras())):
         #     self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
@@ -282,12 +285,13 @@ class Js06TargetView(QDialog):
         self.combo_changed()
         self.blank_lbl.raise_()
 
+    def check(self) -> None:
+        self.update()
+
     def switch_button(self):
         # image = self._ctrl.get_front_image()
         # image.convertToFormat(QImage.Format_Grayscale8)
-        print(self.image.size())
-        print(self.image_label.size())
-        print(self.blank_lbl.size())
+        self.update()
 
     def combo_changed(self) -> None:
         self.blank_lbl.paintEvent = self.blank_paintEvent
@@ -339,19 +343,24 @@ class Js06TargetView(QDialog):
     def blank_paintEvent(self, event):
         self.painter = QPainter(self.blank_lbl)
 
-        self.painter.setPen(QPen(Qt.black, 1, Qt.DotLine))
-        x1 = self.painter.drawLine(self.blank_lbl.width() * (1 / 4), 0,
-                                   self.blank_lbl.width() * (1 / 4), self.blank_lbl.height())
-        x2 = self.painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
-                                   self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
-        x3 = self.painter.drawLine(self.blank_lbl.width() * (3 / 4), 0,
-                                   self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
+        self.painter.setPen(QPen(Qt.white, 1, Qt.DotLine))
+        if self.azimuth_check.isChecked():
+            x1 = self.painter.drawLine(self.blank_lbl.width() * (1 / 4), 0,
+                                       self.blank_lbl.width() * (1 / 4), self.blank_lbl.height())
+            x2 = self.painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
+                                       self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
+            x3 = self.painter.drawLine(self.blank_lbl.width() * (3 / 4), 0,
+                                       self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
 
-        self.painter.setPen(QPen(Qt.black, 2))
+        self.painter.setPen(QPen(Qt.red, 2))
         for name, x, y in zip(self.target, self.point_x, self.point_y):
             self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
             self.painter.drawText(x - 4, y - 10, f"{name}")
-        self.blank_lbl.resize(self.image_label.size())
+
+        print("numberCombo - ", self.numberCombo.currentText())
+        # self.blank_lbl.resize(self.image_label.size())
+        self.blank_lbl.setGeometry(self.image_label.geometry())
+        print("Paint")
 
         self.painter.end()
 
@@ -380,8 +389,8 @@ class Js06TargetView(QDialog):
             self.coordinator()
 
             print("mousePressEvent - ", len(self.target))
-            self.save_target()
-            self.get_target()
+            # self.save_target()
+            # self.get_target()
 
         if event.buttons() == Qt.RightButton:
             deleteIndex = self.numberCombo.currentIndex() + 1
@@ -406,6 +415,14 @@ class Js06TargetView(QDialog):
 
     def save_target(self) -> None:
         # targets = self._model
+
+        print(self.result)
+        print()
+        print(self.target)
+        print(self.point_x)
+        print(self.point_y)
+        print(self.distance)
+        sys.exit()
 
         if self.target:
             for i in range(len(self.target)):
@@ -544,6 +561,9 @@ class Js06MainView(QMainWindow):
         ui_path = os.path.join(directory, 'resources', 'main_view.ui')
         uic.loadUi(ui_path, self)
         self._ctrl = controller
+
+        # self.setWindowFlags(Qt.FramelessWindowHint)
+        self.showFullScreen()
 
         # Connect signals and slots
         self.restore_defaults_requested.connect(self._ctrl.restore_defaults)
