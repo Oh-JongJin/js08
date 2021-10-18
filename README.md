@@ -36,6 +36,7 @@ We recommend using Anaconda Python distribution for the Windows environment.
 - Required Python packages that can be installed using `conda`:
   - pyqt >= 5.13
   - pymongo >= 3.12.0
+  - cv2 >= 4.4.0
 
 #### Ubuntu 18.04
 You can install most of the prerequisites using Ubuntu package manager, apt.
