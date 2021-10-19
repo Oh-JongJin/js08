@@ -197,6 +197,7 @@ class Js06MainCtrl(QObject):
         self.target_assorted.emit(pos, neg)
         wedge_vis = self.wedge_visibility()
         self.wedge_vis_ready.emit(epoch, wedge_vis)
+        self.write_visibilitiy(epoch, wedge_vis)
 
     @pyqtSlot()
     def stop_timer(self) -> None:
