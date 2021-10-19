@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>445</width>
-    <height>319</height>
+    <height>307</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -41,9 +41,6 @@
         <widget class="QLabel" name="label_2">
          <property name="styleSheet">
           <string notr="true">font: 9pt &quot;Noto Sans&quot;;</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::Box</enum>
          </property>
          <property name="text">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:12pt; font-weight:600;&quot;&gt;JS08 0.0.1&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;The successor of JS-06.The goal of JS-08 is improved surveillance, &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;sensor integration with integrated user experience compared to JS-06.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This code is for an IoT platform, i.e., NVIDIA Jetson, Raspberry Pi, etc.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Copyright 2020-2021 Sijung Co., Ltd.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
