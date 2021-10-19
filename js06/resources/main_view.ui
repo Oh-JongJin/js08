@@ -107,6 +107,12 @@
             <property name="text">
              <string>Front Video</string>
             </property>
+            <property name="margin">
+             <number>6</number>
+            </property>
+            <property name="indent">
+             <number>8</number>
+            </property>
            </widget>
           </item>
          </layout>
@@ -129,6 +135,12 @@
             </property>
             <property name="text">
              <string>Rear Video</string>
+            </property>
+            <property name="margin">
+             <number>6</number>
+            </property>
+            <property name="indent">
+             <number>8</number>
             </property>
            </widget>
           </item>
@@ -157,6 +169,12 @@
             <property name="text">
              <string>Prevailing Visibility</string>
             </property>
+            <property name="margin">
+             <number>6</number>
+            </property>
+            <property name="indent">
+             <number>8</number>
+            </property>
            </widget>
           </item>
          </layout>
@@ -179,6 +197,12 @@
             </property>
             <property name="text">
              <string>Discernment Status</string>
+            </property>
+            <property name="margin">
+             <number>6</number>
+            </property>
+            <property name="indent">
+             <number>8</number>
             </property>
            </widget>
           </item>
