@@ -27,7 +27,6 @@
   </property>
   <property name="font">
    <font>
-    <family>Noto Sans</family>
     <pointsize>9</pointsize>
     <weight>50</weight>
     <italic>false</italic>
@@ -41,7 +40,7 @@
    <string>JS-08</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">font: 9pt &quot;Noto Sans&quot;;</string>
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="maximumSize">
@@ -94,7 +93,6 @@
            <widget class="QLabel" name="front_video_label">
             <property name="font">
              <font>
-              <family>Noto Sans</family>
               <pointsize>11</pointsize>
               <weight>50</weight>
               <italic>false</italic>
@@ -102,7 +100,7 @@
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>Front Video</string>
@@ -123,7 +121,6 @@
            <widget class="QLabel" name="rear_video_label">
             <property name="font">
              <font>
-              <family>Noto Sans</family>
               <pointsize>11</pointsize>
               <weight>50</weight>
               <italic>false</italic>
@@ -131,7 +128,7 @@
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>Rear Video</string>
@@ -156,7 +153,6 @@
            <widget class="QLabel" name="visibility_label">
             <property name="font">
              <font>
-              <family>Noto Sans</family>
               <pointsize>11</pointsize>
               <weight>50</weight>
               <italic>false</italic>
@@ -164,7 +160,7 @@
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>Prevailing Visibility</string>
@@ -185,7 +181,6 @@
            <widget class="QLabel" name="discernment_label">
             <property name="font">
              <font>
-              <family>Noto Sans</family>
               <pointsize>11</pointsize>
               <weight>50</weight>
               <italic>false</italic>
@@ -193,7 +188,7 @@
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
+             <string notr="true"/>
             </property>
             <property name="text">
              <string>Discernment Status</string>
@@ -223,8 +218,16 @@
      <x>0</x>
      <y>0</y>
      <width>783</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+     <weight>50</weight>
+     <italic>false</italic>
+     <bold>false</bold>
+    </font>
    </property>
    <property name="autoFillBackground">
     <bool>false</bool>
