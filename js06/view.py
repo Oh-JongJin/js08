@@ -572,46 +572,35 @@ class Js06MainView(QMainWindow):
             self.ask_restore_default()
 
         # self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
+        # self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
 
         self.actionEdit_Camera.triggered.connect(self.edit_camera)
         self.actionEdit_Target.triggered.connect(self.edit_target)
         self.actionAbout.triggered.connect(self.about_view)
 
         # Front video
-        self.front_video_dock.setTitleBarWidget(QWidget(self))
         self.front_video_widget = Js06VideoWidget(self)
-        # self.front_video_widget.moveToThread(self._ctrl.video_thread)
-        self.front_video_dock.setWidget(self.front_video_widget)
+        self.front_vertical.addWidget(self.front_video_widget)
         self.front_video_widget.video_frame_prepared.connect(self._ctrl.update_front_video_frame)
         self._ctrl.front_camera_changed.connect(self.front_video_widget.on_camera_change)
         self._ctrl.front_camera_changed.emit(self._ctrl.get_front_camera_uri())
-        # self._ctrl.video_thread.start()
 
         # Rear video
-        self.rear_video_dock.setTitleBarWidget(QWidget(self))
         self.rear_video_widget = Js06VideoWidget(self)
-        # self.rear_video_widget.moveToThread(self._ctrl.video_thread)
-        self.rear_video_dock.setWidget(self.rear_video_widget)
+        self.rear_vertical.addWidget(self.rear_video_widget)
         self.rear_video_widget.video_frame_prepared.connect(self._ctrl.update_rear_video_frame)
         self._ctrl.rear_camera_changed.connect(self.rear_video_widget.on_camera_change)
         self._ctrl.rear_camera_changed.emit(self._ctrl.get_rear_camera_uri())
-        # self._ctrl.video_thread.start()
 
         # Discernment status
-        self.discernment_dock.setTitleBarWidget(QWidget(self))
         self.discernment_widget = Js06DiscernmentView(self)
-        # self.discernment_widget.moveToThread(self._ctrl.plot_thread)
-        self.discernment_dock.setWidget(self.discernment_widget)
+        self.discernment_vertical.addWidget(self.discernment_widget)
         self._ctrl.target_assorted.connect(self.discernment_widget.refresh_stats)
 
         # Prevailing visibility
-        self.visibility_dock.setTitleBarWidget(QWidget(self))
         self.visibility_widget = Js06VisibilityView(self, 1440)
-        # self.visibility_widget.moveToThread(self._ctrl.plot_thread)
-        self.visibility_dock.setWidget(self.visibility_widget)
+        self.visibility_vertical.addWidget(self.visibility_widget)
         self._ctrl.wedge_vis_ready.connect(self.visibility_widget.refresh_stats)
-        # self._ctrl.plot_thread.start()
 
         self.show()
 
