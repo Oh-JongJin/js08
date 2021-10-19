@@ -34,41 +34,87 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QLabel" name="image_label">
-         <property name="text">
-          <string/>
-         </property>
-         <property name="scaledContents">
-          <bool>true</bool>
-         </property>
-        </widget>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QLabel" name="image_label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="switch_btn">
+           <property name="text">
+            <string>Switch Camera</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="minimumSize">
           <size>
            <width>300</width>
            <height>0</height>
           </size>
          </property>
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
          <property name="title">
           <string>Target Infomation</string>
          </property>
          <layout class="QGridLayout" name="gridLayout">
+<<<<<<< HEAD
           <item row="10" column="0">
            <widget class="QLabel" name="categoryLabel">
             <property name="text">
              <string>Category: </string>
+=======
+          <item row="4" column="0">
+           <widget class="QLabel" name="labelLabel">
+            <property name="text">
+             <string>Label: </string>
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
+<<<<<<< HEAD
           <item row="8" column="0">
            <widget class="QLabel" name="ordinalLabel">
             <property name="text">
              <string>Ordinal: </string>
+=======
+          <item row="6" column="0">
+           <widget class="QLabel" name="distanceLabel">
+            <property name="text">
+             <string>Distance (km): </string>
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -76,6 +122,7 @@
            </widget>
           </item>
           <item row="8" column="2">
+<<<<<<< HEAD
            <widget class="QComboBox" name="ordinalCombo">
             <property name="placeholderText">
              <string/>
@@ -133,6 +180,11 @@
            <widget class="QComboBox" name="numberCombo"/>
           </item>
           <item row="12" column="0">
+=======
+           <widget class="QLineEdit" name="azimuthEdit"/>
+          </item>
+          <item row="10" column="0">
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
            <widget class="QLabel" name="pointLabel">
             <property name="text">
              <string>Point: </string>
@@ -142,6 +194,7 @@
             </property>
            </widget>
           </item>
+<<<<<<< HEAD
           <item row="15" column="2">
            <widget class="Line" name="line_5">
             <property name="orientation">
@@ -182,31 +235,50 @@
           </item>
           <item row="1" column="2">
            <widget class="Line" name="line_8">
+=======
+          <item row="5" column="2">
+           <widget class="Line" name="line_3">
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
+<<<<<<< HEAD
           <item row="11" column="2">
            <widget class="Line" name="line_4">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
+=======
+          <item row="6" column="2">
+           <widget class="QLineEdit" name="distanceEdit">
+            <property name="inputMask">
+             <string/>
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
             </property>
            </widget>
           </item>
           <item row="4" column="2">
            <widget class="QLineEdit" name="labelEdit"/>
           </item>
+<<<<<<< HEAD
           <item row="4" column="0">
            <widget class="QLabel" name="labelLabel">
             <property name="text">
              <string>Label: </string>
+=======
+          <item row="2" column="0">
+           <widget class="QLabel" name="numberLabel">
+            <property name="text">
+             <string>Number: </string>
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
+<<<<<<< HEAD
           <item row="9" column="2">
            <widget class="Line" name="line_6">
             <property name="orientation">
@@ -223,11 +295,16 @@
           </item>
           <item row="13" column="2">
            <widget class="Line" name="line_7">
+=======
+          <item row="3" column="2">
+           <widget class="Line" name="line_2">
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
+<<<<<<< HEAD
           <item row="6" column="0">
            <widget class="QLabel" name="distanceLabel">
             <property name="text">
@@ -239,6 +316,9 @@
            </widget>
           </item>
           <item row="12" column="2">
+=======
+          <item row="10" column="2">
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QLineEdit" name="point_x_Edit"/>
@@ -255,6 +335,7 @@
             </item>
            </layout>
           </item>
+<<<<<<< HEAD
           <item row="5" column="2">
            <widget class="Line" name="line_2">
             <property name="orientation">
@@ -266,19 +347,34 @@
            <widget class="QLabel" name="numberLabel">
             <property name="text">
              <string>Number: </string>
+=======
+          <item row="8" column="0">
+           <widget class="QLabel" name="azimuthLabel">
+            <property name="text">
+             <string>Azimuth:</string>
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
+<<<<<<< HEAD
           <item row="7" column="2">
            <widget class="Line" name="line_3">
+=======
+          <item row="2" column="2">
+           <widget class="QComboBox" name="numberCombo"/>
+          </item>
+          <item row="1" column="2">
+           <widget class="Line" name="line_1">
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
            </widget>
           </item>
+<<<<<<< HEAD
           <item row="14" column="0">
            <widget class="QLabel" name="sizeLabel">
             <property name="text">
@@ -286,6 +382,26 @@
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
+=======
+          <item row="9" column="2">
+           <widget class="Line" name="line_5">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="2">
+           <widget class="QPushButton" name="delete_btn">
+            <property name="text">
+             <string>Delete Target</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="2">
+           <widget class="Line" name="line_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+>>>>>>> parent of 14f8daa (Add azimuth line on/off button in Target view)
             </property>
            </widget>
           </item>
