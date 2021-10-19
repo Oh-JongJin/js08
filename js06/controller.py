@@ -41,8 +41,6 @@ class Js06MainCtrl(QObject):
 
         self._model = model
 
-        self.front_video_frame = None
-        self.rear_video_frame = None
         self.num_working_cam = 0
 
         self.front_decomposed_targets = []
@@ -136,10 +134,6 @@ class Js06MainCtrl(QObject):
         Parameters:
             path: path to mask file
         """
-        # img = cv2.imread(path)
-        # arr = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        # mask = arr // 255
-        # return mask
         with open(path, 'rb') as f:
             content = f.read()
         image = QImage()
@@ -156,17 +150,8 @@ class Js06MainCtrl(QObject):
 
     @pyqtSlot()
     def start_broker(self) -> None:
-        print(
-            f'DEBUG(start_broker): self.broker: {self.broker}, '
-            f'front_frame: {self.front_video_frame}, rear_frame: {self.rear_video_frame} '
-            f'front: {len(self.front_decomposed_targets)}, rear: {len(self.rear_decomposed_targets)}'
-        )
         # If broker is already running, quit.
         if self.broker:
-            return
-        
-        # If both video frames are not ready, quit.
-        if self.front_video_frame == None or self.rear_video_frame == None:
             return
         
         # if decomposed targets are not ready, quit.

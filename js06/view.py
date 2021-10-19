@@ -14,20 +14,16 @@ from PyQt5 import uic
 from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
                            QLineSeries, QPolarChart, QScatterSeries,
                            QValueAxis)
-from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, QTimer, QUrl,
-                          pyqtSignal, pyqtSlot)
-from PyQt5.QtGui import (QCloseEvent, QColor, QPainter, QPaintEvent, QPen,
-                         QPixmap, QResizeEvent)
-from PyQt5.QtMultimedia import (QMediaContent, QMediaPlayer, QVideoFrame,
-                                QVideoProbe)
-from PyQt5.QtMultimediaWidgets import QGraphicsVideoItem
-from PyQt5.QtWidgets import (QDialog, QGraphicsRectItem, QGraphicsScene,
-                             QGraphicsView, QLabel, QMainWindow, QMessageBox,
+from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, QUrl, pyqtSignal,
+                          pyqtSlot)
+from PyQt5.QtGui import QCloseEvent, QColor, QPainter, QPen, QPixmap
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+from PyQt5.QtMultimediaWidgets import QVideoWidget
+from PyQt5.QtWidgets import (QDialog, QLabel, QMainWindow, QMessageBox,
                              QVBoxLayout, QWidget)
 
-from .model import Js06Settings
-
 from .controller import Js06MainCtrl
+from .model import Js06Settings
 
 
 class Js06DiscernmentView(QChartView):
@@ -82,7 +78,6 @@ class Js06DiscernmentView(QChartView):
 
     @pyqtSlot(list, list)
     def refresh_stats(self, positives: list, negatives: list):
-        print('DEBUG(Js06DiscernmentView.refresh_stats)')
         pos_point = [QPointF(a, d) for a, d in positives]
         self.positives.replace(pos_point)
         neg_point = [QPointF(a, d) for a, d in negatives]
@@ -452,83 +447,24 @@ class Js06AboutView(QDialog):
 
 
 class Js06VideoWidget(QWidget):
-    """Video stream player using QGraphicsVideoItem
+    """Video stream player using QVideoWidget
     """
-    video_frame_prepared = pyqtSignal(QVideoFrame)
-
-    def __init__(self, parent: QObject) -> None:
+    def __init__(self, parent: QObject = None) -> None:
         super().__init__(parent)
-
-        self.scene = QGraphicsScene(self)
-        self.graphicView = QGraphicsView(self.scene)
-        self.graphicView.setStyleSheet('background: #000000')
-        self.graphicView.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.graphicView.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self._video_item = QGraphicsVideoItem()
-        self.scene.addItem(self._video_item)
-
+        
+        self.viewer = QVideoWidget()
         self.player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
-        self.player.setVideoOutput(self._video_item)
-        self.player.setPosition(0)
-
+        self.player.setVideoOutput(self.viewer)
         layout = QVBoxLayout(self)
-        layout.addWidget(self.graphicView)
-
-        self.probe = QVideoProbe(self)
-        self.probe.videoFrameProbed.connect(self.on_videoFrameProbed)
-        self.probe.setSource(self.player)
-
-        self.uri = None
-        self.frame_received = False
-        self.recover_timer = QTimer(self)
-        recover_interval = Js06Settings.get('media_recover_interval')
-        self.recover_timer.setInterval(recover_interval * 1000)
-        self.recover_timer.timeout.connect(self.recover_media)
-        self.recover_timer.start()
-
-    def recover_media(self):
-        """Try to reconnect if we can not receive video stream
-        """
-        if self.uri is None:
-            return
-
-        if self.frame_received:
-            return
-
-        print(f'DEBUG: Try to recover video stream from {self.uri}')
-        self.on_camera_change(self.uri)
-        self.frame_recevied = False
-
-    def fit_in_view(self):
-        self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
-
-    def resizeEvent(self, a0: QResizeEvent):
-        self.fit_in_view()
-        return super().resizeEvent(a0)
-
-    @pyqtSlot(QVideoFrame)
-    def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
-        self.frame_received = True
-        self.video_frame_prepared.emit(frame)
+        layout.addWidget(self.viewer)
+        # self.viewer.setGeometry(0, 0, 300, 300)
+        # self.viewer.setMinimumSize(600, 250)
 
     @pyqtSlot(str)
     def on_camera_change(self, uri: str) -> None:
         self.uri = uri
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
-
-        # Wait till the video stream arrives before fitting the video
-        for i in range(500, 5000, 500):
-            QTimer.singleShot(i, self.fit_in_view)
-
-    def draw_roi(self, point: tuple, size: tuple) -> None:
-        """Draw a boundary rectangle of ROI
-        Parameters:
-          point: the upper left point of ROI in canonical coordinates
-          size: the width and height of ROI in canonical coordinates
-        """
-        rectangle = QGraphicsRectItem(*point, *size, self._video_item)
-        rectangle.setPen(QPen(Qt.blue))
 
 
 class Js06MainView(QMainWindow):
@@ -555,24 +491,19 @@ class Js06MainView(QMainWindow):
         if not normal_exit:
             self.ask_restore_default()
 
-        # self.setWindowFlags(Qt.FramelessWindowHint)
-        # self.setCorner(Qt.TopLeftCorner, Qt.LeftDockWidgetArea)
-
         self.actionEdit_Camera.triggered.connect(self.edit_camera)
         self.actionEdit_Target.triggered.connect(self.edit_target)
         self.actionAbout.triggered.connect(self.about_view)
 
         # Front video
         self.front_video_widget = Js06VideoWidget(self)
-        self.front_vertical.addWidget(self.front_video_widget)
-        self.front_video_widget.video_frame_prepared.connect(self._ctrl.update_front_video_frame)
+        self.front_vertical.addWidget(self.front_video_widget, 1)
         self._ctrl.front_camera_changed.connect(self.front_video_widget.on_camera_change)
         self._ctrl.front_camera_changed.emit(self._ctrl.get_front_camera_uri())
 
         # Rear video
         self.rear_video_widget = Js06VideoWidget(self)
-        self.rear_vertical.addWidget(self.rear_video_widget)
-        self.rear_video_widget.video_frame_prepared.connect(self._ctrl.update_rear_video_frame)
+        self.rear_vertical.addWidget(self.rear_video_widget, 1)
         self._ctrl.rear_camera_changed.connect(self.rear_video_widget.on_camera_change)
         self._ctrl.rear_camera_changed.emit(self._ctrl.get_rear_camera_uri())
 
@@ -606,7 +537,7 @@ class Js06MainView(QMainWindow):
         # Check the last shutdown status
         response = QMessageBox.question(
             self,
-            'JS-06 Restore to defaults',
+            'Restore to defaults',
             'The JS-06 exited abnormally. '
             'Do you want to restore the factory default?',
         )
