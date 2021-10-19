@@ -27,7 +27,6 @@
   </property>
   <property name="font">
    <font>
-    <family>Noto Sans</family>
     <pointsize>9</pointsize>
     <weight>50</weight>
     <italic>false</italic>
@@ -41,7 +40,7 @@
    <string>JS-08</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">font: 9pt &quot;Noto Sans&quot;;</string>
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="maximumSize">
@@ -87,118 +86,122 @@
        <number>10</number>
       </property>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout">
+       <layout class="QVBoxLayout" name="camera_layout">
         <item>
-         <widget class="QLabel" name="label">
-          <property name="font">
-           <font>
-            <family>Noto Sans</family>
-            <pointsize>11</pointsize>
-            <weight>50</weight>
-            <italic>false</italic>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
-          </property>
-          <property name="text">
-           <string>Front Video</string>
-          </property>
-         </widget>
+         <layout class="QVBoxLayout" name="front_vertical">
+          <item>
+           <widget class="QLabel" name="front_video_label">
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+              <weight>50</weight>
+              <italic>false</italic>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string>Front Video</string>
+            </property>
+            <property name="margin">
+             <number>6</number>
+            </property>
+            <property name="indent">
+             <number>8</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
-         <widget class="QDockWidget" name="front_video_dock">
-          <property name="windowTitle">
-           <string>Front Video</string>
-          </property>
-          <widget class="QWidget" name="dockWidgetContents_3"/>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_2">
-          <property name="font">
-           <font>
-            <family>Noto Sans</family>
-            <pointsize>11</pointsize>
-            <weight>50</weight>
-            <italic>false</italic>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
-          </property>
-          <property name="text">
-           <string>Rear Video</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QDockWidget" name="rear_video_dock">
-          <property name="windowTitle">
-           <string>Rear Video</string>
-          </property>
-          <widget class="QWidget" name="dockWidgetContents_2"/>
-         </widget>
+         <layout class="QVBoxLayout" name="rear_vertical">
+          <item>
+           <widget class="QLabel" name="rear_video_label">
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+              <weight>50</weight>
+              <italic>false</italic>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string>Rear Video</string>
+            </property>
+            <property name="margin">
+             <number>6</number>
+            </property>
+            <property name="indent">
+             <number>8</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
+       <layout class="QVBoxLayout" name="graph_layout">
         <item>
-         <widget class="QLabel" name="label_3">
-          <property name="font">
-           <font>
-            <family>Noto Sans</family>
-            <pointsize>11</pointsize>
-            <weight>50</weight>
-            <italic>false</italic>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
-          </property>
-          <property name="text">
-           <string>Prevailing Visibility</string>
-          </property>
-         </widget>
+         <layout class="QVBoxLayout" name="visibility_vertical">
+          <item>
+           <widget class="QLabel" name="visibility_label">
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+              <weight>50</weight>
+              <italic>false</italic>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string>Prevailing Visibility</string>
+            </property>
+            <property name="margin">
+             <number>6</number>
+            </property>
+            <property name="indent">
+             <number>8</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
-         <widget class="QDockWidget" name="visibility_dock">
-          <property name="windowTitle">
-           <string>Prevailing Visibility</string>
-          </property>
-          <widget class="QWidget" name="dockWidgetContents"/>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_4">
-          <property name="font">
-           <font>
-            <family>Noto Sans</family>
-            <pointsize>11</pointsize>
-            <weight>50</weight>
-            <italic>false</italic>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
-          </property>
-          <property name="text">
-           <string>Discernment Status</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QDockWidget" name="discernment_dock">
-          <property name="windowTitle">
-           <string>Discernment Status</string>
-          </property>
-          <widget class="QWidget" name="dockWidgetContents_4"/>
-         </widget>
+         <layout class="QVBoxLayout" name="discernment_vertical">
+          <item>
+           <widget class="QLabel" name="discernment_label">
+            <property name="font">
+             <font>
+              <pointsize>11</pointsize>
+              <weight>50</weight>
+              <italic>false</italic>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="styleSheet">
+             <string notr="true"/>
+            </property>
+            <property name="text">
+             <string>Discernment Status</string>
+            </property>
+            <property name="margin">
+             <number>6</number>
+            </property>
+            <property name="indent">
+             <number>8</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </item>
@@ -215,8 +218,16 @@
      <x>0</x>
      <y>0</y>
      <width>783</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>9</pointsize>
+     <weight>50</weight>
+     <italic>false</italic>
+     <bold>false</bold>
+    </font>
    </property>
    <property name="autoFillBackground">
     <bool>false</bool>
