@@ -27,17 +27,21 @@
   </property>
   <property name="font">
    <font>
-    <family>Bahnschrift Light</family>
+    <family>Noto Sans</family>
+    <pointsize>9</pointsize>
+    <weight>50</weight>
+    <italic>false</italic>
+    <bold>false</bold>
    </font>
   </property>
   <property name="mouseTracking">
    <bool>false</bool>
   </property>
   <property name="windowTitle">
-   <string>JS-06</string>
+   <string>JS-08</string>
   </property>
   <property name="styleSheet">
-   <string notr="true"/>
+   <string notr="true">font: 9pt &quot;Noto Sans&quot;;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="maximumSize">
@@ -50,8 +54,7 @@
     <bool>false</bool>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(39, 44, 86);
-color: rgb(255, 255, 255);</string>
+    <string notr="true"/>
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <property name="leftMargin">
@@ -86,11 +89,49 @@ color: rgb(255, 255, 255);</string>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
+         <widget class="QLabel" name="label">
+          <property name="font">
+           <font>
+            <family>Noto Sans</family>
+            <pointsize>11</pointsize>
+            <weight>50</weight>
+            <italic>false</italic>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
+          </property>
+          <property name="text">
+           <string>Front Video</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QDockWidget" name="front_video_dock">
           <property name="windowTitle">
            <string>Front Video</string>
           </property>
           <widget class="QWidget" name="dockWidgetContents_3"/>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="font">
+           <font>
+            <family>Noto Sans</family>
+            <pointsize>11</pointsize>
+            <weight>50</weight>
+            <italic>false</italic>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
+          </property>
+          <property name="text">
+           <string>Rear Video</string>
+          </property>
          </widget>
         </item>
         <item>
@@ -106,11 +147,49 @@ color: rgb(255, 255, 255);</string>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
+         <widget class="QLabel" name="label_3">
+          <property name="font">
+           <font>
+            <family>Noto Sans</family>
+            <pointsize>11</pointsize>
+            <weight>50</weight>
+            <italic>false</italic>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
+          </property>
+          <property name="text">
+           <string>Prevailing Visibility</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QDockWidget" name="visibility_dock">
           <property name="windowTitle">
            <string>Prevailing Visibility</string>
           </property>
           <widget class="QWidget" name="dockWidgetContents"/>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_4">
+          <property name="font">
+           <font>
+            <family>Noto Sans</family>
+            <pointsize>11</pointsize>
+            <weight>50</weight>
+            <italic>false</italic>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">font: 11pt &quot;Noto Sans&quot;;</string>
+          </property>
+          <property name="text">
+           <string>Discernment Status</string>
+          </property>
          </widget>
         </item>
         <item>
@@ -136,15 +215,14 @@ color: rgb(255, 255, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>783</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="autoFillBackground">
     <bool>false</bool>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(48, 55, 100);
-color: rgb(255, 255, 255);</string>
+    <string notr="true"/>
    </property>
    <property name="nativeMenuBar">
     <bool>false</bool>

@@ -49,7 +49,7 @@ class Js06DiscernmentView(QChartView):
         self.negatives.setMarkerSize(10)
         chart.addSeries(self.positives)
         chart.addSeries(self.negatives)
-        
+
         axis_x = QValueAxis()
         axis_x.setRange(0, 360)
         axis_x.setLabelFormat('%d')
@@ -78,6 +78,7 @@ class Js06DiscernmentView(QChartView):
         callback = keymap.get(event.key())
         if callback:
             callback()
+    # end of keyPressEvent
 
     @pyqtSlot(list, list)
     def refresh_stats(self, positives: list, negatives: list):
@@ -86,6 +87,9 @@ class Js06DiscernmentView(QChartView):
         self.positives.replace(pos_point)
         neg_point = [QPointF(a, d) for a, d in negatives]
         self.negatives.replace(neg_point)
+    # end of refresh_stats
+
+# end of Js06DiscernmentView
 
 
 class Js06VisibilityView(QChartView):
@@ -95,7 +99,7 @@ class Js06VisibilityView(QChartView):
         now = QDateTime.currentSecsSinceEpoch()
         zeros = [(t * 1000, -1) for t in range(now - maxlen * 60, now, 60)]
         self.data = collections.deque(zeros, maxlen=maxlen)
-        
+
         self.setRenderHint(QPainter.Antialiasing)
 
         chart = QChart(title=title)
@@ -120,6 +124,7 @@ class Js06VisibilityView(QChartView):
 
         data_point = [QPointF(t, v) for t, v in self.data]
         self.series.append(data_point)
+    # end of __init__
 
     def keyPressEvent(self, event):
         keymap = {
@@ -133,26 +138,31 @@ class Js06VisibilityView(QChartView):
         callback = keymap.get(event.key())
         if callback:
             callback()
+    # end of keyPressEvent
 
     @pyqtSlot(int, dict)
     def refresh_stats(self, epoch: int, wedge_vis: dict):
         wedge_vis_list = list(wedge_vis.values())
         prev_vis = self.prevailing_visibility(wedge_vis_list)
         self.data.append((epoch * 1000, prev_vis))
-        
+
         left = QDateTime.fromMSecsSinceEpoch(self.data[0][0])
         right = QDateTime.fromMSecsSinceEpoch(self.data[-1][0])
         self.chart().axisX().setRange(left, right)
-        
+
         data_point = [QPointF(t, v) for t, v in self.data]
         self.series.replace(data_point)
-        
+    # end of refresh_stats
+
     def prevailing_visibility(self, wedge_vis: list) -> float:
         if None in wedge_vis:
             return 0
         sorted_vis = sorted(wedge_vis, reverse=True)
         prevailing = sorted_vis[(len(sorted_vis) - 1) // 2]
         return prevailing
+    # end of prevailing_visibility
+
+# end of Js06VisibilityView
 
 
 class Js06CameraView(QDialog):
@@ -229,7 +239,7 @@ class Js06TargetView(QDialog):
         ui_path = os.path.join(directory, 'resources', 'target_view.ui')
         uic.loadUi(ui_path, self)
         self._ctrl = parent._ctrl
-        self._model = self._ctrl.get_target()
+        self._model = self._ctrl.get_front_target()
         self.cam_name = []
 
         self.target = []
@@ -248,11 +258,13 @@ class Js06TargetView(QDialog):
         self.get_target()
 
         self.image = self._ctrl.front_video_frame.image().mirrored(False, True)
-        self.image_label.setPixmap(QPixmap.fromImage(self.image))
-        self.image_label.setMaximumSize(self.width(), self.height())
-
         self.w = self.image.width()
         self.h = self.image.height()
+        self.image_label.setPixmap(QPixmap.fromImage(self.image).scaled(self.w, self.h, Qt.KeepAspectRatio))
+        self.image_label.setMaximumSize(self.width(), self.height())
+        # self.image_label.setMaximumHeight(self.height())
+
+        # self.groupBox.setMaximumHeight(self.height() / 2)
 
         self.blank_lbl = QLabel(self)
 
@@ -260,6 +272,7 @@ class Js06TargetView(QDialog):
         self.buttonBox.accepted.connect(self.save_btn)
         self.buttonBox.rejected.connect(self.rejected_btn)
         self.switch_btn.clicked.connect(self.switch_button)
+        self.azimuth_check.stateChanged.connect(self.check)
 
         # for i in range(len(self._ctrl.get_cameras())):
         #     self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
@@ -272,17 +285,16 @@ class Js06TargetView(QDialog):
         self.combo_changed()
         self.blank_lbl.raise_()
 
+    def check(self) -> None:
+        self.update()
+
     def switch_button(self):
         # image = self._ctrl.get_front_image()
         # image.convertToFormat(QImage.Format_Grayscale8)
-        print(self.image.size())
-        print(self.image_label.size())
-        print(self.blank_lbl.size())
+        self.update()
 
     def combo_changed(self) -> None:
         self.blank_lbl.paintEvent = self.blank_paintEvent
-        ordinalItems = [self.ordinalCombo.itemText(i) for i in range(self.ordinalCombo.count())]
-        categoryItems = [self.categoryCombo.itemText(i) for i in range(self.categoryCombo.count())]
 
         for i in range(len(self.target)):
             if self.numberCombo.currentText() == str(i + 1):
@@ -290,23 +302,13 @@ class Js06TargetView(QDialog):
                 self.distanceEdit.setText(str(self.distance[i]))
                 self.point_x_Edit.setText(str(self.point_x[i]))
                 self.point_y_Edit.setText(str(self.point_y[i]))
-                self.size_x_Edit.setText(str(self.size_x[i]))
-                self.size_y_Edit.setText(str(self.size_y[i]))
-
-                if self.ordinal[i] in ordinalItems:
-                    self.ordinalCombo.setCurrentIndex(ordinalItems.index(self.ordinal[i]))
-                if self.category[i] in categoryItems:
-                    self.categoryCombo.setCurrentIndex(categoryItems.index(self.category[i]))
                 break
             else:
-                self.labelEdit.setText('')
-                self.distanceEdit.setText('')
-                self.point_x_Edit.setText('')
-                self.point_y_Edit.setText('')
-                self.size_x_Edit.setText('')
-                self.size_y_Edit.setText('')
-                self.ordinalCombo.setCurrentIndex(-1)
-                self.categoryCombo.setCurrentIndex(-1)
+                self.labelEdit.setText("")
+                self.distanceEdit.setText("")
+                self.point_x_Edit.setText("")
+                self.point_y_Edit.setText("")
+    # end of combo_changed
 
     @pyqtSlot()
     def save_btn(self) -> None:
@@ -320,14 +322,11 @@ class Js06TargetView(QDialog):
             self.numberCombo.setCurrentIndex(i)
             result.append({'label': f'{self.labelEdit.text()}',
                            'distance': f'{float(self.distanceEdit.text())}',
-                           'ordinal': f'{self.ordinalCombo.currentText()}',
-                           'category': f'{self.categoryCombo.currentText()}',
                            'roi': {
-                               'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())],
-                               'size': [int(self.size_x_Edit.text()), int(self.size_y_Edit.text())]
+                               'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
                            }})
 
-        # TODO(Kyungwon): update camera db only, the current camera selection is 
+        # TODO(Kyungwon): update camera db only, the current camera selection is
         # performed at camera view
         # Save Target through controller
         self._ctrl.set_attr(result)
@@ -341,30 +340,35 @@ class Js06TargetView(QDialog):
     def rejected_btn(self) -> None:
         self.close()
 
-    def blank_paintEvent(self, event: QPaintEvent) -> None:
+    def blank_paintEvent(self, event):
         self.painter = QPainter(self.blank_lbl)
 
-        self.painter.setPen(QPen(Qt.black, 1, Qt.DotLine))
-        x1 = self.painter.drawLine(self.blank_lbl.width() * (1 / 4), 0,
-                                   self.blank_lbl.width() * (1 / 4), self.blank_lbl.height())
-        x2 = self.painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
-                                   self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
-        x3 = self.painter.drawLine(self.blank_lbl.width() * (3 / 4), 0,
-                                   self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
+        self.painter.setPen(QPen(Qt.white, 1, Qt.DotLine))
+        if self.azimuth_check.isChecked():
+            x1 = self.painter.drawLine(self.blank_lbl.width() * (1 / 4), 0,
+                                       self.blank_lbl.width() * (1 / 4), self.blank_lbl.height())
+            x2 = self.painter.drawLine(self.blank_lbl.width() * (1 / 2), 0,
+                                       self.blank_lbl.width() * (1 / 2), self.blank_lbl.height())
+            x3 = self.painter.drawLine(self.blank_lbl.width() * (3 / 4), 0,
+                                       self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
 
-        self.painter.setPen(QPen(Qt.black, 2))
+        self.painter.setPen(QPen(Qt.red, 2))
         for name, x, y in zip(self.target, self.point_x, self.point_y):
             self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
             self.painter.drawText(x - 4, y - 10, f"{name}")
-        self.blank_lbl.resize(self.image_label.size())
+
+        print("numberCombo - ", self.numberCombo.currentText())
+        # self.blank_lbl.resize(self.image_label.size())
+        self.blank_lbl.setGeometry(self.image_label.geometry())
+        print("Paint")
 
         self.painter.end()
 
     def blank_mousePressEvent(self, event) -> None:
         self.update()
 
-        x = int(event.pos().x() / self.width() * self.w)
-        y = int(event.pos().y() / self.height() * self.h)
+        x = int(event.pos().x() / self.blank_lbl.width() * self.image.width())
+        y = int(event.pos().y() / self.blank_lbl.height() * self.image.height())
 
         for i in range(len(self.target)):
             self.target[i] = i + 1
@@ -375,20 +379,18 @@ class Js06TargetView(QDialog):
             self.numberCombo.addItem(str(maxVal + 1))
             self.numberCombo.setCurrentIndex(maxVal)
 
-            self.point_x.append(int(x))
-            self.point_y.append(int(y))
-            self.size_x.append(0.3)
-            self.size_y.append(0.3)
+            self.point_x.append(int(event.pos().x()))
+            self.point_y.append(int(event.pos().y()))
+
             self.target.append(len(self.point_x))
             self.distance.append(0)
-            self.ordinal.append('E')
-            self.category.append('Single')
 
             self.combo_changed()
+            self.coordinator()
 
             print("mousePressEvent - ", len(self.target))
-            self.save_target()
-            self.get_target()
+            # self.save_target()
+            # self.get_target()
 
         if event.buttons() == Qt.RightButton:
             deleteIndex = self.numberCombo.currentIndex() + 1
@@ -414,19 +416,22 @@ class Js06TargetView(QDialog):
     def save_target(self) -> None:
         # targets = self._model
 
+        print(self.result)
+        print()
+        print(self.target)
+        print(self.point_x)
+        print(self.point_y)
+        print(self.distance)
+        sys.exit()
+
         if self.target:
             for i in range(len(self.target)):
-                pass
-                # self.result[i]['label'] = self.target
-                # # self.result[i]['label_x'] = [int(x * self.width() / self.w) for x in self.target_x][i]
-                # # self.result[i]['label_y'] = [int(y * self.height() / self.h) for y in self.target_y][i]
-                # self.result[i]['roi']['point'][0] = self.label_x
-                # self.result[i]['roi']['point'][1] = self.label_y
-                # self.result[i]['distance'] = self.distance
-                # # print(self.target[i])
-                # # print(self.label_x[i])
-                # # print(self.label_y[i])
-                # # print(self.distance[i])
+                self.result[i]['label'] = self.target
+                self.result[i]['roi']['point'][0] = self.point_x
+                self.result[i]['roi']['point'][1] = self.point_y
+                self.result[i]["distance"] = self.distance
+
+    # end of save_target
 
     def get_target(self) -> None:
         targets = self._model
@@ -440,11 +445,10 @@ class Js06TargetView(QDialog):
             self.target.append(self.result[i]['label'])
             self.point_x.append(self.result[i]['roi']['point'][0])
             self.point_y.append(self.result[i]['roi']['point'][1])
-            self.size_x.append(self.result[i]['roi']['size'][0])
-            self.size_y.append(self.result[i]['roi']['size'][1])
             self.distance.append(self.result[i]['distance'])
-            self.ordinal.append(self.result[i]['ordinal'])
-            self.category.append(self.result[i]['category'])
+    # end of get_target
+
+# end of Js06TargetView
 
 
 class Js06AboutView(QDialog):
@@ -457,6 +461,7 @@ class Js06AboutView(QDialog):
             directory = os.path.dirname(__file__)
         ui_path = os.path.join(directory, 'resources', 'about_view.ui')
         uic.loadUi(ui_path, self)
+# end of Js06AboutView
 
 
 class Js06VideoWidget(QWidget):
@@ -493,21 +498,23 @@ class Js06VideoWidget(QWidget):
         self.recover_timer.setInterval(recover_interval * 1000)
         self.recover_timer.timeout.connect(self.recover_media)
         self.recover_timer.start()
+    # end of __init__
 
     def recover_media(self):
         """Try to reconnect if we can not receive video stream
         """
         if self.uri is None:
             return
-        
+
         if self.frame_received:
             return
-        
+
         print(f'DEBUG: Try to recover video stream from {self.uri}')
         self.on_camera_change(self.uri)
         self.frame_recevied = False
+    # end of recover_media
 
-    def fit_in_view(self) -> None:
+    def fit_in_view(self):
         self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
 
     def resizeEvent(self, a0: QResizeEvent):
@@ -555,6 +562,9 @@ class Js06MainView(QMainWindow):
         uic.loadUi(ui_path, self)
         self._ctrl = controller
 
+        # self.setWindowFlags(Qt.FramelessWindowHint)
+        self.showFullScreen()
+
         # Connect signals and slots
         self.restore_defaults_requested.connect(self._ctrl.restore_defaults)
 
@@ -571,7 +581,7 @@ class Js06MainView(QMainWindow):
         self.actionAbout.triggered.connect(self.about_view)
 
         # Front video
-        # self.front_video_dock.setTitleBarWidget(QWidget(self))
+        self.front_video_dock.setTitleBarWidget(QWidget(self))
         self.front_video_widget = Js06VideoWidget(self)
         # self.front_video_widget.moveToThread(self._ctrl.video_thread)
         self.front_video_dock.setWidget(self.front_video_widget)
@@ -581,7 +591,7 @@ class Js06MainView(QMainWindow):
         # self._ctrl.video_thread.start()
 
         # Rear video
-        # self.rear_video_dock.setTitleBarWidget(QWidget(self))
+        self.rear_video_dock.setTitleBarWidget(QWidget(self))
         self.rear_video_widget = Js06VideoWidget(self)
         # self.rear_video_widget.moveToThread(self._ctrl.video_thread)
         self.rear_video_dock.setWidget(self.rear_video_widget)
@@ -591,12 +601,14 @@ class Js06MainView(QMainWindow):
         # self._ctrl.video_thread.start()
 
         # Discernment status
+        self.discernment_dock.setTitleBarWidget(QWidget(self))
         self.discernment_widget = Js06DiscernmentView(self)
         # self.discernment_widget.moveToThread(self._ctrl.plot_thread)
         self.discernment_dock.setWidget(self.discernment_widget)
         self._ctrl.target_assorted.connect(self.discernment_widget.refresh_stats)
 
         # Prevailing visibility
+        self.visibility_dock.setTitleBarWidget(QWidget(self))
         self.visibility_widget = Js06VisibilityView(self, 1440)
         # self.visibility_widget.moveToThread(self._ctrl.plot_thread)
         self.visibility_dock.setWidget(self.visibility_widget)
@@ -608,13 +620,13 @@ class Js06MainView(QMainWindow):
     def edit_target(self) -> None:
         dlg = Js06TargetView(self)
         dlg.resize(self.width(), self.height())
-        dlg.exec()
-
-        # self.setWindowOpacity(0.1)
+        dlg.exec_()
+    # end of edit_target
 
     def about_view(self) -> None:
         dlg = Js06AboutView()
-        dlg.exec()
+        dlg.exec_()
+    # end of about_view
 
     @pyqtSlot()
     def edit_camera(self) -> None:
@@ -635,6 +647,7 @@ class Js06MainView(QMainWindow):
     # TODO(kwchun): its better to emit signal and process at the controller
     def closeEvent(self, event: QCloseEvent) -> None:
         self._ctrl.set_normal_shutdown()
+
 
 
 if __name__ == '__main__':
