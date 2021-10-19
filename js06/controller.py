@@ -32,9 +32,6 @@ class Js06MainCtrl(QObject):
     def __init__(self, model: Js06AttrModel):
         super().__init__()
 
-        self.video_thread = QThread()
-        self.plot_thread = QThread()
-
         self.writer_pool = QThreadPool.globalInstance()
         self.writer_pool.setMaxThreadCount(1)
 
