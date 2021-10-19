@@ -51,8 +51,9 @@ class Js06DiscernmentView(QChartView):
         chart.addSeries(self.negatives)
 
         axis_x = QValueAxis()
+        axis_x.setTickCount(9)
         axis_x.setRange(0, 360)
-        axis_x.setLabelFormat('%d')
+        axis_x.setLabelFormat('%d \xc2\xb0')
         axis_x.setTitleText('Azimuth (deg)')
         axis_x.setTitleVisible(False)
         chart.setAxisX(axis_x, self.positives)
