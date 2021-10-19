@@ -79,7 +79,6 @@ class Js06DiscernmentView(QChartView):
         callback = keymap.get(event.key())
         if callback:
             callback()
-    # end of keyPressEvent
 
     @pyqtSlot(list, list)
     def refresh_stats(self, positives: list, negatives: list):
@@ -88,9 +87,6 @@ class Js06DiscernmentView(QChartView):
         self.positives.replace(pos_point)
         neg_point = [QPointF(a, d) for a, d in negatives]
         self.negatives.replace(neg_point)
-    # end of refresh_stats
-
-# end of Js06DiscernmentView
 
 
 class Js06VisibilityView(QChartView):
@@ -125,7 +121,6 @@ class Js06VisibilityView(QChartView):
 
         data_point = [QPointF(t, v) for t, v in self.data]
         self.series.append(data_point)
-    # end of __init__
 
     def keyPressEvent(self, event):
         keymap = {
@@ -139,7 +134,6 @@ class Js06VisibilityView(QChartView):
         callback = keymap.get(event.key())
         if callback:
             callback()
-    # end of keyPressEvent
 
     @pyqtSlot(int, dict)
     def refresh_stats(self, epoch: int, wedge_vis: dict):
@@ -153,7 +147,6 @@ class Js06VisibilityView(QChartView):
 
         data_point = [QPointF(t, v) for t, v in self.data]
         self.series.replace(data_point)
-    # end of refresh_stats
 
     def prevailing_visibility(self, wedge_vis: list) -> float:
         if None in wedge_vis:
@@ -161,9 +154,6 @@ class Js06VisibilityView(QChartView):
         sorted_vis = sorted(wedge_vis, reverse=True)
         prevailing = sorted_vis[(len(sorted_vis) - 1) // 2]
         return prevailing
-    # end of prevailing_visibility
-
-# end of Js06VisibilityView
 
 
 class Js06CameraView(QDialog):
@@ -229,6 +219,7 @@ class Js06CameraView(QDialog):
         self._ctrl.insert_attr(attr)
         self._ctrl.front_camera_changed.emit(self._ctrl.get_front_camera_uri())
         self._ctrl.rear_camera_changed.emit(self._ctrl.get_rear_camera_uri())
+
 
 class Js06TargetView(QDialog):
     def __init__(self, parent: QWidget) -> None:
@@ -311,7 +302,6 @@ class Js06TargetView(QDialog):
                 self.distanceEdit.setText("")
                 self.point_x_Edit.setText("")
                 self.point_y_Edit.setText("")
-    # end of combo_changed
 
     @pyqtSlot()
     def save_btn(self) -> None:
@@ -434,8 +424,6 @@ class Js06TargetView(QDialog):
                 self.result[i]['roi']['point'][1] = self.point_y
                 self.result[i]["distance"] = self.distance
 
-    # end of save_target
-
     def get_target(self) -> None:
         targets = self._model
 
@@ -449,9 +437,6 @@ class Js06TargetView(QDialog):
             self.point_x.append(self.result[i]['roi']['point'][0])
             self.point_y.append(self.result[i]['roi']['point'][1])
             self.distance.append(self.result[i]['distance'])
-    # end of get_target
-
-# end of Js06TargetView
 
 
 class Js06AboutView(QDialog):
@@ -464,7 +449,6 @@ class Js06AboutView(QDialog):
             directory = os.path.dirname(__file__)
         ui_path = os.path.join(directory, 'resources', 'about_view.ui')
         uic.loadUi(ui_path, self)
-# end of Js06AboutView
 
 
 class Js06VideoWidget(QWidget):
@@ -501,7 +485,6 @@ class Js06VideoWidget(QWidget):
         self.recover_timer.setInterval(recover_interval * 1000)
         self.recover_timer.timeout.connect(self.recover_media)
         self.recover_timer.start()
-    # end of __init__
 
     def recover_media(self):
         """Try to reconnect if we can not receive video stream
@@ -515,7 +498,6 @@ class Js06VideoWidget(QWidget):
         print(f'DEBUG: Try to recover video stream from {self.uri}')
         self.on_camera_change(self.uri)
         self.frame_recevied = False
-    # end of recover_media
 
     def fit_in_view(self):
         self.graphicView.fitInView(self._video_item, Qt.KeepAspectRatio)
@@ -610,12 +592,10 @@ class Js06MainView(QMainWindow):
         dlg = Js06TargetView(self)
         dlg.resize(self.width(), self.height())
         dlg.exec_()
-    # end of edit_target
 
     def about_view(self) -> None:
         dlg = Js06AboutView()
         dlg.exec_()
-    # end of about_view
 
     @pyqtSlot()
     def edit_camera(self) -> None:
@@ -636,7 +616,6 @@ class Js06MainView(QMainWindow):
     # TODO(kwchun): its better to emit signal and process at the controller
     def closeEvent(self, event: QCloseEvent) -> None:
         self._ctrl.set_normal_shutdown()
-
 
 
 if __name__ == '__main__':
