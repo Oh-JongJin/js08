@@ -215,10 +215,12 @@ class Js06CameraView(QDialog):
                 uri = cam['uri']
                 self._ctrl.front_camera_changed.emit(uri)
                 front_cam = cam
+                front_cam['camera_id'] = front_cam.pop('_id')
             elif cam['placement'] == 'rear':
                 uri = cam['uri']
                 self._ctrl.rear_camera_changed.emit(uri)
                 rear_cam = cam
+                rear_cam['camera_id'] = rear_cam.pop('_id')
 
         attr = self._ctrl.get_attr()
         attr['front_camera'] = front_cam
@@ -625,7 +627,7 @@ class Js06MainView(QMainWindow):
         response = QMessageBox.question(
             self,
             'JS-06 Restore to defaults',
-            'The JS-06 exited abnormally.'
+            'The JS-06 exited abnormally. '
             'Do you want to restore the factory default?',
         )
         if response == QMessageBox.Yes:
