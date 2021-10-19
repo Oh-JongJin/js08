@@ -562,9 +562,6 @@ class Js06MainView(QMainWindow):
         uic.loadUi(ui_path, self)
         self._ctrl = controller
 
-        # self.setWindowFlags(Qt.FramelessWindowHint)
-        self.showFullScreen()
-
         # Connect signals and slots
         self.restore_defaults_requested.connect(self._ctrl.restore_defaults)
 
