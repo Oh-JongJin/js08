@@ -17,7 +17,7 @@ from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
 from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, QUrl, pyqtSignal,
                           pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QColor, QPainter, QPen, QPixmap
-from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (QDialog, QLabel, QMainWindow, QMessageBox,
                              QVBoxLayout, QWidget)
@@ -449,6 +449,8 @@ class Js06AboutView(QDialog):
 class Js06VideoWidget(QWidget):
     """Video stream player using QVideoWidget
     """
+    video_frame_prepared = pyqtSignal(QVideoFrame)
+
     def __init__(self, parent: QObject = None) -> None:
         super().__init__(parent)
         
@@ -465,6 +467,11 @@ class Js06VideoWidget(QWidget):
         self.uri = uri
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
+
+    @pyqtSlot(QVideoFrame)
+    def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
+        self.frame_received = True
+        self.video_frame_prepared.emit(frame)
 
 
 class Js06MainView(QMainWindow):
