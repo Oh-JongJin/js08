@@ -20,7 +20,7 @@ from PyQt5.QtGui import QCloseEvent, QColor, QPainter, QPen, QPixmap
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (QDialog, QLabel, QMainWindow, QMessageBox,
-                             QVBoxLayout, QWidget)
+                             QVBoxLayout, QWidget, QFileDialog)
 
 from .controller import Js06MainCtrl
 from .model import Js06Settings
@@ -438,6 +438,38 @@ class Js06AboutView(QDialog):
         uic.loadUi(ui_path, self)
 
 
+class Js06ConfigView(QDialog):
+    def __init__(self) -> None:
+        super().__init__()
+
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        ui_path = os.path.join(directory, 'resources', 'config_view.ui')
+        uic.loadUi(ui_path, self)
+
+        self.insert_data()
+
+    def insert_data(self) -> None:
+        self.ObsercationPeriod_spinBox.setValue(Js06Settings.get('observation_period'))
+        self.SaveVista_comboBox.setCurrentText(f"{Js06Settings.get('save_vista')}")
+        self.SaveImagePatch_comboBox.setCurrentText(f"{Js06Settings.get('save_image_patch')}")
+        self.ImageBasePath_pushButton.clicked.connect(self.image_base_path)
+        self.InferenceThreadCount_spinBox.setValue(Js06Settings.get('inferece_thread_count'))
+        self.MediaRecoverInterval_spinBox.setValue(Js06Settings.get('media_recover_interval'))
+        self.DatabaseHost_lineEdit.setText(Js06Settings.get('db_host'))
+        self.DatabasePort_lineEdit.setText(f"{Js06Settings.get('db_port')}")
+        self.DatabaseName_lineEdit.setText(Js06Settings.get('db_name'))
+        self.DatabaseAdmin_lineEdit.setText(Js06Settings.get('db_admin'))
+        self.DatabaseAdminPw_lineEdit.setText(Js06Settings.get('db_admin_password'))
+        self.DatabaseUser_lineEdit.setText(Js06Settings.get('db_user'))
+        self.DatabaseUserPw_lineEdit.setText(Js06Settings.get('db_user_password'))
+
+    def image_base_path(self) -> None:
+        fname = QFileDialog.getOpenFileUrl()
+
+
 class Js06VideoWidget(QWidget):
     """Video stream player using QVideoWidget
     """
@@ -492,6 +524,7 @@ class Js06MainView(QMainWindow):
 
         self.actionEdit_Camera.triggered.connect(self.edit_camera)
         self.actionEdit_Target.triggered.connect(self.edit_target)
+        self.actionConfiguration.triggered.connect(self.configuration)
         self.actionAbout.triggered.connect(self.about_view)
 
         # Front video
@@ -521,6 +554,10 @@ class Js06MainView(QMainWindow):
     def edit_target(self) -> None:
         dlg = Js06TargetView(self)
         dlg.resize(self.width(), self.height())
+        dlg.exec_()
+
+    def configuration(self) -> None:
+        dlg = Js06ConfigView()
         dlg.exec_()
 
     def about_view(self) -> None:
