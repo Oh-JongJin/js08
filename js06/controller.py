@@ -15,6 +15,7 @@ import numpy as np
 from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread,
                           QThreadPool, QTime, QTimer, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QImage
+from PyQt5.QtMultimedia import QVideoFrame
 
 from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner,
                     Js06Settings, Js06SimpleTarget, Js06Wedge)
