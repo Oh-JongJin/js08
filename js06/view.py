@@ -404,14 +404,6 @@ class Js06TargetView(QDialog):
     def save_target(self) -> None:
         # targets = self._model
 
-        print(self.result)
-        print()
-        print(self.target)
-        print(self.point_x)
-        print(self.point_y)
-        print(self.distance)
-        sys.exit()
-
         if self.target:
             for i in range(len(self.target)):
                 self.result[i]['label'] = self.target
