@@ -449,17 +449,15 @@ class Js06ConfigView(QDialog):
         ui_path = os.path.join(directory, 'resources', 'config_view.ui')
         uic.loadUi(ui_path, self)
 
-        self.buttonBox.accepted.connect(self.save_setting)
+        self.buttonBox.accepted.connect(self.write_values)
 
-        self.insert_setting()
+        self.read_values()
 
-    def insert_setting(self) -> None:
-        self.ObsercationPeriod_spinBox.setValue(Js06Settings.get('observation_period'))
+    def read_values(self) -> None:
         self.SaveVista_comboBox.setCurrentText(f"{Js06Settings.get('save_vista')}")
         self.SaveImagePatch_comboBox.setCurrentText(f"{Js06Settings.get('save_image_patch')}")
         self.ImageBasePath_pushButton.clicked.connect(self.image_base_path)
         self.InferenceThreadCount_spinBox.setValue(Js06Settings.get('inferece_thread_count'))
-        self.MediaRecoverInterval_spinBox.setValue(Js06Settings.get('media_recover_interval'))
         self.DatabaseHost_lineEdit.setText(Js06Settings.get('db_host'))
         self.DatabasePort_lineEdit.setText(f"{Js06Settings.get('db_port')}")
         self.DatabaseName_lineEdit.setText(Js06Settings.get('db_name'))
@@ -472,13 +470,11 @@ class Js06ConfigView(QDialog):
         qurl = QFileDialog.getExistingDirectory(self, "Select directory",
                                                 directory=Js06Settings.get('image_base_path'))
 
-    def save_setting(self) -> None:
-        Js06Settings.set('observation_period', self.ObsercationPeriod_spinBox.value())
+    def write_values(self) -> None:
         Js06Settings.set('save_vista', self.SaveVista_comboBox.currentText())
         Js06Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
         # Js06Settings.set('image_base_path', )
         Js06Settings.set('inferece_thread_count', self.InferenceThreadCount_spinBox.value())
-        Js06Settings.set('media_recover_interval', self.MediaRecoverInterval_spinBox.value())
         Js06Settings.set('db_host', self.DatabaseHost_lineEdit.text())
         Js06Settings.set('db_port', f"{int(self.DatabasePort_lineEdit.text())}")
         Js06Settings.set('db_name', self.DatabaseName_lineEdit.text())

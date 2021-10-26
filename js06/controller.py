@@ -140,8 +140,7 @@ class Js06MainCtrl(QObject):
     def start_observation_timer(self) -> None:
         print('DEBUG(start_observation_timer):', QTime.currentTime().toString())
         self.init_broker()
-        observation_period = Js06Settings.get('observation_period')
-        self.observation_timer.setInterval(observation_period * 1000)
+        self.observation_timer.setInterval(1000) # every one second
         self.observation_timer.timeout.connect(self.start_broker)
         self.observation_timer.start()
 
