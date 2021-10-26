@@ -584,6 +584,7 @@ class Js06MainView(QMainWindow):
 
     def about_view(self) -> None:
         dlg = Js06AboutView()
+        dlg.setFixedSize(dlg.size())
         dlg.exec_()
 
     @pyqtSlot()
