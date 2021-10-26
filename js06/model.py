@@ -383,7 +383,7 @@ class Js06Settings:
         'db_user': 'js06',
         'db_user_password': 'js06_pw',
         # Hidden settings
-        'window_size': [800, 600],
+        'window_size': (1230, 700),
         'normal_shutdown': False
     }
 

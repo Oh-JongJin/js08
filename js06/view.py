@@ -541,6 +541,10 @@ class Js06MainView(QMainWindow):
         self.actionConfiguration.triggered.connect(self.configuration)
         self.actionAbout.triggered.connect(self.about_view)
 
+        width, height = Js06Settings.get('window_size')
+        print('DEBUG:', type(width), width, type(height), height)
+        self.resize(width, height)
+
         # Front video
         self.front_video_widget = Js06VideoWidget(self)
         self.front_vertical.addWidget(self.front_video_widget, 1)
@@ -596,8 +600,13 @@ class Js06MainView(QMainWindow):
 
     # TODO(kwchun): its better to emit signal and process at the controller
     def closeEvent(self, event: QCloseEvent) -> None:
-        self._ctrl.set_normal_shutdown()
+        # Save currnet window size
+        window_size = self.size()
+        width = window_size.width()
+        height = window_size.height()
+        Js06Settings.set('window_size', (width, height))
 
+        self._ctrl.set_normal_shutdown()
 
 if __name__ == '__main__':
     import sys
