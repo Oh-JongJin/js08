@@ -15,6 +15,7 @@ import numpy as np
 from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread,
                           QThreadPool, QTime, QTimer, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QImage
+from PyQt5.QtMultimedia import QVideoFrame
 
 from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner,
                     Js06Settings, Js06SimpleTarget, Js06Wedge)
@@ -38,6 +39,9 @@ class Js06MainCtrl(QObject):
         self._model = model
 
         self.num_working_cam = 0
+
+        self.front_video_frame = None
+        self.rear_video_frame = None
 
         self.front_decomposed_targets = []
         self.rear_decomposed_targets = []
@@ -149,6 +153,10 @@ class Js06MainCtrl(QObject):
         # If broker is already running, quit.
         if self.broker:
             return
+
+        # If both video frames are not ready, quit.
+        if self.front_video_frame is None or self.rear_video_frame is None:
+            return
         
         # if decomposed targets are not ready, quit.
         if len(self.front_decomposed_targets) == 0 or len(self.rear_decomposed_targets) == 0:
@@ -259,6 +267,14 @@ class Js06MainCtrl(QObject):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
         return image
+
+    @pyqtSlot(QVideoFrame)
+    def update_front_video_frame(self, video_frame: QVideoFrame) -> None:
+        self.front_video_frame = video_frame
+
+    @pyqtSlot(QVideoFrame)
+    def update_rear_video_frame(self, video_frame: QVideoFrame) -> None:
+        self.rear_video_frame = video_frame
 
     @pyqtSlot()
     def get_front_camera_uri(self) -> str:

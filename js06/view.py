@@ -17,7 +17,8 @@ from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
 from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, QUrl, pyqtSignal,
                           pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QColor, QPainter, QPen, QPixmap
-from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+from PyQt5.QtMultimedia import (QMediaContent, QMediaPlayer, QVideoFrame,
+                                QVideoProbe)
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (QDialog, QLabel, QMainWindow, QMessageBox,
                              QVBoxLayout, QWidget)
@@ -345,10 +346,7 @@ class Js06TargetView(QDialog):
             self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
             self.painter.drawText(x - 4, y - 10, f"{name}")
 
-        print("numberCombo - ", self.numberCombo.currentText())
-        # self.blank_lbl.resize(self.image_label.size())
         self.blank_lbl.setGeometry(self.image_label.geometry())
-        print("Paint")
 
         self.painter.end()
 
@@ -449,6 +447,8 @@ class Js06AboutView(QDialog):
 class Js06VideoWidget(QWidget):
     """Video stream player using QVideoWidget
     """
+    video_frame_prepared = pyqtSignal(QVideoFrame)
+
     def __init__(self, parent: QObject = None) -> None:
         super().__init__(parent)
         
@@ -457,6 +457,11 @@ class Js06VideoWidget(QWidget):
         self.player.setVideoOutput(self.viewer)
         layout = QVBoxLayout(self)
         layout.addWidget(self.viewer)
+
+        self.probe = QVideoProbe(self)
+        self.probe.videoFrameProbed.connect(self.on_videoFrameProbed)
+        self.probe.setSource(self.player)
+
         # self.viewer.setGeometry(0, 0, 300, 300)
         # self.viewer.setMinimumSize(600, 250)
 
@@ -465,6 +470,10 @@ class Js06VideoWidget(QWidget):
         self.uri = uri
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
+
+    @pyqtSlot(QVideoFrame)
+    def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
+        self.video_frame_prepared.emit(frame)
 
 
 class Js06MainView(QMainWindow):
@@ -498,6 +507,7 @@ class Js06MainView(QMainWindow):
         # Front video
         self.front_video_widget = Js06VideoWidget(self)
         self.front_vertical.addWidget(self.front_video_widget, 1)
+        self.front_video_widget.video_frame_prepared.connect(self._ctrl.update_front_video_frame)
         self._ctrl.front_camera_changed.connect(self.front_video_widget.on_camera_change)
         self._ctrl.front_camera_changed.emit(self._ctrl.get_front_camera_uri())
 
