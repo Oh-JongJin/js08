@@ -15,6 +15,7 @@ import numpy as np
 from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread,
                           QThreadPool, QTime, QTimer, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QImage
+from PyQt5.QtMultimedia import QVideoFrame
 
 from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner,
                     Js06Settings, Js06SimpleTarget, Js06Wedge)
@@ -139,8 +140,7 @@ class Js06MainCtrl(QObject):
     def start_observation_timer(self) -> None:
         print('DEBUG(start_observation_timer):', QTime.currentTime().toString())
         self.init_broker()
-        observation_period = Js06Settings.get('observation_period')
-        self.observation_timer.setInterval(observation_period * 1000)
+        self.observation_timer.setInterval(1000) # every one second
         self.observation_timer.timeout.connect(self.start_broker)
         self.observation_timer.start()
 
@@ -259,6 +259,14 @@ class Js06MainCtrl(QObject):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
         return image
+
+    @pyqtSlot(QVideoFrame)
+    def update_front_video_frame(self, video_frame: QVideoFrame) -> None:
+        self.front_video_frame = video_frame
+
+    @pyqtSlot(QVideoFrame)
+    def update_rear_video_frame(self, video_frame: QVideoFrame) -> None:
+        self.rear_video_frame = video_frame
 
     @pyqtSlot()
     def get_front_camera_uri(self) -> str:

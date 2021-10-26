@@ -367,7 +367,6 @@ class Js06Settings:
     settings = QSettings('sijung', 'js06')
 
     defaults = {
-        'observation_period': 1, # in minutes
         'save_vista': True,
         'save_image_patch': True,
         'image_base_path': os.path.join(
@@ -375,7 +374,6 @@ class Js06Settings:
             'js06'
         ),
         'inferece_thread_count': 2,
-        'media_recover_interval': 5, # in seconds
         # Database settings
         'db_host': 'localhost',
         'db_port': 27017,

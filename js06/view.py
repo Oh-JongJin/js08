@@ -15,12 +15,12 @@ from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
                            QLineSeries, QPolarChart, QScatterSeries,
                            QValueAxis)
 from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, QUrl, pyqtSignal,
-                          pyqtSlot)
+                          pyqtSlot, QStandardPaths)
 from PyQt5.QtGui import QCloseEvent, QColor, QPainter, QPen, QPixmap
-from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (QDialog, QLabel, QMainWindow, QMessageBox,
-                             QVBoxLayout, QWidget)
+                             QVBoxLayout, QWidget, QFileDialog)
 
 from .controller import Js06MainCtrl
 from .model import Js06Settings
@@ -398,19 +398,11 @@ class Js06TargetView(QDialog):
         self.prime_x = [2 * x / self.w - 1 for x in self.target_x]
 
     def restoration(self) -> None:
-        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime_x]
+        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime1_x]
         self.target_y = [int(y * self.h) for y in self.prime_y]
 
     def save_target(self) -> None:
         # targets = self._model
-
-        print(self.result)
-        print()
-        print(self.target)
-        print(self.point_x)
-        print(self.point_y)
-        print(self.distance)
-        sys.exit()
 
         if self.target:
             for i in range(len(self.target)):
@@ -446,9 +438,57 @@ class Js06AboutView(QDialog):
         uic.loadUi(ui_path, self)
 
 
+class Js06ConfigView(QDialog):
+    def __init__(self) -> None:
+        super().__init__()
+
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        ui_path = os.path.join(directory, 'resources', 'config_view.ui')
+        uic.loadUi(ui_path, self)
+
+        self.buttonBox.accepted.connect(self.write_values)
+
+        self.read_values()
+
+    def read_values(self) -> None:
+        self.SaveVista_comboBox.setCurrentText(f"{Js06Settings.get('save_vista')}")
+        self.SaveImagePatch_comboBox.setCurrentText(f"{Js06Settings.get('save_image_patch')}")
+        self.ImageBasePath_pushButton.clicked.connect(self.image_base_path)
+        self.InferenceThreadCount_spinBox.setValue(Js06Settings.get('inferece_thread_count'))
+        self.DatabaseHost_lineEdit.setText(Js06Settings.get('db_host'))
+        self.DatabasePort_lineEdit.setText(f"{Js06Settings.get('db_port')}")
+        self.DatabaseName_lineEdit.setText(Js06Settings.get('db_name'))
+        self.DatabaseAdmin_lineEdit.setText(Js06Settings.get('db_admin'))
+        self.DatabaseAdminPw_lineEdit.setText(Js06Settings.get('db_admin_password'))
+        self.DatabaseUser_lineEdit.setText(Js06Settings.get('db_user'))
+        self.DatabaseUserPw_lineEdit.setText(Js06Settings.get('db_user_password'))
+
+    def image_base_path(self) -> None:
+        self.qurl = QFileDialog.getExistingDirectory(self, "Select directory",
+                                                directory=Js06Settings.get('image_base_path'))
+
+    def write_values(self) -> None:
+        Js06Settings.set('save_vista', self.SaveVista_comboBox.currentText())
+        Js06Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
+        Js06Settings.set('image_base_path', self.qurl)
+        Js06Settings.set('inferece_thread_count', self.InferenceThreadCount_spinBox.value())
+        Js06Settings.set('db_host', self.DatabaseHost_lineEdit.text())
+        Js06Settings.set('db_port', f"{int(self.DatabasePort_lineEdit.text())}")
+        Js06Settings.set('db_name', self.DatabaseName_lineEdit.text())
+        Js06Settings.set('db_admin', self.DatabaseAdmin_lineEdit.text())
+        Js06Settings.set('db_admin_password', self.DatabaseAdminPw_lineEdit.text())
+        Js06Settings.set('db_user', self.DatabaseUser_lineEdit.text())
+        Js06Settings.set('db_user_password', self.DatabaseUserPw_lineEdit.text())
+
+
 class Js06VideoWidget(QWidget):
     """Video stream player using QVideoWidget
     """
+    video_frame_prepared = pyqtSignal(QVideoFrame)
+
     def __init__(self, parent: QObject = None) -> None:
         super().__init__(parent)
         
@@ -465,6 +505,11 @@ class Js06VideoWidget(QWidget):
         self.uri = uri
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
+
+    @pyqtSlot(QVideoFrame)
+    def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
+        self.frame_received = True
+        self.video_frame_prepared.emit(frame)
 
 
 class Js06MainView(QMainWindow):
@@ -493,6 +538,7 @@ class Js06MainView(QMainWindow):
 
         self.actionEdit_Camera.triggered.connect(self.edit_camera)
         self.actionEdit_Target.triggered.connect(self.edit_target)
+        self.actionConfiguration.triggered.connect(self.configuration)
         self.actionAbout.triggered.connect(self.about_view)
 
         # Front video
@@ -522,6 +568,10 @@ class Js06MainView(QMainWindow):
     def edit_target(self) -> None:
         dlg = Js06TargetView(self)
         dlg.resize(self.width(), self.height())
+        dlg.exec_()
+
+    def configuration(self) -> None:
+        dlg = Js06ConfigView()
         dlg.exec_()
 
     def about_view(self) -> None:
