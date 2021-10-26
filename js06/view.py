@@ -517,7 +517,7 @@ class Js06MainView(QMainWindow):
     main_view_closed = pyqtSignal()
     select_camera_requested = pyqtSignal()
 
-    def __init__(self, controller: Js06MainCtrl) -> None:
+    def __init__(self, controller: Js06MainCtrl, size: list = None) -> None:
         super().__init__()
 
         if getattr(sys, 'frozen', False):
@@ -540,6 +540,14 @@ class Js06MainView(QMainWindow):
         self.actionEdit_Target.triggered.connect(self.edit_target)
         self.actionConfiguration.triggered.connect(self.configuration)
         self.actionAbout.triggered.connect(self.about_view)
+
+        # Set size of Js06MainView
+        if size == None:
+            width, height = Js06Settings.get('window_size')
+        else:
+            width, height = size
+        print('DEBUG:', type(width), width, type(height), height)
+        self.resize(width, height)
 
         # Front video
         self.front_video_widget = Js06VideoWidget(self)
@@ -596,8 +604,13 @@ class Js06MainView(QMainWindow):
 
     # TODO(kwchun): its better to emit signal and process at the controller
     def closeEvent(self, event: QCloseEvent) -> None:
-        self._ctrl.set_normal_shutdown()
+        # Save currnet window size
+        window_size = self.size()
+        width = window_size.width()
+        height = window_size.height()
+        Js06Settings.set('window_size', (width, height))
 
+        self._ctrl.set_normal_shutdown()
 
 if __name__ == '__main__':
     import sys
