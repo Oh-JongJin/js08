@@ -398,7 +398,7 @@ class Js06TargetView(QDialog):
         self.prime_x = [2 * x / self.w - 1 for x in self.target_x]
 
     def restoration(self) -> None:
-        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime_x]
+        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime1_x]
         self.target_y = [int(y * self.h) for y in self.prime_y]
 
     def save_target(self) -> None:
@@ -469,14 +469,14 @@ class Js06ConfigView(QDialog):
         self.DatabaseUserPw_lineEdit.setText(Js06Settings.get('db_user_password'))
 
     def image_base_path(self) -> None:
-        qurl = QFileDialog.getExistingDirectory(self, "Select directory",
+        self.qurl = QFileDialog.getExistingDirectory(self, "Select directory",
                                                 directory=Js06Settings.get('image_base_path'))
 
     def save_setting(self) -> None:
         Js06Settings.set('observation_period', self.ObsercationPeriod_spinBox.value())
         Js06Settings.set('save_vista', self.SaveVista_comboBox.currentText())
         Js06Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
-        # Js06Settings.set('image_base_path', )
+        Js06Settings.set('image_base_path', self.qurl)
         Js06Settings.set('inferece_thread_count', self.InferenceThreadCount_spinBox.value())
         Js06Settings.set('media_recover_interval', self.MediaRecoverInterval_spinBox.value())
         Js06Settings.set('db_host', self.DatabaseHost_lineEdit.text())
