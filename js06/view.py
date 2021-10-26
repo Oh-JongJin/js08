@@ -15,7 +15,7 @@ from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
                            QLineSeries, QPolarChart, QScatterSeries,
                            QValueAxis)
 from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, QUrl, pyqtSignal,
-                          pyqtSlot)
+                          pyqtSlot, QStandardPaths)
 from PyQt5.QtGui import QCloseEvent, QColor, QPainter, QPen, QPixmap
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -449,9 +449,11 @@ class Js06ConfigView(QDialog):
         ui_path = os.path.join(directory, 'resources', 'config_view.ui')
         uic.loadUi(ui_path, self)
 
-        self.insert_data()
+        self.buttonBox.accepted.connect(self.save_setting)
 
-    def insert_data(self) -> None:
+        self.insert_setting()
+
+    def insert_setting(self) -> None:
         self.ObsercationPeriod_spinBox.setValue(Js06Settings.get('observation_period'))
         self.SaveVista_comboBox.setCurrentText(f"{Js06Settings.get('save_vista')}")
         self.SaveImagePatch_comboBox.setCurrentText(f"{Js06Settings.get('save_image_patch')}")
@@ -467,7 +469,23 @@ class Js06ConfigView(QDialog):
         self.DatabaseUserPw_lineEdit.setText(Js06Settings.get('db_user_password'))
 
     def image_base_path(self) -> None:
-        fname = QFileDialog.getOpenFileUrl()
+        qurl = QFileDialog.getExistingDirectory(self, "Select directory",
+                                                directory=Js06Settings.get('image_base_path'))
+
+    def save_setting(self) -> None:
+        Js06Settings.set('observation_period', self.ObsercationPeriod_spinBox.value())
+        Js06Settings.set('save_vista', self.SaveVista_comboBox.currentText())
+        Js06Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
+        # Js06Settings.set('image_base_path', )
+        Js06Settings.set('inferece_thread_count', self.InferenceThreadCount_spinBox.value())
+        Js06Settings.set('media_recover_interval', self.MediaRecoverInterval_spinBox.value())
+        Js06Settings.set('db_host', self.DatabaseHost_lineEdit.text())
+        Js06Settings.set('db_port', f"{int(self.DatabasePort_lineEdit.text())}")
+        Js06Settings.set('db_name', self.DatabaseName_lineEdit.text())
+        Js06Settings.set('db_admin', self.DatabaseAdmin_lineEdit.text())
+        Js06Settings.set('db_admin_password', self.DatabaseAdminPw_lineEdit.text())
+        Js06Settings.set('db_user', self.DatabaseUser_lineEdit.text())
+        Js06Settings.set('db_user_password', self.DatabaseUserPw_lineEdit.text())
 
 
 class Js06VideoWidget(QWidget):
