@@ -449,6 +449,8 @@ class Js06ConfigView(QDialog):
         ui_path = os.path.join(directory, 'resources', 'config_view.ui')
         uic.loadUi(ui_path, self)
 
+        self.qUrl = None
+
         self.buttonBox.accepted.connect(self.write_values)
 
         self.read_values()
@@ -467,13 +469,14 @@ class Js06ConfigView(QDialog):
         self.DatabaseUserPw_lineEdit.setText(Js06Settings.get('db_user_password'))
 
     def image_base_path(self) -> None:
-        self.qurl = QFileDialog.getExistingDirectory(self, "Select directory",
+        self.qUrl = QFileDialog.getExistingDirectory(self, "Select directory",
                                                 directory=Js06Settings.get('image_base_path'))
 
     def write_values(self) -> None:
         Js06Settings.set('save_vista', self.SaveVista_comboBox.currentText())
         Js06Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
-        Js06Settings.set('image_base_path', self.qurl)
+        if self.qUrl is not None:
+            Js06Settings.set('image_base_path', self.qUrl)
         Js06Settings.set('inferece_thread_count', self.InferenceThreadCount_spinBox.value())
         Js06Settings.set('db_host', self.DatabaseHost_lineEdit.text())
         Js06Settings.set('db_port', f"{int(self.DatabasePort_lineEdit.text())}")
