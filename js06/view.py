@@ -458,7 +458,7 @@ class Js06ConfigView(QDialog):
     def read_values(self) -> None:
         self.SaveVista_comboBox.setCurrentText(f"{Js06Settings.get('save_vista')}")
         self.SaveImagePatch_comboBox.setCurrentText(f"{Js06Settings.get('save_image_patch')}")
-        self.ImageBasePath_pushButton.clicked.connect(self.image_base_path)
+        self.ImageBasePath_pushButton.clicked.connect(self.ask_image_base_path)
         self.InferenceThreadCount_spinBox.setValue(Js06Settings.get('inferece_thread_count'))
         self.DatabaseHost_lineEdit.setText(Js06Settings.get('db_host'))
         self.DatabasePort_lineEdit.setText(f"{Js06Settings.get('db_port')}")
@@ -468,7 +468,7 @@ class Js06ConfigView(QDialog):
         self.DatabaseUser_lineEdit.setText(Js06Settings.get('db_user'))
         self.DatabaseUserPw_lineEdit.setText(Js06Settings.get('db_user_password'))
 
-    def image_base_path(self) -> None:
+    def ask_image_base_path(self) -> None:
         self.image_base_path = QFileDialog.getExistingDirectory(self, "Select directory",
                                                 directory=Js06Settings.get('image_base_path'))
 
