@@ -271,6 +271,7 @@
     </property>
     <addaction name="actionEdit_Camera"/>
     <addaction name="actionEdit_Target"/>
+    <addaction name="actionConfiguration"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -347,7 +348,7 @@
   </action>
   <action name="actionEdit_Camera">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>Edit &amp;Camera Info</string>
@@ -356,6 +357,11 @@
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionConfiguration">
+   <property name="text">
+    <string>Con&amp;figuration</string>
    </property>
   </action>
  </widget>

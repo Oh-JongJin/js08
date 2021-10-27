@@ -17,11 +17,10 @@ from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
 from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, QUrl, pyqtSignal,
                           pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QColor, QPainter, QPen, QPixmap
-from PyQt5.QtMultimedia import (QMediaContent, QMediaPlayer, QVideoFrame,
-                                QVideoProbe)
+from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (QDialog, QLabel, QMainWindow, QMessageBox,
-                             QVBoxLayout, QWidget)
+                             QVBoxLayout, QWidget, QFileDialog)
 
 from .controller import Js06MainCtrl
 from .model import Js06Settings
@@ -242,7 +241,7 @@ class Js06TargetView(QDialog):
 
         self.get_target()
 
-        self.image = self._ctrl.front_video_frame.image().mirrored(False, True)
+        self.image = self._ctrl.grap_image('front')
         self.w = self.image.width()
         self.h = self.image.height()
         self.image_label.setPixmap(QPixmap.fromImage(self.image).scaled(self.w, self.h, Qt.KeepAspectRatio))
@@ -311,7 +310,7 @@ class Js06TargetView(QDialog):
         for i in range(self.numberCombo.count()):
             self.numberCombo.setCurrentIndex(i)
             result.append({'label': f'{self.labelEdit.text()}',
-                           'distance': f'{float(self.distanceEdit.text())}',
+                           'distance': f'{[float(self.distanceEdit.text())]}',
                            'roi': {
                                'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
                            }})
@@ -319,7 +318,10 @@ class Js06TargetView(QDialog):
         # TODO(Kyungwon): update camera db only, the current camera selection is
         # performed at camera view
         # Save Target through controller
-        self._ctrl.set_attr(result)
+        # self._ctrl.set_attr(result)
+
+        print(f"result = {result}\n")
+        print(f"cameras = {self._model.get_data()}")
 
         self.close()
 
@@ -441,6 +443,59 @@ class Js06AboutView(QDialog):
         uic.loadUi(ui_path, self)
 
 
+class Js06ConfigView(QDialog):
+    def __init__(self) -> None:
+        super().__init__()
+
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        ui_path = os.path.join(directory, 'resources', 'config_view.ui')
+        uic.loadUi(ui_path, self)
+
+        self.qurl = None
+
+        self.buttonBox.accepted.connect(self.save_setting)
+
+        self.insert_setting()
+
+    def insert_setting(self) -> None:
+        self.ObsercationPeriod_spinBox.setValue(Js06Settings.get('observation_period'))
+        self.SaveVista_comboBox.setCurrentText(f"{Js06Settings.get('save_vista')}")
+        self.SaveImagePatch_comboBox.setCurrentText(f"{Js06Settings.get('save_image_patch')}")
+        self.ImageBasePath_pushButton.clicked.connect(self.image_base_path)
+        self.InferenceThreadCount_spinBox.setValue(Js06Settings.get('inferece_thread_count'))
+        self.MediaRecoverInterval_spinBox.setValue(Js06Settings.get('media_recover_interval'))
+        self.DatabaseHost_lineEdit.setText(Js06Settings.get('db_host'))
+        self.DatabasePort_lineEdit.setText(f"{Js06Settings.get('db_port')}")
+        self.DatabaseName_lineEdit.setText(Js06Settings.get('db_name'))
+        self.DatabaseAdmin_lineEdit.setText(Js06Settings.get('db_admin'))
+        self.DatabaseAdminPw_lineEdit.setText(Js06Settings.get('db_admin_password'))
+        self.DatabaseUser_lineEdit.setText(Js06Settings.get('db_user'))
+        self.DatabaseUserPw_lineEdit.setText(Js06Settings.get('db_user_password'))
+
+    def image_base_path(self) -> None:
+        self.qurl = QFileDialog.getExistingDirectory(self, "Select directory",
+                                                directory=Js06Settings.get('image_base_path'))
+
+    def save_setting(self) -> None:
+        Js06Settings.set('observation_period', self.ObsercationPeriod_spinBox.value())
+        Js06Settings.set('save_vista', self.SaveVista_comboBox.currentText())
+        Js06Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
+        if self.qurl is not None:
+            Js06Settings.set('image_base_path', self.qurl)
+        Js06Settings.set('inferece_thread_count', self.InferenceThreadCount_spinBox.value())
+        Js06Settings.set('media_recover_interval', self.MediaRecoverInterval_spinBox.value())
+        Js06Settings.set('db_host', self.DatabaseHost_lineEdit.text())
+        Js06Settings.set('db_port', f"{int(self.DatabasePort_lineEdit.text())}")
+        Js06Settings.set('db_name', self.DatabaseName_lineEdit.text())
+        Js06Settings.set('db_admin', self.DatabaseAdmin_lineEdit.text())
+        Js06Settings.set('db_admin_password', self.DatabaseAdminPw_lineEdit.text())
+        Js06Settings.set('db_user', self.DatabaseUser_lineEdit.text())
+        Js06Settings.set('db_user_password', self.DatabaseUserPw_lineEdit.text())
+
+
 class Js06VideoWidget(QWidget):
     """Video stream player using QVideoWidget
     """
@@ -455,22 +510,11 @@ class Js06VideoWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.viewer)
 
-        self.probe = QVideoProbe(self)
-        self.probe.videoFrameProbed.connect(self.on_videoFrameProbed)
-        self.probe.setSource(self.player)
-
-        # self.viewer.setGeometry(0, 0, 300, 300)
-        # self.viewer.setMinimumSize(600, 250)
-
     @pyqtSlot(str)
     def on_camera_change(self, uri: str) -> None:
         self.uri = uri
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
-
-    @pyqtSlot(QVideoFrame)
-    def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
-        self.video_frame_prepared.emit(frame)
 
 
 class Js06MainView(QMainWindow):
@@ -499,19 +543,18 @@ class Js06MainView(QMainWindow):
 
         self.actionEdit_Camera.triggered.connect(self.edit_camera)
         self.actionEdit_Target.triggered.connect(self.edit_target)
+        self.actionConfiguration.triggered.connect(self.configuration)
         self.actionAbout.triggered.connect(self.about_view)
 
         # Front video
         self.front_video_widget = Js06VideoWidget(self)
         self.front_vertical.addWidget(self.front_video_widget, 1)
-        self.front_video_widget.video_frame_prepared.connect(self._ctrl.update_front_video_frame)
         self._ctrl.front_camera_changed.connect(self.front_video_widget.on_camera_change)
         self._ctrl.front_camera_changed.emit(self._ctrl.get_front_camera_uri())
 
         # Rear video
         self.rear_video_widget = Js06VideoWidget(self)
         self.rear_vertical.addWidget(self.rear_video_widget, 1)
-        self.rear_video_widget.video_frame_prepared.connect(self._ctrl.update_rear_video_frame)
         self._ctrl.rear_camera_changed.connect(self.rear_video_widget.on_camera_change)
         self._ctrl.rear_camera_changed.emit(self._ctrl.get_rear_camera_uri())
 
@@ -530,6 +573,10 @@ class Js06MainView(QMainWindow):
     def edit_target(self) -> None:
         dlg = Js06TargetView(self)
         dlg.resize(self.width(), self.height())
+        dlg.exec_()
+
+    def configuration(self) -> None:
+        dlg = Js06ConfigView()
         dlg.exec_()
 
     def about_view(self) -> None:
