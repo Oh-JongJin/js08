@@ -9,6 +9,7 @@
 import argparse
 import sys
 
+from PyQt5.QtCore import QElapsedTimer
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 
@@ -16,6 +17,22 @@ from . import js06_rc
 from .controller import Js06MainCtrl
 from .model import Js06AttrModel
 from .view import Js06MainView
+
+
+class Js06Application(QApplication):
+
+    t = QElapsedTimer()
+
+    def notify(self, receiver, event):
+        self.t.start()
+        ret = QApplication.notify(self, receiver, event)
+        if(self.t.elapsed() > 10):
+            print(
+                f'Processing event type {event.type()} ' 
+                f'for object {receiver.objectName()} ' 
+                f'took {self.t.elapsed()}ms'
+                )
+        return ret
 
 
 def process_args():
@@ -39,7 +56,7 @@ def main():
         window_size = (int(width), int(height))
 
     # Create an instance of `QApplication`
-    app = QApplication(unparsed_args)
+    app = Js06Application(unparsed_args)
     # Create instances of the model
     model = Js06AttrModel()
     # Create instances of the controller
@@ -51,6 +68,7 @@ def main():
     view.setWindowIcon(app_icon)
     # Execute calculator's main loop
     sys.exit(app.exec())
+
 
 if __name__ == '__main__':
     do_profiling = False
