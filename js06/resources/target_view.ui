@@ -156,17 +156,8 @@
             </item>
             <item row="2" column="1">
              <widget class="QCheckBox" name="azimuth_check">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
               <property name="text">
                <string/>
-              </property>
-              <property name="tristate">
-               <bool>false</bool>
               </property>
              </widget>
             </item>
@@ -176,7 +167,7 @@
          <item>
           <widget class="QGroupBox" name="groupBox">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -323,6 +314,19 @@
               </item>
              </layout>
             </item>
+            <item row="10" column="2">
+             <widget class="QPushButton" name="delete_btn">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Delete Target</string>
+              </property>
+             </widget>
+            </item>
             <item row="6" column="2">
              <widget class="Line" name="line_4">
               <property name="sizePolicy">
@@ -402,22 +406,6 @@
              </widget>
             </item>
            </layout>
-<<<<<<< HEAD
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="delete_btn">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Delete Target</string>
-           </property>
-=======
->>>>>>> 0f16bd75146501351f7da6385cfdf631cad59bfb
           </widget>
          </item>
         </layout>

@@ -9,6 +9,7 @@
 import collections
 import os
 import sys
+import ast
 
 from PyQt5 import uic
 from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
@@ -227,32 +228,24 @@ class Js06TargetView(QDialog):
         ui_path = os.path.join(directory, 'resources', 'target_view.ui')
         uic.loadUi(ui_path, self)
         self._ctrl = parent._ctrl
-        self._model = self._ctrl.get_front_target()
-        self.cam_name = []
+        self._model_front = self._ctrl.get_front_target()
+        self._model_rear = self._ctrl.get_rear_target()
 
         self.target = []
         self.target_x = []
         self.target_y = []
         self.point_x = []
         self.point_y = []
-        self.size_x = []
-        self.size_y = []
-        self.ordinal = []
-        self.category = []
         self.distance = []
-        self.oxlist = []
         self.result = []
 
         self.get_target()
 
-        self.image = self._ctrl.front_video_frame.image().mirrored(False, True)
+        self.image = self._ctrl.grab_image('front')
         self.w = self.image.width()
         self.h = self.image.height()
         self.image_label.setPixmap(QPixmap.fromImage(self.image).scaled(self.w, self.h, Qt.KeepAspectRatio))
         self.image_label.setMaximumSize(self.width(), self.height())
-        # self.image_label.setMaximumHeight(self.height())
-
-        # self.groupBox.setMaximumHeight(self.height() / 2)
 
         self.blank_lbl = QLabel(self)
 
@@ -261,13 +254,7 @@ class Js06TargetView(QDialog):
         self.buttonBox.rejected.connect(self.rejected_btn)
         self.switch_btn.clicked.connect(self.switch_button)
         self.azimuth_check.stateChanged.connect(self.check)
-
-        # for i in range(len(self._ctrl.get_cameras())):
-        #     self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
-        # self.cameraCombo.addItems(self.cam_name)
-
-        # if self._ctrl.get_camera_models() in self.cam_name:
-        #     self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_models()))
+        self.frame_direction = 0
 
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
         self.combo_changed()
@@ -277,8 +264,20 @@ class Js06TargetView(QDialog):
         self.update()
 
     def switch_button(self):
-        # image = self._ctrl.get_front_image()
-        # image.convertToFormat(QImage.Format_Grayscale8)
+        if self.frame_direction >= 2:
+            self.frame_direction = 0
+
+        if self.frame_direction == 0:
+            self.image = self._ctrl.grab_image('rear')
+        else:
+            self.image = self._ctrl.grab_image('front')
+
+        self.w = self.image.width()
+        self.h = self.image.height()
+        self.image_label.setPixmap(QPixmap.fromImage(self.image).scaled(self.w, self.h, Qt.KeepAspectRatio))
+
+        self.frame_direction = self.frame_direction + 1
+
         self.update()
 
     def combo_changed(self) -> None:
@@ -296,19 +295,16 @@ class Js06TargetView(QDialog):
                 self.distanceEdit.setText("")
                 self.point_x_Edit.setText("")
                 self.point_y_Edit.setText("")
+        self.update()
 
     @pyqtSlot()
     def save_btn(self) -> None:
         result = []
-        # for i in range(len(self._ctrl.get_cameras())):
-        #     if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
-        #         address = self._ctrl.get_cameras()[i]['uri']
-        # self._ctrl.current_camera_changed.emit(address)
 
         for i in range(self.numberCombo.count()):
             self.numberCombo.setCurrentIndex(i)
             result.append({'label': f'{self.labelEdit.text()}',
-                           'distance': f'{float(self.distanceEdit.text())}',
+                           'distance': ast.literal_eval(self.distanceEdit.text()),
                            'roi': {
                                'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
                            }})
@@ -316,7 +312,7 @@ class Js06TargetView(QDialog):
         # TODO(Kyungwon): update camera db only, the current camera selection is
         # performed at camera view
         # Save Target through controller
-        self._ctrl.set_attr(result)
+        self._ctrl.update_cameras(result)
 
         self.close()
 
@@ -344,10 +340,7 @@ class Js06TargetView(QDialog):
             self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
             self.painter.drawText(x - 4, y - 10, f"{name}")
 
-        print("numberCombo - ", self.numberCombo.currentText())
-        # self.blank_lbl.resize(self.image_label.size())
         self.blank_lbl.setGeometry(self.image_label.geometry())
-        print("Paint")
 
         self.painter.end()
 
@@ -375,7 +368,7 @@ class Js06TargetView(QDialog):
             self.combo_changed()
             self.coordinator()
 
-            print("mousePressEvent - ", len(self.target))
+            print(f'Mouse press event - Add "{len(self.target)}th" target')
             # self.save_target()
             # self.get_target()
 
@@ -391,6 +384,8 @@ class Js06TargetView(QDialog):
                 del self.point_y[deleteIndex - 1]
                 del self.target[deleteIndex - 1]
                 self.combo_changed()
+
+        self.update()
 
     def coordinator(self) -> None:
         self.prime_y = [y / self.h for y in self.target_y]
@@ -411,7 +406,7 @@ class Js06TargetView(QDialog):
                 self.result[i]["distance"] = self.distance
 
     def get_target(self) -> None:
-        targets = self._model
+        targets = self._model_front
 
         self.numberCombo.clear()
         for i in range(len(targets)):
@@ -499,19 +494,12 @@ class Js06VideoWidget(QWidget):
         self.player.setVideoOutput(self.viewer)
         layout = QVBoxLayout(self)
         layout.addWidget(self.viewer)
-        # self.viewer.setGeometry(0, 0, 300, 300)
-        # self.viewer.setMinimumSize(600, 250)
 
     @pyqtSlot(str)
     def on_camera_change(self, uri: str) -> None:
         self.uri = uri
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
-
-    @pyqtSlot(QVideoFrame)
-    def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
-        self.frame_received = True
-        self.video_frame_prepared.emit(frame)
 
 
 class Js06MainView(QMainWindow):
