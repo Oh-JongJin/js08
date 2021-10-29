@@ -9,6 +9,7 @@
 import collections
 import os
 import sys
+import ast
 
 from PyQt5 import uic
 from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
@@ -189,7 +190,6 @@ class Js06CameraView(QDialog):
     def accepted(self) -> None:
         # Update camera db
         cameras = self._model.get_data()
-        # print(f'DEBUG: {cameras}')
         self._ctrl.update_cameras(cameras, update_target=False)
 
         # Insert a new attr document, with new front_cam and rear_cam.
@@ -227,9 +227,9 @@ class Js06TargetView(QDialog):
             directory = os.path.dirname(__file__)
         ui_path = os.path.join(directory, 'resources', 'target_view.ui')
         uic.loadUi(ui_path, self)
-
         self._ctrl = parent._ctrl
-        self._model = self._ctrl.get_front_target()
+        self._model_front = self._ctrl.get_front_target()
+        self._model_rear = self._ctrl.get_rear_target()
 
         self.target = []
         self.target_x = []
@@ -270,9 +270,10 @@ class Js06TargetView(QDialog):
             self.frame_direction = 0
 
         if self.frame_direction == 0:
-            self.image = self._ctrl.rear_video_frame.image().mirrored(False, True)
+            self.image = self._ctrl.grap_image('rear')
         else:
-            self.image = self._ctrl.front_video_frame.image().mirrored(False, True)
+            self.image = self._ctrl.grap_image('front')
+
         self.w = self.image.width()
         self.h = self.image.height()
         self.image_label.setPixmap(QPixmap.fromImage(self.image).scaled(self.w, self.h, Qt.KeepAspectRatio))
@@ -282,7 +283,6 @@ class Js06TargetView(QDialog):
         self.update()
 
     def combo_changed(self) -> None:
-        print(self.target)
         self.blank_lbl.paintEvent = self.blank_paintEvent
 
         for i in range(len(self.target)):
@@ -310,7 +310,7 @@ class Js06TargetView(QDialog):
         for i in range(self.numberCombo.count()):
             self.numberCombo.setCurrentIndex(i)
             result.append({'label': f'{self.labelEdit.text()}',
-                           'distance': f'{[float(self.distanceEdit.text())]}',
+                           'distance': ast.literal_eval(self.distanceEdit.text()),
                            'roi': {
                                'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
                            }})
@@ -320,8 +320,11 @@ class Js06TargetView(QDialog):
         # Save Target through controller
         # self._ctrl.set_attr(result)
 
-        print(f"result = {result}\n")
-        print(f"cameras = {self._model.get_data()}")
+        # print(self._model_front)
+        self._ctrl.update_cameras(result, update_target=True)
+
+        # print(f"result = {result}\n")
+        # print(f"cameras = {self._model.get_data()}")
 
         self.close()
 
@@ -349,9 +352,8 @@ class Js06TargetView(QDialog):
             target = self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
             self.painter.drawText(x - 4, y - 10, f"{name}")
 
-            if name == self.numberCombo.currentText():
-                print("name==Text()")
-                select_target = self.painter.drawLine(30*int(name), 30*int(name), 100*int(name), 100*int(name))
+            # if name == self.numberCombo.currentText():
+            #     select_target = self.painter.drawLine(30*int(name), 30*int(name), 100*int(name), 100*int(name))
 
         self.blank_lbl.setGeometry(self.image_label.geometry())
 
@@ -379,7 +381,7 @@ class Js06TargetView(QDialog):
             self.combo_changed()
             self.coordinator()
 
-            print(f'mousePressEvent - {len(self.target)}')
+            print(f'Mouse press event - Add "{len(self.target)}th" target')
             # self.save_target()
             # self.get_target()
 
@@ -397,6 +399,7 @@ class Js06TargetView(QDialog):
                 self.combo_changed()
 
         self.update()
+        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
 
     def coordinator(self) -> None:
         self.prime_y = [y / self.h for y in self.target_y]
@@ -417,7 +420,7 @@ class Js06TargetView(QDialog):
                 self.result[i]["distance"] = self.distance
 
     def get_target(self) -> None:
-        targets = self._model
+        targets = self._model_front
 
         self.numberCombo.clear()
         for i in range(len(targets)):
@@ -454,19 +457,17 @@ class Js06ConfigView(QDialog):
         ui_path = os.path.join(directory, 'resources', 'config_view.ui')
         uic.loadUi(ui_path, self)
 
-        self.qurl = None
+        self.image_base_path = None
 
-        self.buttonBox.accepted.connect(self.save_setting)
+        self.buttonBox.accepted.connect(self.write_values)
 
-        self.insert_setting()
+        self.read_values()
 
-    def insert_setting(self) -> None:
-        self.ObsercationPeriod_spinBox.setValue(Js06Settings.get('observation_period'))
+    def read_values(self) -> None:
         self.SaveVista_comboBox.setCurrentText(f"{Js06Settings.get('save_vista')}")
         self.SaveImagePatch_comboBox.setCurrentText(f"{Js06Settings.get('save_image_patch')}")
-        self.ImageBasePath_pushButton.clicked.connect(self.image_base_path)
+        self.ImageBasePath_pushButton.clicked.connect(self.open_ImageBasePath)
         self.InferenceThreadCount_spinBox.setValue(Js06Settings.get('inferece_thread_count'))
-        self.MediaRecoverInterval_spinBox.setValue(Js06Settings.get('media_recover_interval'))
         self.DatabaseHost_lineEdit.setText(Js06Settings.get('db_host'))
         self.DatabasePort_lineEdit.setText(f"{Js06Settings.get('db_port')}")
         self.DatabaseName_lineEdit.setText(Js06Settings.get('db_name'))
@@ -475,18 +476,16 @@ class Js06ConfigView(QDialog):
         self.DatabaseUser_lineEdit.setText(Js06Settings.get('db_user'))
         self.DatabaseUserPw_lineEdit.setText(Js06Settings.get('db_user_password'))
 
-    def image_base_path(self) -> None:
-        self.qurl = QFileDialog.getExistingDirectory(self, "Select directory",
+    def open_ImageBasePath(self) -> None:
+        self.image_base_path = QFileDialog.getExistingDirectory(self, "Select directory",
                                                 directory=Js06Settings.get('image_base_path'))
 
-    def save_setting(self) -> None:
-        Js06Settings.set('observation_period', self.ObsercationPeriod_spinBox.value())
+    def write_values(self) -> None:
         Js06Settings.set('save_vista', self.SaveVista_comboBox.currentText())
         Js06Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
-        if self.qurl is not None:
-            Js06Settings.set('image_base_path', self.qurl)
+        if self.image_base_path is not None:
+            Js06Settings.set('image_base_path', self.image_base_path)
         Js06Settings.set('inferece_thread_count', self.InferenceThreadCount_spinBox.value())
-        Js06Settings.set('media_recover_interval', self.MediaRecoverInterval_spinBox.value())
         Js06Settings.set('db_host', self.DatabaseHost_lineEdit.text())
         Js06Settings.set('db_port', f"{int(self.DatabasePort_lineEdit.text())}")
         Js06Settings.set('db_name', self.DatabaseName_lineEdit.text())

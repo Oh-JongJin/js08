@@ -7,5 +7,5 @@
 #     5jx2oh@gmail.com (Jongjin Oh)
 
 from js06.__main__ import main
+
 main()
-# end of run.py
