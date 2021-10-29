@@ -154,17 +154,10 @@ class Js06MainCtrl(QObject):
 
     @pyqtSlot()
     def start_broker(self) -> None:
-<<<<<<< HEAD
-        # If broker is already running, quit.
-        if self.broker:
-            return
-
         # If both video frames are not ready, quit.
         if self.front_video_frame is None or self.rear_video_frame is None:
             return
-        
-=======
->>>>>>> 0f16bd75146501351f7da6385cfdf631cad59bfb
+
         # if decomposed targets are not ready, quit.
         if self.front_target_prepared is False or self.rear_target_prepared is False:
             return
