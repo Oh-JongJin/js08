@@ -9,7 +9,6 @@
 import collections
 import os
 import sys
-import ast
 
 from PyQt5 import uic
 from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
@@ -228,24 +227,32 @@ class Js06TargetView(QDialog):
         ui_path = os.path.join(directory, 'resources', 'target_view.ui')
         uic.loadUi(ui_path, self)
         self._ctrl = parent._ctrl
-        self._model_front = self._ctrl.get_front_target()
-        self._model_rear = self._ctrl.get_rear_target()
+        self._model = self._ctrl.get_front_target()
+        self.cam_name = []
 
         self.target = []
         self.target_x = []
         self.target_y = []
         self.point_x = []
         self.point_y = []
+        self.size_x = []
+        self.size_y = []
+        self.ordinal = []
+        self.category = []
         self.distance = []
+        self.oxlist = []
         self.result = []
 
         self.get_target()
 
-        self.image = self._ctrl.grap_image('front')
+        self.image = self._ctrl.front_video_frame.image().mirrored(False, True)
         self.w = self.image.width()
         self.h = self.image.height()
         self.image_label.setPixmap(QPixmap.fromImage(self.image).scaled(self.w, self.h, Qt.KeepAspectRatio))
         self.image_label.setMaximumSize(self.width(), self.height())
+        # self.image_label.setMaximumHeight(self.height())
+
+        # self.groupBox.setMaximumHeight(self.height() / 2)
 
         self.blank_lbl = QLabel(self)
 
@@ -255,8 +262,12 @@ class Js06TargetView(QDialog):
         self.switch_btn.clicked.connect(self.switch_button)
         self.azimuth_check.stateChanged.connect(self.check)
 
-        # 0 = front, 1 = rear
-        self.frame_direction = 0
+        # for i in range(len(self._ctrl.get_cameras())):
+        #     self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
+        # self.cameraCombo.addItems(self.cam_name)
+
+        # if self._ctrl.get_camera_models() in self.cam_name:
+        #     self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_models()))
 
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
         self.combo_changed()
@@ -266,20 +277,8 @@ class Js06TargetView(QDialog):
         self.update()
 
     def switch_button(self):
-        if self.frame_direction >= 2:
-            self.frame_direction = 0
-
-        if self.frame_direction == 0:
-            self.image = self._ctrl.grap_image('rear')
-        else:
-            self.image = self._ctrl.grap_image('front')
-
-        self.w = self.image.width()
-        self.h = self.image.height()
-        self.image_label.setPixmap(QPixmap.fromImage(self.image).scaled(self.w, self.h, Qt.KeepAspectRatio))
-
-        self.frame_direction = self.frame_direction + 1
-
+        # image = self._ctrl.get_front_image()
+        # image.convertToFormat(QImage.Format_Grayscale8)
         self.update()
 
     def combo_changed(self) -> None:
@@ -297,7 +296,6 @@ class Js06TargetView(QDialog):
                 self.distanceEdit.setText("")
                 self.point_x_Edit.setText("")
                 self.point_y_Edit.setText("")
-        self.update()
 
     @pyqtSlot()
     def save_btn(self) -> None:
@@ -310,7 +308,7 @@ class Js06TargetView(QDialog):
         for i in range(self.numberCombo.count()):
             self.numberCombo.setCurrentIndex(i)
             result.append({'label': f'{self.labelEdit.text()}',
-                           'distance': ast.literal_eval(self.distanceEdit.text()),
+                           'distance': f'{float(self.distanceEdit.text())}',
                            'roi': {
                                'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
                            }})
@@ -318,13 +316,7 @@ class Js06TargetView(QDialog):
         # TODO(Kyungwon): update camera db only, the current camera selection is
         # performed at camera view
         # Save Target through controller
-        # self._ctrl.set_attr(result)
-
-        # print(self._model_front)
-        self._ctrl.update_cameras(result, update_target=True)
-
-        # print(f"result = {result}\n")
-        # print(f"cameras = {self._model.get_data()}")
+        self._ctrl.set_attr(result)
 
         self.close()
 
@@ -349,17 +341,19 @@ class Js06TargetView(QDialog):
 
         self.painter.setPen(QPen(Qt.red, 2))
         for name, x, y in zip(self.target, self.point_x, self.point_y):
-            target = self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
+            self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
             self.painter.drawText(x - 4, y - 10, f"{name}")
 
-            # if name == self.numberCombo.currentText():
-            #     select_target = self.painter.drawLine(30*int(name), 30*int(name), 100*int(name), 100*int(name))
-
+        print("numberCombo - ", self.numberCombo.currentText())
+        # self.blank_lbl.resize(self.image_label.size())
         self.blank_lbl.setGeometry(self.image_label.geometry())
+        print("Paint")
 
         self.painter.end()
 
     def blank_mousePressEvent(self, event) -> None:
+        self.update()
+
         x = int(event.pos().x() / self.blank_lbl.width() * self.image.width())
         y = int(event.pos().y() / self.blank_lbl.height() * self.image.height())
 
@@ -381,7 +375,7 @@ class Js06TargetView(QDialog):
             self.combo_changed()
             self.coordinator()
 
-            print(f'Mouse press event - Add "{len(self.target)}th" target')
+            print("mousePressEvent - ", len(self.target))
             # self.save_target()
             # self.get_target()
 
@@ -398,15 +392,12 @@ class Js06TargetView(QDialog):
                 del self.target[deleteIndex - 1]
                 self.combo_changed()
 
-        self.update()
-        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
-
     def coordinator(self) -> None:
         self.prime_y = [y / self.h for y in self.target_y]
         self.prime_x = [2 * x / self.w - 1 for x in self.target_x]
 
     def restoration(self) -> None:
-        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime_x]
+        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime1_x]
         self.target_y = [int(y * self.h) for y in self.prime_y]
 
     def save_target(self) -> None:
@@ -420,7 +411,7 @@ class Js06TargetView(QDialog):
                 self.result[i]["distance"] = self.distance
 
     def get_target(self) -> None:
-        targets = self._model_front
+        targets = self._model
 
         self.numberCombo.clear()
         for i in range(len(targets)):
@@ -466,7 +457,7 @@ class Js06ConfigView(QDialog):
     def read_values(self) -> None:
         self.SaveVista_comboBox.setCurrentText(f"{Js06Settings.get('save_vista')}")
         self.SaveImagePatch_comboBox.setCurrentText(f"{Js06Settings.get('save_image_patch')}")
-        self.ImageBasePath_pushButton.clicked.connect(self.open_ImageBasePath)
+        self.ImageBasePath_pushButton.clicked.connect(self.ask_image_base_path)
         self.InferenceThreadCount_spinBox.setValue(Js06Settings.get('inferece_thread_count'))
         self.DatabaseHost_lineEdit.setText(Js06Settings.get('db_host'))
         self.DatabasePort_lineEdit.setText(f"{Js06Settings.get('db_port')}")
@@ -476,9 +467,9 @@ class Js06ConfigView(QDialog):
         self.DatabaseUser_lineEdit.setText(Js06Settings.get('db_user'))
         self.DatabaseUserPw_lineEdit.setText(Js06Settings.get('db_user_password'))
 
-    def open_ImageBasePath(self) -> None:
+    def ask_image_base_path(self) -> None:
         self.image_base_path = QFileDialog.getExistingDirectory(self, "Select directory",
-                                                directory=Js06Settings.get('image_base_path'))
+                                                                directory=Js06Settings.get('image_base_path'))
 
     def write_values(self) -> None:
         Js06Settings.set('save_vista', self.SaveVista_comboBox.currentText())
@@ -502,12 +493,14 @@ class Js06VideoWidget(QWidget):
 
     def __init__(self, parent: QObject = None) -> None:
         super().__init__(parent)
-        
+
         self.viewer = QVideoWidget()
         self.player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
         self.player.setVideoOutput(self.viewer)
         layout = QVBoxLayout(self)
         layout.addWidget(self.viewer)
+        # self.viewer.setGeometry(0, 0, 300, 300)
+        # self.viewer.setMinimumSize(600, 250)
 
     @pyqtSlot(str)
     def on_camera_change(self, uri: str) -> None:
@@ -515,13 +508,18 @@ class Js06VideoWidget(QWidget):
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
 
+    @pyqtSlot(QVideoFrame)
+    def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
+        self.frame_received = True
+        self.video_frame_prepared.emit(frame)
+
 
 class Js06MainView(QMainWindow):
     restore_defaults_requested = pyqtSignal()
     main_view_closed = pyqtSignal()
     select_camera_requested = pyqtSignal()
 
-    def __init__(self, controller: Js06MainCtrl) -> None:
+    def __init__(self, controller: Js06MainCtrl, size: list = None) -> None:
         super().__init__()
 
         if getattr(sys, 'frozen', False):
@@ -544,6 +542,13 @@ class Js06MainView(QMainWindow):
         self.actionEdit_Target.triggered.connect(self.edit_target)
         self.actionConfiguration.triggered.connect(self.configuration)
         self.actionAbout.triggered.connect(self.about_view)
+
+        # Set size of Js06MainView
+        if size == None:
+            width, height = Js06Settings.get('window_size')
+        else:
+            width, height = size
+        self.resize(width, height)
 
         # Front video
         self.front_video_widget = Js06VideoWidget(self)
@@ -580,6 +585,7 @@ class Js06MainView(QMainWindow):
 
     def about_view(self) -> None:
         dlg = Js06AboutView()
+        dlg.setFixedSize(dlg.size())
         dlg.exec_()
 
     @pyqtSlot()
@@ -600,6 +606,12 @@ class Js06MainView(QMainWindow):
 
     # TODO(kwchun): its better to emit signal and process at the controller
     def closeEvent(self, event: QCloseEvent) -> None:
+        # Save currnet window size
+        window_size = self.size()
+        width = window_size.width()
+        height = window_size.height()
+        Js06Settings.set('window_size', (width, height))
+
         self._ctrl.set_normal_shutdown()
 
 

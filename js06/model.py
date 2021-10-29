@@ -15,7 +15,7 @@ import pymongo
 from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, QRect, QRunnable,
                           QSettings, QStandardPaths, Qt)
 from PyQt5.QtGui import QImage
-from tflite_runtime.interpreter import Interpreter
+import tflite_runtime.interpreter as tflite
 
 Js06TargetCategory = ['single', 'compound']
 Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
@@ -43,33 +43,35 @@ class Js06SimpleTarget(QRunnable):
             directory = sys._MEIPASS
         else:
             directory = os.path.dirname(__file__)
+
+        # Prepare model.
         model_path = os.path.join(directory, 'resources', 'js02.tflite')
-        self.interpreter = Interpreter(model_path=model_path)
+        self.interpreter = tflite.Interpreter(model_path=model_path)
         self.interpreter.allocate_tensors()
-        _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
+
+        # Prepare mask array.
+        input_details = self.interpreter.get_input_details()
+        height = input_details[0]['shape'][1]
+        width = input_details[0]['shape'][2]
         self.mask = self.img_to_arr(mask, width, height)
 
         self.setAutoDelete(False)
     
-    def set_input_tensor(self, interpreter: Interpreter, image: np.ndarray) -> None:
-        tensor_index = interpreter.get_input_details()[0]['index']
-        input_tensor = interpreter.tensor(tensor_index)()[0]
-        input_tensor[:, :] = image
+    def classify_image(self, interpreter: tflite.Interpreter, image: np.ndarray) -> bool:
+        """Discriminate the image.
 
-    def classify_image(self, interpreter: Interpreter, image: np.ndarray, top_k: int=1) -> list:
-        """Returns a sorted array of classification results."""
-        self.set_input_tensor(interpreter, image)
+        Return True if the model can discriminate the image.
+        """
+        input_details = interpreter.get_input_details()
+        input_data = np.expand_dims(image, axis=0)
+        interpreter.set_tensor(input_details[0]['index'], input_data)
         interpreter.invoke()
-        output_details = interpreter.get_output_details()[0]
-        output = np.squeeze(interpreter.get_tensor(output_details['index']))
+        output_details = interpreter.get_output_details()
 
-        # If the model is quantized (uint8 data), then dequantize the results
-        if output_details['dtype'] == np.uint8:
-            scale, zero_point = output_details['quantization']
-            output = scale * (output - zero_point)
-
-        ordered = np.argpartition(-output, top_k)
-        return [(i, output[i]) for i in ordered[:top_k]]
+        output_data = interpreter.get_tensor(output_details[0]['index'])
+        results = np.squeeze(output_data)
+        top = np.argmax(results)
+        return top == 1
 
     def clip_roi(self, epoch: int, vista: QImage) -> None:
         self.epoch = epoch
@@ -96,30 +98,20 @@ class Js06SimpleTarget(QRunnable):
         ptr = img.bits()
         ptr.setsize(int(height * width * 3))
         arr = np.frombuffer(ptr, np.uint8).reshape((height, width, 3))
-        
-        # # The following code is referring to:
-        # # https://newbedev.com/convert-pyqt5-qpixmap-to-numpy-ndarray
-        # bits = image.bits()
-        # bits.setsize(self._height * self._width * 3)
-        # img_arr = np.frombuffer(bits, np.uint8).reshape((self._height, self._width, 3))
-        
-        # # The following code is referring to:
-        # # https://www.programcreek.com/python/example/106694/PyQt5.QtGui.QImage
-        # tmp = image.bits().asstring(image.numBytes())
-        # img_arr = np.frombuffer(tmp, np.uint8).reshape((self._height, self._width, 3))
-        # img_arr = img_arr.astype(np.float32) / 255
+        arr = arr.astype(np.float32) / 255
 
         return arr
 
     def run(self):
-        _, height, width, _ = self.interpreter.get_input_details()[0]['shape']
+        input_details = self.interpreter.get_input_details()
+        height = input_details[0]['shape'][1]
+        width = input_details[0]['shape'][2]
         arr = self.img_to_arr(self.image, width, height)
 
         masked_arr = arr * self.mask
         results = self.classify_image(self.interpreter, masked_arr)
         
-        label_id, _ = results[0]
-        self.discernment = True if label_id else False
+        self.discernment = results
 
     def save_image(self):
         pass
@@ -367,7 +359,6 @@ class Js06Settings:
     settings = QSettings('sijung', 'js06')
 
     defaults = {
-        'observation_period': 1, # in minutes
         'save_vista': True,
         'save_image_patch': True,
         'image_base_path': os.path.join(
@@ -375,7 +366,6 @@ class Js06Settings:
             'js06'
         ),
         'inferece_thread_count': 2,
-        'media_recover_interval': 5, # in seconds
         # Database settings
         'db_host': 'localhost',
         'db_port': 27017,
@@ -385,7 +375,7 @@ class Js06Settings:
         'db_user': 'js06',
         'db_user_password': 'js06_pw',
         # Hidden settings
-        'window_size': [800, 600],
+        'window_size': (1230, 700),
         'normal_shutdown': False
     }
 
@@ -416,7 +406,6 @@ class Js06IoRunner(QRunnable):
         self.image = image
 
     def run(self):
-        print(f'DEBUG: {self.path}')
         self.image.save(self.path)
 
 

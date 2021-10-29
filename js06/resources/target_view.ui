@@ -402,6 +402,7 @@
              </widget>
             </item>
            </layout>
+<<<<<<< HEAD
           </widget>
          </item>
          <item>
@@ -415,6 +416,8 @@
            <property name="text">
             <string>Delete Target</string>
            </property>
+=======
+>>>>>>> 0f16bd75146501351f7da6385cfdf631cad59bfb
           </widget>
          </item>
         </layout>
