@@ -43,12 +43,16 @@ class Js06MainCtrl(QObject):
         self.front_decomposed_targets = []
         self.rear_decomposed_targets = []
 
+        self.front_target_prepared = False
+        self.rear_target_prepared = False
+
         self.init_db()
 
         self.observation_timer = QTimer(self)
         self.front_camera_changed.connect(self.decompose_front_targets)
         self.rear_camera_changed.connect(self.decompose_rear_targets)
 
+        self.broker_running = False
         self.start_observation_timer()
 
     def init_db(self):
@@ -76,7 +80,9 @@ class Js06MainCtrl(QObject):
 
         Parameters:
         """
+        self.front_target_prepared = False
         self.decompose_targets('front')
+        self.front_target_prepared = True
 
     @pyqtSlot(str)
     def decompose_rear_targets(self, _: str) -> None:
@@ -84,9 +90,11 @@ class Js06MainCtrl(QObject):
 
         Parameters:
         """
+        self.rear_target_prepared = False
         self.decompose_targets('rear')
+        self.rear_target_prepared = True
 
-    def decompose_targets(self, direction: str = 'front') -> None:
+    def decompose_targets(self, direction: str) -> None:
         """Make list of SimpleTarget by decoposing compound targets.
 
         Parameters:
@@ -123,8 +131,6 @@ class Js06MainCtrl(QObject):
         elif direction == 'rear':
             self.rear_decomposed_targets = decomposed_targets
 
-        self.rear_target_decomposed.emit()
-
     def read_mask(self, path: str) -> np.ndarray:
         """Read mask image and return 
 
@@ -139,20 +145,21 @@ class Js06MainCtrl(QObject):
 
     def start_observation_timer(self) -> None:
         print('DEBUG(start_observation_timer):', QTime.currentTime().toString())
-        self.init_broker()
         self.observation_timer.setInterval(1000) # every one second
         self.observation_timer.timeout.connect(self.start_broker)
         self.observation_timer.start()
 
     @pyqtSlot()
     def start_broker(self) -> None:
-        # If broker is already running, quit.
-        if self.broker:
-            return
-        
         # if decomposed targets are not ready, quit.
-        if len(self.front_decomposed_targets) == 0 or len(self.rear_decomposed_targets) == 0:
+        if self.front_target_prepared is False or self.rear_target_prepared is False:
             return
+
+        # If broker is already running, quit.
+        if self.broker_running:
+            return
+        else:
+            self.broker_running = True
 
         self.broker = Js06InferenceBroker(self)
         self.broker_thread = QThread()
@@ -160,12 +167,12 @@ class Js06MainCtrl(QObject):
         self.broker_thread.started.connect(self.broker.run)
         self.broker.finished.connect(self.broker_thread.quit)
         self.broker.finished.connect(self.postprocessing)
-        self.broker.finished.connect(self.init_broker)
+        self.broker.finished.connect(self.finalize_broker)
         self.broker_thread.start()
 
     @pyqtSlot()
-    def init_broker(self):
-        self.broker = None
+    def finalize_broker(self):
+        self.broker_running = False
 
     @pyqtSlot()
     def postprocessing(self):
@@ -243,10 +250,10 @@ class Js06MainCtrl(QObject):
         runner = Js06IoRunner(path, image)
         self.writer_pool.start(runner)
     
-    def grap_image(self, direction: str = 'front') -> QImage:
+    def grab_image(self, direction: str) -> QImage:
         """
         Parameters:
-            direction: 'front' or 'rear', default is 'front'
+            direction: 'front' or 'rear'
         """
         if direction == 'front':
             uri = self.get_front_camera_uri()
@@ -371,8 +378,8 @@ class Js06InferenceBroker(QObject):
         
     def run(self):
         epoch = QDateTime.currentSecsSinceEpoch()
-        front_image = self._ctrl.grap_image('front')
-        rear_image = self._ctrl.grap_image('rear')
+        front_image = self._ctrl.grab_image('front')
+        rear_image = self._ctrl.grab_image('rear')
 
         if Js06Settings.get('save_vista'):
             basepath = Js06Settings.get('image_base_path')

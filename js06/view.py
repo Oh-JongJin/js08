@@ -15,7 +15,7 @@ from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
                            QLineSeries, QPolarChart, QScatterSeries,
                            QValueAxis)
 from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, QUrl, pyqtSignal,
-                          pyqtSlot, QStandardPaths)
+                          pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QColor, QPainter, QPen, QPixmap
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame
 from PyQt5.QtMultimediaWidgets import QVideoWidget
@@ -189,7 +189,6 @@ class Js06CameraView(QDialog):
     def accepted(self) -> None:
         # Update camera db
         cameras = self._model.get_data()
-        # print(f'DEBUG: {cameras}')
         self._ctrl.update_cameras(cameras, update_target=False)
 
         # Insert a new attr document, with new front_cam and rear_cam.
@@ -549,7 +548,6 @@ class Js06MainView(QMainWindow):
             width, height = Js06Settings.get('window_size')
         else:
             width, height = size
-        print('DEBUG:', type(width), width, type(height), height)
         self.resize(width, height)
 
         # Front video
@@ -615,6 +613,7 @@ class Js06MainView(QMainWindow):
         Js06Settings.set('window_size', (width, height))
 
         self._ctrl.set_normal_shutdown()
+
 
 if __name__ == '__main__':
     import sys
