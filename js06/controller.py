@@ -274,14 +274,6 @@ class Js06MainCtrl(QObject):
             image = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
         return image
 
-    @pyqtSlot(QVideoFrame)
-    def update_front_video_frame(self, video_frame: QVideoFrame) -> None:
-        self.front_video_frame = video_frame
-
-    @pyqtSlot(QVideoFrame)
-    def update_rear_video_frame(self, video_frame: QVideoFrame) -> None:
-        self.rear_video_frame = video_frame
-
     @pyqtSlot()
     def get_front_camera_uri(self) -> str:
         attr = self._model.read_attr()
