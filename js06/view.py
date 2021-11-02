@@ -239,7 +239,7 @@ class Js06TargetView(QDialog):
         self.distance = []
         self.result = []
 
-        self.get_target()
+        self.get_target("front")
 
         self.image = self._ctrl.grab_image('front')
         self.w = self.image.width()
@@ -269,8 +269,10 @@ class Js06TargetView(QDialog):
 
         if self.frame_direction == 0:
             self.image = self._ctrl.grab_image('rear')
+            self.get_target("rear")
         else:
             self.image = self._ctrl.grab_image('front')
+            self.get_target("front")
 
         self.w = self.image.width()
         self.h = self.image.height()
@@ -299,20 +301,33 @@ class Js06TargetView(QDialog):
 
     @pyqtSlot()
     def save_btn(self) -> None:
-        result = []
+        self.combo_changed()
+
+        _id = self._ctrl.get_attr()
+        if self.frame_direction == 0:
+            _id = _id['front_camera']['camera_id']
+        else:
+            _id = _id['rear_camera']['camera_id']
 
         for i in range(self.numberCombo.count()):
             self.numberCombo.setCurrentIndex(i)
-            result.append({'label': f'{self.labelEdit.text()}',
-                           'distance': ast.literal_eval(self.distanceEdit.text()),
-                           'roi': {
-                               'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
-                           }})
+            test = [{
+                "_id": _id,
+                "targets": [{
+                    "label": f"{self.labelEdit.text()}",
+                    "distance": ast.literal_eval(self.distanceEdit.text()),
+                    "mask": [f"{i + 1}-1.png", f"{i + 1}-2.png"],
+                    # "azimuth": int(self.azimuthEdit.text()),
+                    "roi": {
+                        "point": [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
+                    }
+                }]
+            }]
 
         # TODO(Kyungwon): update camera db only, the current camera selection is
         # performed at camera view
         # Save Target through controller
-        self._ctrl.update_cameras(result)
+        self._ctrl.update_cameras(test, True)
 
         self.close()
 
@@ -405,10 +420,16 @@ class Js06TargetView(QDialog):
                 self.result[i]['roi']['point'][1] = self.point_y
                 self.result[i]["distance"] = self.distance
 
-    def get_target(self) -> None:
-        targets = self._model_front
+    def get_target(self, direction: str) -> None:
+        self.result = None
+
+        if direction == "front":
+            targets = self._model_front
+        elif direction == "rear":
+            targets = self._model_rear
 
         self.numberCombo.clear()
+
         for i in range(len(targets)):
             self.numberCombo.addItem(str(i + 1))
         self.result = targets

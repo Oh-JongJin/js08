@@ -39,19 +39,17 @@
             {
                 "label": "2",
                 "distance": [
-                    5,
                     10
                 ],
                 "mask": [
-                    "2-1.png",
-                    "2-2.png"
+                    "2-1.png"
                 ],
                 "wedge": "NW",
                 "azimuth": 300,
                 "roi": {
                     "point": [
-                        559,
-                        299
+                        731,
+                        310
                     ],
                     "size": [
                         30,
@@ -62,19 +60,17 @@
             {
                 "label": "3",
                 "distance": [
-                    5,
-                    10
+                    1.6
                 ],
                 "mask": [
-                    "3-1.png",
-                    "3-2.png"
+                    "3-1.png"
                 ],
                 "wedge": "N",
                 "azimuth": 0,
                 "roi": {
                     "point": [
-                        559,
-                        299
+                        993,
+                        320
                     ],
                     "size": [
                         30,
@@ -85,19 +81,17 @@
             {
                 "label": "4",
                 "distance": [
-                    5,
-                    10
+                    4
                 ],
                 "mask": [
-                    "4-1.png",
-                    "4-2.png"
+                    "4-1.png"
                 ],
                 "wedge": "NE",
                 "azimuth": 25,
                 "roi": {
                     "point": [
-                        559,
-                        299
+                        620,
+                        315
                     ],
                     "size": [
                         30,
