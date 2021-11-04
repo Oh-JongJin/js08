@@ -237,6 +237,8 @@ class Js06TargetView(QDialog):
         self.point_x = []
         self.point_y = []
         self.distance = []
+        self.size_x = []
+        self.size_y = []
         self.result = []
 
         self.get_target("front")
@@ -407,7 +409,7 @@ class Js06TargetView(QDialog):
         self.prime_x = [2 * x / self.w - 1 for x in self.target_x]
 
     def restoration(self) -> None:
-        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime1_x]
+        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime_x]
         self.target_y = [int(y * self.h) for y in self.prime_y]
 
     def save_target(self) -> None:
@@ -439,6 +441,11 @@ class Js06TargetView(QDialog):
             self.point_x.append(self.result[i]['roi']['point'][0])
             self.point_y.append(self.result[i]['roi']['point'][1])
             self.distance.append(self.result[i]['distance'])
+            self.size_x.append(self.result[i]['roi']['size'][0])
+            self.size_y.append(self.result[i]['roi']['size'][1])
+
+        self.point_x = [round(x * 1053 / 6096, 3) for x in self.point_x]
+        self.point_y = [round(y * 646 / 2540, 3) for y in self.point_y]
 
 
 class Js06AboutView(QDialog):
