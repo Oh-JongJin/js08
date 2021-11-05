@@ -11,11 +11,13 @@ import platform
 import sys
 
 import numpy as np
+import onnxruntime as ort
 import pymongo
+
 from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, QRect, QRunnable,
                           QSettings, QStandardPaths, Qt)
 from PyQt5.QtGui import QImage
-import tflite_runtime.interpreter as tflite
+
 
 Js06TargetCategory = ['single', 'compound']
 Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
@@ -45,30 +47,26 @@ class Js06SimpleTarget(QRunnable):
             directory = os.path.dirname(__file__)
 
         # Prepare model.
-        model_path = os.path.join(directory, 'resources', 'js02.tflite')
-        self.interpreter = tflite.Interpreter(model_path=model_path)
-        self.interpreter.allocate_tensors()
+        model_path = os.path.join(directory, 'resources', 'js02.onnx')
+        providers = ['CPUExecutionProvider']
+        self.session = ort.InferenceSession(model_path, providers=providers)
 
         # Prepare mask array.
-        input_details = self.interpreter.get_input_details()
-        height = input_details[0]['shape'][1]
-        width = input_details[0]['shape'][2]
+        input_shape = self.session.get_inputs()[0].shape
+        height = input_shape[1]
+        width = input_shape[2]
         self.mask = self.img_to_arr(mask, width, height)
 
         self.setAutoDelete(False)
     
-    def classify_image(self, interpreter: tflite.Interpreter, image: np.ndarray) -> bool:
+    def classify_image(self, sess: ort.InferenceSession, image: np.ndarray) -> bool:
         """Discriminate the image.
 
         Return True if the model can discriminate the image.
         """
-        input_details = interpreter.get_input_details()
         input_data = np.expand_dims(image, axis=0)
-        interpreter.set_tensor(input_details[0]['index'], input_data)
-        interpreter.invoke()
-        output_details = interpreter.get_output_details()
-
-        output_data = interpreter.get_tensor(output_details[0]['index'])
+        input_name = sess.get_inputs()[0].name
+        output_data = sess.run(None, {input_name: input_data})
         results = np.squeeze(output_data)
         top = np.argmax(results)
         return top == 1
@@ -103,13 +101,13 @@ class Js06SimpleTarget(QRunnable):
         return arr
 
     def run(self):
-        input_details = self.interpreter.get_input_details()
-        height = input_details[0]['shape'][1]
-        width = input_details[0]['shape'][2]
+        input_shape = self.session.get_inputs()[0].shape
+        height = input_shape[1]
+        width = input_shape[2]
         arr = self.img_to_arr(self.image, width, height)
 
         masked_arr = arr * self.mask
-        results = self.classify_image(self.interpreter, masked_arr)
+        results = self.classify_image(self.session, masked_arr)
         
         self.discernment = results
 
