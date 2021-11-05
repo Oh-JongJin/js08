@@ -241,8 +241,6 @@ class Js06TargetView(QDialog):
         self.size_y = []
         self.result = []
 
-        self.get_target("front")
-
         self.image = self._ctrl.grab_image('front')
         self.w = self.image.width()
         self.h = self.image.height()
@@ -261,6 +259,8 @@ class Js06TargetView(QDialog):
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
         self.combo_changed()
         self.blank_lbl.raise_()
+
+        self.get_target("front")
 
     def check(self) -> None:
         self.update()
@@ -353,8 +353,8 @@ class Js06TargetView(QDialog):
                                        self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
 
         self.painter.setPen(QPen(Qt.red, 2))
-        for name, x, y in zip(self.target, self.point_x, self.point_y):
-            self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
+        for name, x, y, sx, sy in zip(self.target, self.point_x, self.point_y, self.size_x, self.size_y):
+            self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), int(sx), int(sy))
             self.painter.drawText(x - 4, y - 10, f"{name}")
 
         self.blank_lbl.setGeometry(self.image_label.geometry())
@@ -362,10 +362,8 @@ class Js06TargetView(QDialog):
         self.painter.end()
 
     def blank_mousePressEvent(self, event) -> None:
-        self.update()
-
-        x = int(event.pos().x() / self.blank_lbl.width() * self.image.width())
-        y = int(event.pos().y() / self.blank_lbl.height() * self.image.height())
+        x = int(event.pos().x() / self.blank_lbl.width() * self.w)
+        y = int(event.pos().y() / self.blank_lbl.height() * self.h)
 
         for i in range(len(self.target)):
             self.target[i] = i + 1
@@ -378,6 +376,8 @@ class Js06TargetView(QDialog):
 
             self.point_x.append(int(event.pos().x()))
             self.point_y.append(int(event.pos().y()))
+            self.size_x.append(30)
+            self.size_y.append(30)
 
             self.target.append(len(self.point_x))
             self.distance.append(0)
@@ -387,7 +387,7 @@ class Js06TargetView(QDialog):
 
             print(f'Mouse press event - Add "{len(self.target)}th" target')
             # self.save_target()
-            # self.get_target()
+            # self.get_target('front')
 
         if event.buttons() == Qt.RightButton:
             deleteIndex = self.numberCombo.currentIndex() + 1
@@ -423,7 +423,13 @@ class Js06TargetView(QDialog):
                 self.result[i]["distance"] = self.distance
 
     def get_target(self, direction: str) -> None:
-        self.result = None
+        self.update()
+        self.target = []
+        self.point_x = []
+        self.point_y = []
+        self.distance = []
+        self.size_x = []
+        self.size_y = []
 
         if direction == "front":
             targets = self._model_front
@@ -444,8 +450,10 @@ class Js06TargetView(QDialog):
             self.size_x.append(self.result[i]['roi']['size'][0])
             self.size_y.append(self.result[i]['roi']['size'][1])
 
-        self.point_x = [round(x * 1053 / 6096, 3) for x in self.point_x]
-        self.point_y = [round(y * 646 / 2540, 3) for y in self.point_y]
+        self.point_x = [round(x * 1053 / self.w, 3) for x in self.point_x]
+        self.point_y = [round(y * 646 / self.h, 3) for y in self.point_y]
+        self.size_x = [round(x * 1053 / self.w, 3) for x in self.size_x]
+        self.size_y = [round(y * 646 / self.h, 3) for y in self.size_y]
 
 
 class Js06AboutView(QDialog):
