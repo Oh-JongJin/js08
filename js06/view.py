@@ -422,6 +422,9 @@ class Js06TargetView(QDialog):
 
     def get_target(self, direction: str) -> None:
         self.update()
+
+        # Initialize variable
+        # This is because variables overlap
         self.target = []
         self.point_x = []
         self.point_y = []
@@ -429,10 +432,7 @@ class Js06TargetView(QDialog):
         self.size_x = []
         self.size_y = []
 
-        if direction == "front":
-            targets = self._ctrl.get_target('front')
-        elif direction == "rear":
-            targets = self._ctrl.get_target("rear")
+        targets = self._ctrl.get_target(direction)
 
         self.numberCombo.clear()
 
@@ -448,10 +448,12 @@ class Js06TargetView(QDialog):
             self.size_x.append(self.result[i]['roi']['size'][0])
             self.size_y.append(self.result[i]['roi']['size'][1])
 
-        self.point_x = [round(x * 1053 / self.w, 3) for x in self.point_x]
-        self.point_y = [round(y * 646 / self.h, 3) for y in self.point_y]
-        self.size_x = [round(x * 1053 / self.w, 3) for x in self.size_x]
-        self.size_y = [round(y * 646 / self.h, 3) for y in self.size_y]
+        # 1053 is self.image_label.width
+        # 646 is self.image_label.height
+        self.point_x = [int(x * 1053 / self.w) for x in self.point_x]
+        self.point_y = [int(y * 646 / self.h) for y in self.point_y]
+        self.size_x = [int(x * 1053 / self.w) for x in self.size_x]
+        self.size_y = [int(y * 646 / self.h) for y in self.size_y]
 
 
 class Js06AboutView(QDialog):
