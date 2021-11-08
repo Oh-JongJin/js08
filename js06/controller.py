@@ -277,13 +277,9 @@ class Js06MainCtrl(QObject):
         attr = self._model.read_attr()
         return attr['rear_camera']['uri']
 
-    def get_front_target(self) -> list:
+    def get_target(self, direction: str) -> list:
         attr = self._model.read_attr()
-        return attr['front_camera']['targets']
-
-    def get_rear_target(self) -> list:
-        attr = self._model.read_attr()
-        return attr['rear_camera']['targets']
+        return attr[f'{direction}_camera']['targets']
 
     def get_camera_table_model(self) -> dict:
         cameras = self.get_cameras()

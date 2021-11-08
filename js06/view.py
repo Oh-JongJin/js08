@@ -228,8 +228,6 @@ class Js06TargetView(QDialog):
         ui_path = os.path.join(directory, 'resources', 'target_view.ui')
         uic.loadUi(ui_path, self)
         self._ctrl = parent._ctrl
-        self._model_front = self._ctrl.get_front_target()
-        self._model_rear = self._ctrl.get_rear_target()
 
         self.target = []
         self.target_x = []
@@ -432,9 +430,9 @@ class Js06TargetView(QDialog):
         self.size_y = []
 
         if direction == "front":
-            targets = self._model_front
+            targets = self._ctrl.get_target('front')
         elif direction == "rear":
-            targets = self._model_rear
+            targets = self._ctrl.get_target("rear")
 
         self.numberCombo.clear()
 
