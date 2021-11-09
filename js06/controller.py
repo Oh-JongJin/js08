@@ -9,6 +9,7 @@
 import json
 import os
 import sys
+from typing import List
 
 import cv2
 import numpy as np
@@ -397,7 +398,7 @@ class Js06InferenceWorker(QObject):
         self.batch_size = Js06Settings.get('inference_batch_size')
 
         # Prepare model.
-        model_path = os.path.join(directory, 'resources', 'js02.onnx')
+        model_path = os.path.join(directory, 'resources', 'js08_1636343249.onnx')
         providers = ['CPUExecutionProvider']
         self.session = ort.InferenceSession(model_path, providers=providers)
 
@@ -424,17 +425,16 @@ class Js06InferenceWorker(QObject):
         path = QDir.cleanPath(os.path.join(dir, filename))
         image.save(path)
 
-    def classify_image(self, image: np.ndarray) -> bool:
+    def classify_image(self, image: np.ndarray) -> np.ndarray:
         """Discriminate the image.
 
-        Return True if the model can discriminate the image.
+        Return 1 if the model can discriminate the image, 0 otherwise.
         """
         input_data = image
         input_name = self.session.get_inputs()[0].name
         output_data = self.session.run(None, {input_name: input_data})
-        results = np.squeeze(output_data)
-        top = np.argmax(results)
-        return top == 1
+        tops = np.argmax(output_data, axis=-1)
+        return np.squeeze(tops)
 
     def run(self):
         front_image = self.grab_image(self.front_uri)
@@ -459,58 +459,40 @@ class Js06InferenceWorker(QObject):
             filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
             self.save_image(dir, filename, rear_image)
         
-        # padding_size = self.batch_size - (len(self.front_targets) % self.batch_size)
-        # result = np.zeros(len(self.front_targets) + padding_size)
-        # for i, target in enumerate(self.front_targets):
-        #     if i % self.batch_size == 0:
-        #         data = np.zeros(
-        #             (self.batch_size, self.input_height, self.input_width, 3), 
-        #             dtype=np.float32
-        #             )
+        # Discriminate the targets of front camera
+        self.classify_batch(self.front_targets, front_image)
 
-        #     roi_image = target.clip_roi(front_image)
-        #     arr = target.img_to_arr(roi_image, self.input_width, self.input_height)
-        #     masked_arr = arr * target.mask
-        #     data[i % self.batch_size] = masked_arr
-
-        #     if i % self.batch_size == self.batch_size - 1:
-        #         result[i: i + self.batch_size] = self.classify_image(data)
-
-        # for i, target in enumerate(self.front_targets):
-        #     target.discernment = result[i] is True
-
-        # padding_size = self.batch_size - (len(self.rear_targets) % self.batch_size)
-        # result = np.zeros(len(self.rear_targets) + padding_size)
-        # for i, target in enumerate(self.rear_targets):
-        #     if i % self.batch_size == 0:
-        #         data = np.zeros(
-        #             (self.batch_size, self.input_height, self.input_width, 3),
-        #             np.float32
-        #             )
-
-        #     roi_image = target.clip_roi(rear_image)
-        #     arr = target.img_to_arr(roi_image, self.input_width, self.input_height)
-        #     masked_arr = arr * target.mask
-        #     data[i % self.batch_size] = masked_arr
-
-        #     if i % self.batch_size == self.batch_size - 1:
-        #         result[i: i + self.batch_size] = self.classify_image(data)
-
-        # for i, target in enumerate(self.rear_targets):
-        #     target.discernment = result[i] is True
-
-        for i, target in enumerate(self.front_targets):
-            roi_image = target.clip_roi(front_image)
-            arr = target.img_to_arr(roi_image, self.input_width, self.input_height)
-            masked_arr = np.expand_dims(arr * target.mask, 0)
-            result = self.classify_image(masked_arr)
-            target.discernment = np.squeeze(result == 1)
-
-        for i, target in enumerate(self.rear_targets):
-            roi_image = target.clip_roi(rear_image)
-            arr = target.img_to_arr(roi_image, self.input_width, self.input_height)
-            masked_arr = np.expand_dims(arr * target.mask, 0)
-            result = self.classify_image(masked_arr)
-            target.discernment = np.squeeze(result == 1)
+        # Discriminate the targets of rear camera
+        self.classify_batch(self.rear_targets, rear_image)
 
         self.finished.emit()
+
+    def classify_batch(self, targets: List[Js06SimpleTarget], vista: QImage):
+        """Discriminate image batch
+
+        Parameters:
+            targets: List of Js06SimpleTarget
+            vista: QImage
+        """
+        padding_size = -len(targets) % self.batch_size
+        result = np.zeros(len(targets) + padding_size)
+        for i, target in enumerate(targets):
+            if i % self.batch_size == 0:
+                data = np.zeros(
+                    (self.batch_size, self.input_height, self.input_width, 3), 
+                    dtype=np.float32
+                    )
+
+            roi_image = target.clip_roi(vista)
+            arr = target.img_to_arr(roi_image, self.input_width, self.input_height)
+            masked_arr = arr * target.mask
+            data[i % self.batch_size] = masked_arr
+
+            if i % self.batch_size == self.batch_size - 1:
+                result[i - self.batch_size + 1: i + 1] = self.classify_image(data)
+            elif i == len(targets) - 1:
+                chunk_size = len(targets) % self.batch_size
+                result[i - chunk_size + 1:] = self.classify_image(data)
+
+        for i, target in enumerate(targets):
+            target.discernment = result[i] == 1
