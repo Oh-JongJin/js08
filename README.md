@@ -70,7 +70,7 @@ docker run --name mongodb -d -p 27017:27017 mongo
 ### Video Codecs
 #### Windows
 For Windows, DirectShow filters are required to play RTSP video streams. Download one of the following filter packs:
-- K-Lite:: https://files3.codecguide.com/K-Lite_Codec_Pack_1625_Basic.exe
+- LAV filter: https://github.com/Nevcairiel/LAVFilters/releases
 
 #### Ubuntu 18.04  
 For Linux, install GStreamer: 
@@ -94,3 +94,7 @@ ImportError: Microsoft Visual C++ Redistributable for Visual Studio 2019 not ins
 Please, download and install the required packages from:
 https://docs.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170
 
+
+### JS-08 freezes after a few minutes after starting on Windows.
+It is known that JS-08 with K-Lite Codec Pack crashes after a few minutes after 
+starting on Windows 10. Please, use the LAV filter instead.
