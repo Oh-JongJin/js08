@@ -255,7 +255,6 @@ class Js06TargetView(QDialog):
         self.frame_direction = 0
 
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
-        self.combo_changed()
         self.blank_lbl.raise_()
 
         self.get_target("front")
@@ -286,8 +285,9 @@ class Js06TargetView(QDialog):
         self.blank_lbl.paintEvent = self.blank_paintEvent
 
         for i in range(len(self.target)):
-            if self.numberCombo.currentText() == str(i + 1):
-                self.labelEdit.setText(str(self.target[i]))
+            if self.numberCombo.currentText() == self.target[i]:
+                # self.labelEdit.setText(str(self.target[i]))
+                self.labelEdit.setText(self.numberCombo.currentText())
                 self.distanceEdit.setText(str(self.distance[i]))
                 self.point_x_Edit.setText(str(self.point_x[i]))
                 self.point_y_Edit.setText(str(self.point_y[i]))
@@ -319,7 +319,7 @@ class Js06TargetView(QDialog):
                                        self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
 
         self.painter.setPen(QPen(Qt.red, 2))
-        for name, x, y, sx, sy in zip(self.target, self.point_x, self.point_y, self.size_x, self.size_y):
+        for name, x, y, sx, sy in zip(self.target, self.coor_point_x, self.coor_point_y, self.size_x, self.size_y):
             self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), int(sx), int(sy))
             self.painter.drawText(x - 4, y - 10, f"{name}")
 
@@ -379,6 +379,11 @@ class Js06TargetView(QDialog):
         self.target_y = [int(y * self.h) for y in self.prime_y]
 
     def save_target(self) -> None:
+        label = self.labelEdit.text()
+        distance = ast.literal_eval(self.distanceEdit.text())
+        x = int(self.point_x_Edit.text())
+        y = int(self.point_y_Edit.text())
+
         self.combo_changed()
 
         _id = self._ctrl.get_attr()
@@ -387,25 +392,21 @@ class Js06TargetView(QDialog):
         else:
             _id = _id['rear_camera']['camera_id']
 
-        for i in range(self.numberCombo.count()):
-            self.numberCombo.setCurrentIndex(i)
-            test = [{
-                "_id": _id,
-                "targets": [{
-                    "label": f"{self.labelEdit.text()}",
-                    "distance": ast.literal_eval(self.distanceEdit.text()),
-                    "mask": [f"{i + 1}-1.png", f"{i + 1}-2.png"],
-                    # "azimuth": int(self.azimuthEdit.text()),
-                    "roi": {
-                        "point": [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
-                    }
-                }]
+        info = [{
+            "_id": _id,
+            "targets": [{
+                "label": label,
+                "distance": distance,
+                # "mask": [f"{int(self.labelEdit.text()) + 1}-1.png", f"{int(self.labelEdit.text()) + 1}-2.png"],
+                "roi": {"point": [x, y]}
             }]
+        }]
 
         # TODO(Kyungwon): update camera db only, the current camera selection is
         # performed at camera view
         # Save Target through controller
-        self._ctrl.update_cameras(test, True)
+        self._ctrl.update_cameras(info, True)
+        print(info)
 
         self.close()
 
@@ -423,8 +424,6 @@ class Js06TargetView(QDialog):
 
         self.numberCombo.clear()
         for i in range(len(self.result)):
-            self.numberCombo.addItem(str(i + 1))
-
             self.target.append(self.result[i]['label'])
             self.point_x.append(self.result[i]['roi']['point'][0])
             self.point_y.append(self.result[i]['roi']['point'][1])
@@ -432,12 +431,14 @@ class Js06TargetView(QDialog):
             self.size_x.append(self.result[i]['roi']['size'][0])
             self.size_y.append(self.result[i]['roi']['size'][1])
 
+        self.numberCombo.addItems(self.target)
+
         # 1053 is self.image_label.width
         # 646 is self.image_label.height
-        self.point_x = [int(x * 1053 / self.w) for x in self.point_x]
-        self.point_y = [int(y * 646 / self.h) for y in self.point_y]
-        self.size_x = [int(x * 1053 / self.w) for x in self.size_x]
-        self.size_y = [int(y * 646 / self.h) for y in self.size_y]
+        self.coor_point_x = [int(x * 1053 / self.w) for x in self.point_x]
+        self.coor_point_y = [int(y * 646 / self.h) for y in self.point_y]
+        self.coor_size_x = [int(x * 1053 / self.w) for x in self.size_x]
+        self.coor_size_y = [int(y * 646 / self.h) for y in self.size_y]
 
 
 class Js06AboutView(QDialog):
