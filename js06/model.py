@@ -25,7 +25,7 @@ Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 class Js06SimpleTarget:
     """Simple target"""
 
-    def __init__(self, label: str, wedge: str, azimuth: float, distance: float, roi: QRect, mask: QImage):
+    def __init__(self, label: str, wedge: str, azimuth: float, distance: float, roi: QRect, mask: QImage, input_width: int, input_height: int):
         super().__init__()
         self.label = label
         self.wedge = wedge
@@ -33,8 +33,7 @@ class Js06SimpleTarget:
         self.distance = distance
         self.roi = roi
 
-        # TODO(Kyungwon): The hard-coded width and height should be fixed.
-        self.mask = self.img_to_arr(mask, 224, 224)
+        self.mask = self.img_to_arr(mask, input_width, input_height)
 
         # image are set using clip_roi
         self.image = None

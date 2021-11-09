@@ -114,6 +114,19 @@ class Js06MainCtrl(QObject):
         
         base_path = Js06Settings.get('image_base_path') 
         
+        # Prepare model.
+        # TODO(Kyungwon): Put the model file into Qt Resource Collection.
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+        model_path = os.path.join(directory, 'resources', 'js08_1636343249.onnx')
+        providers = ['CPUExecutionProvider']
+        sess = ort.InferenceSession(model_path, providers=providers)
+        input_shape = sess.get_inputs()[0].shape
+        input_height = input_shape[1]
+        input_width = input_shape[2]
+
         for tg in targets:
             wedge = tg['wedge']
             azimuth = tg['azimuth']
@@ -126,7 +139,7 @@ class Js06MainCtrl(QObject):
                 distance = tg['distance'][i]
                 mask_path = os.path.join(base_path, 'mask', id, tg['mask'][i])
                 mask = self.read_mask(mask_path)
-                st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask)
+                st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask, input_width, input_height)
                 decomposed_targets.append(st)
 
         if direction == 'front':
@@ -393,7 +406,7 @@ class Js06InferenceWorker(QObject):
         self.rear_uri = rear_uri
         self.front_targets = front_decomposed_targets
         self.rear_targets = rear_decomposed_targets
-        
+
         self.batch_size = Js06Settings.get('inference_batch_size')
 
         # Prepare model.
