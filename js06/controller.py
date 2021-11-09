@@ -396,7 +396,6 @@ class Js06InferenceWorker(QObject):
         # num_threads = Js06Settings.get('inferece_thread_count')
         self.batch_size = Js06Settings.get('inference_batch_size')
 
-
         # Prepare model.
         model_path = os.path.join(directory, 'resources', 'js02.tflite')
         self.interpreter = tflite.Interpreter(model_path=model_path)
@@ -444,7 +443,7 @@ class Js06InferenceWorker(QObject):
             self.finished.emit()
             return
 
-        if  rear_image is None:
+        if rear_image is None:
             print('DEBUG: Failed to capture the rear video stream')
             self.finished.emit()
             return
