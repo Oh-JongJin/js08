@@ -248,7 +248,7 @@ class Js06TargetView(QDialog):
         self.blank_lbl = QLabel(self)
 
         self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
-        self.buttonBox.accepted.connect(self.save_btn)
+        self.buttonBox.accepted.connect(self.save_target)
         self.buttonBox.rejected.connect(self.rejected_btn)
         self.switch_btn.clicked.connect(self.switch_button)
         self.azimuth_check.stateChanged.connect(self.check)
@@ -298,38 +298,6 @@ class Js06TargetView(QDialog):
                 self.point_x_Edit.setText("")
                 self.point_y_Edit.setText("")
         self.update()
-
-    @pyqtSlot()
-    def save_btn(self) -> None:
-        self.combo_changed()
-
-        _id = self._ctrl.get_attr()
-        if self.frame_direction == 0:
-            _id = _id['front_camera']['camera_id']
-        else:
-            _id = _id['rear_camera']['camera_id']
-
-        for i in range(self.numberCombo.count()):
-            self.numberCombo.setCurrentIndex(i)
-            test = [{
-                "_id": _id,
-                "targets": [{
-                    "label": f"{self.labelEdit.text()}",
-                    "distance": ast.literal_eval(self.distanceEdit.text()),
-                    "mask": [f"{i + 1}-1.png", f"{i + 1}-2.png"],
-                    # "azimuth": int(self.azimuthEdit.text()),
-                    "roi": {
-                        "point": [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
-                    }
-                }]
-            }]
-
-        # TODO(Kyungwon): update camera db only, the current camera selection is
-        # performed at camera view
-        # Save Target through controller
-        self._ctrl.update_cameras(test, True)
-
-        self.close()
 
     def save_cameras(self) -> None:
         cameras = self._model.get_data()
@@ -411,14 +379,35 @@ class Js06TargetView(QDialog):
         self.target_y = [int(y * self.h) for y in self.prime_y]
 
     def save_target(self) -> None:
-        # targets = self._model
+        self.combo_changed()
 
-        if self.target:
-            for i in range(len(self.target)):
-                self.result[i]['label'] = self.target
-                self.result[i]['roi']['point'][0] = self.point_x
-                self.result[i]['roi']['point'][1] = self.point_y
-                self.result[i]["distance"] = self.distance
+        _id = self._ctrl.get_attr()
+        if self.frame_direction == 0:
+            _id = _id['front_camera']['camera_id']
+        else:
+            _id = _id['rear_camera']['camera_id']
+
+        for i in range(self.numberCombo.count()):
+            self.numberCombo.setCurrentIndex(i)
+            test = [{
+                "_id": _id,
+                "targets": [{
+                    "label": f"{self.labelEdit.text()}",
+                    "distance": ast.literal_eval(self.distanceEdit.text()),
+                    "mask": [f"{i + 1}-1.png", f"{i + 1}-2.png"],
+                    # "azimuth": int(self.azimuthEdit.text()),
+                    "roi": {
+                        "point": [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
+                    }
+                }]
+            }]
+
+        # TODO(Kyungwon): update camera db only, the current camera selection is
+        # performed at camera view
+        # Save Target through controller
+        self._ctrl.update_cameras(test, True)
+
+        self.close()
 
     def get_target(self, direction: str) -> None:
         # Initialize variable
@@ -436,7 +425,6 @@ class Js06TargetView(QDialog):
         for i in range(len(self.result)):
             self.numberCombo.addItem(str(i + 1))
 
-        for i in range(len(self.result)):
             self.target.append(self.result[i]['label'])
             self.point_x.append(self.result[i]['roi']['point'][0])
             self.point_y.append(self.result[i]['roi']['point'][1])
