@@ -31,12 +31,14 @@ JS-08 supports Windows 10 and Ubuntu 18.04 on usual personal computer platforms,
 ## Setting Up Execution Environment
 ### Python Packages
 #### Windows 10
-We recommend using Anaconda Python distribution for the Windows environment.
-- Anaconda Python 3.8 64-bit or later
-- Required Python packages that can be installed using `conda`:
-  - pyqt >= 5.13
+Required Python packages that can be installed using `pip`:
+  - python >= 3.8
+  - PyQt5 >= 5.13
+  - PyQtChart >= 5.13
   - pymongo >= 3.12.0
-  - cv2 >= 4.4.0
+  - opencv-python >= 4.4.0
+  - numpy
+  - onnxruntime
 
 #### Ubuntu 18.04
 You can install most of the prerequisites using Ubuntu package manager, apt.
@@ -57,13 +59,17 @@ sudo apt-get install python3-tflite-runtime
 ```
 
 ### MongoDB
-We recommend installing MongoDB with Docker. Please follow the description on the following link:
+Before execution of JS-08, you need an woring MongoDB. We recommend installing 
+MongoDB with Docker. Please follow the description on the following link:
 - https://hub.docker.com/_/mongo
+You can create and execute a container with MongoDB:
+```bash
+docker run --name mongodb -d -p 27017:27017 mongo
+```
 
 ### Video Codecs
 #### Windows
 For Windows, DirectShow filters are required to play RTSP video streams. Download one of the following filter packs:
-- LAV Filter: https://github.com/Nevcairiel/LAVFilters/releases
 - K-Lite:: https://files3.codecguide.com/K-Lite_Codec_Pack_1625_Basic.exe
 
 #### Ubuntu 18.04  
@@ -71,3 +77,20 @@ For Linux, install GStreamer:
 ```bash
 sudo apt install gstreamer1.0-libav ubuntu-restricted-extras
 ```
+
+## Frequently Asked Questions
+### Codec Missing
+The following error occurs when the video codec is not installed correctly:
+```
+DirectShowPlayerService::doSetUrlSource: Unresolved error code 0x800c000d (?? ?? ???? ?????????? ??????????.)
+```
+Please, refer to the 'Video Codec' section, and install the appropriate codec in your environment.
+
+### Missing Redistributable for Visual Studio 2019
+The onnxruntime package for Windows, requires the Redistributable for Visual Studio;
+```
+ImportError: Microsoft Visual C++ Redistributable for Visual Studio 2019 not installed on the machine.
+```
+Please, download and install the required packages from:
+https://docs.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170
+

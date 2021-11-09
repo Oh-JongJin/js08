@@ -8,7 +8,6 @@
 import datetime
 import os
 import platform
-import sys
 
 import numpy as np
 import onnxruntime as ort
@@ -23,7 +22,7 @@ Js06TargetCategory = ['single', 'compound']
 Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 
 
-class Js06SimpleTarget(QRunnable):
+class Js06SimpleTarget:
     """Simple target"""
 
     def __init__(self, label: str, wedge: str, azimuth: float, distance: float, roi: QRect, mask: QImage):
@@ -34,48 +33,17 @@ class Js06SimpleTarget(QRunnable):
         self.distance = distance
         self.roi = roi
 
-        # epoch and image are set using clip_roi
-        self.epoch = 0
+        # TODO(Kyungwon): The hard-coded width and height should be fixed.
+        self.mask = self.img_to_arr(mask, 224, 224)
+
+        # image are set using clip_roi
         self.image = None
+        self.discernment = False
 
-        self.discernment = None
-
-        # TODO(Kyungwon): Put the model file into Qt Resource Collection.
-        if getattr(sys, 'frozen', False):
-            directory = sys._MEIPASS
-        else:
-            directory = os.path.dirname(__file__)
-
-        # Prepare model.
-        model_path = os.path.join(directory, 'resources', 'js02.onnx')
-        providers = ['CPUExecutionProvider']
-        self.session = ort.InferenceSession(model_path, providers=providers)
-
-        # Prepare mask array.
-        input_shape = self.session.get_inputs()[0].shape
-        height = input_shape[1]
-        width = input_shape[2]
-        self.mask = self.img_to_arr(mask, width, height)
-
-        self.setAutoDelete(False)
-    
-    def classify_image(self, sess: ort.InferenceSession, image: np.ndarray) -> bool:
-        """Discriminate the image.
-
-        Return True if the model can discriminate the image.
-        """
-        input_data = np.expand_dims(image, axis=0)
-        input_name = sess.get_inputs()[0].name
-        output_data = sess.run(None, {input_name: input_data})
-        results = np.squeeze(output_data)
-        top = np.argmax(results)
-        return top == 1
-
-    def clip_roi(self, epoch: int, vista: QImage) -> None:
-        self.epoch = epoch
+    def clip_roi(self, vista: QImage) -> QImage:
         trimmed = vista.copy(self.roi)
         # multiply self.mask with trimmed
-        self.image = trimmed
+        return trimmed
 
     def img_to_arr(self, image: QImage, width: int, height: int) -> np.ndarray:
         """
@@ -90,7 +58,7 @@ class Js06SimpleTarget(QRunnable):
             Qt.IgnoreAspectRatio, 
             Qt.SmoothTransformation
             )
-        
+
         # The following code is referring to:
         # https://stackoverflow.com/questions/19902183/qimage-to-numpy-array-using-pyside
         ptr = img.bits()
@@ -99,20 +67,6 @@ class Js06SimpleTarget(QRunnable):
         arr = arr.astype(np.float32) / 255
 
         return arr
-
-    def run(self):
-        input_shape = self.session.get_inputs()[0].shape
-        height = input_shape[1]
-        width = input_shape[2]
-        arr = self.img_to_arr(self.image, width, height)
-
-        masked_arr = arr * self.mask
-        results = self.classify_image(self.session, masked_arr)
-        
-        self.discernment = results
-
-    def save_image(self):
-        pass
 
 
 class Js06CameraTableModel(QAbstractTableModel):
@@ -363,7 +317,7 @@ class Js06Settings:
             QStandardPaths.writableLocation(QStandardPaths.PicturesLocation),
             'js06'
         ),
-        'inferece_thread_count': 2,
+        'inference_batch_size': 8,
         # Database settings
         'db_host': 'localhost',
         'db_port': 27017,

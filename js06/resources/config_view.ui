@@ -64,7 +64,7 @@
        <item row="3" column="0">
         <widget class="QLabel" name="label_5">
          <property name="text">
-          <string>Inference thread count</string>
+          <string>Inference batch size</string>
          </property>
         </widget>
        </item>
@@ -83,7 +83,7 @@
         </widget>
        </item>
        <item row="3" column="1">
-        <widget class="QSpinBox" name="InferenceThreadCount_spinBox"/>
+        <widget class="QSpinBox" name="InferenceBatchSize_spinBox"/>
        </item>
        <item row="5" column="0">
         <widget class="QLabel" name="label_8">
