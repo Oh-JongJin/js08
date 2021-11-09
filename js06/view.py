@@ -458,7 +458,7 @@ class Js06ConfigView(QDialog):
         self.SaveVista_comboBox.setCurrentText(f"{Js06Settings.get('save_vista')}")
         self.SaveImagePatch_comboBox.setCurrentText(f"{Js06Settings.get('save_image_patch')}")
         self.ImageBasePath_pushButton.clicked.connect(self.ask_image_base_path)
-        self.InferenceBatchSize_spinBox.setValue(Js06Settings.get('inferece_batch_size'))
+        self.InferenceBatchSize_spinBox.setValue(Js06Settings.get('inference_batch_size'))
         self.DatabaseHost_lineEdit.setText(Js06Settings.get('db_host'))
         self.DatabasePort_lineEdit.setText(f"{Js06Settings.get('db_port')}")
         self.DatabaseName_lineEdit.setText(Js06Settings.get('db_name'))
@@ -476,7 +476,7 @@ class Js06ConfigView(QDialog):
         Js06Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
         if self.image_base_path is not None:
             Js06Settings.set('image_base_path', self.image_base_path)
-        Js06Settings.set('inferece_batch_size', self.InferenceBatchSize_spinBox.value())
+        Js06Settings.set('inference_batch_size', self.InferenceBatchSize_spinBox.value())
         Js06Settings.set('db_host', self.DatabaseHost_lineEdit.text())
         Js06Settings.set('db_port', f"{int(self.DatabasePort_lineEdit.text())}")
         Js06Settings.set('db_name', self.DatabaseName_lineEdit.text())

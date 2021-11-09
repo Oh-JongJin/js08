@@ -38,6 +38,7 @@ Required Python packages that can be installed using `pip`:
   - pymongo >= 3.12.0
   - opencv-python >= 4.4.0
   - numpy
+  - onnxruntime
 
 #### Ubuntu 18.04
 You can install most of the prerequisites using Ubuntu package manager, apt.
@@ -84,3 +85,12 @@ The following error occurs when the video codec is not installed correctly:
 DirectShowPlayerService::doSetUrlSource: Unresolved error code 0x800c000d (?? ?? ???? ?????????? ??????????.)
 ```
 Please, refer to the 'Video Codec' section, and install the appropriate codec in your environment.
+
+### Missing Redistributable for Visual Studio 2019
+The onnxruntime package for Windows, requires the Redistributable for Visual Studio;
+```
+ImportError: Microsoft Visual C++ Redistributable for Visual Studio 2019 not installed on the machine.
+```
+Please, download and install the required packages from:
+https://docs.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170
+

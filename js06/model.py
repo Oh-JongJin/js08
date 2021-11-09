@@ -10,10 +10,13 @@ import os
 import platform
 
 import numpy as np
+import onnxruntime as ort
 import pymongo
+
 from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, QRect, QRunnable,
                           QSettings, QStandardPaths, Qt)
 from PyQt5.QtGui import QImage
+
 
 Js06TargetCategory = ['single', 'compound']
 Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']

@@ -12,7 +12,7 @@ import sys
 
 import cv2
 import numpy as np
-import tflite_runtime.interpreter as tflite
+import onnxruntime as ort
 
 from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread,
                           QThreadPool, QTime, QTimer, pyqtSignal, pyqtSlot)
@@ -397,14 +397,14 @@ class Js06InferenceWorker(QObject):
         self.batch_size = Js06Settings.get('inference_batch_size')
 
         # Prepare model.
-        model_path = os.path.join(directory, 'resources', 'js02.tflite')
-        self.interpreter = tflite.Interpreter(model_path=model_path)
-        self.interpreter.allocate_tensors()
+        model_path = os.path.join(directory, 'resources', 'js02.onnx')
+        providers = ['CPUExecutionProvider']
+        self.session = ort.InferenceSession(model_path, providers=providers)
 
         # Prepare mask array.
-        input_details = self.interpreter.get_input_details()
-        self.input_height = input_details[0]['shape'][1]
-        self.input_width = input_details[0]['shape'][2]
+        input_shape = self.session.get_inputs()[0].shape
+        self.input_height = input_shape[1]
+        self.input_width = input_shape[2]
 
     def grab_image(self, uri: str) -> QImage:
         """
@@ -424,15 +424,17 @@ class Js06InferenceWorker(QObject):
         path = QDir.cleanPath(os.path.join(dir, filename))
         image.save(path)
 
-    def classify_image(self, data: np.ndarray) -> np.ndarray:
-        input_details = self.interpreter.get_input_details()
-        self.interpreter.set_tensor(input_details[0]['index'], data)
-        self.interpreter.invoke()
-        output_details = self.interpreter.get_output_details()
+    def classify_image(self, image: np.ndarray) -> bool:
+        """Discriminate the image.
 
-        output_data = self.interpreter.get_tensor(output_details[0]['index'])
-        top = np.argmax(output_data, axis=1)
-        return np.squeeze(top == 1)
+        Return True if the model can discriminate the image.
+        """
+        input_data = image
+        input_name = self.session.get_inputs()[0].name
+        output_data = self.session.run(None, {input_name: input_data})
+        results = np.squeeze(output_data)
+        top = np.argmax(results)
+        return top == 1
 
     def run(self):
         front_image = self.grab_image(self.front_uri)
