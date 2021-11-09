@@ -393,8 +393,7 @@ class Js06InferenceWorker(QObject):
         self.rear_uri = rear_uri
         self.front_targets = front_decomposed_targets
         self.rear_targets = rear_decomposed_targets
-
-        # num_threads = Js06Settings.get('inferece_thread_count')
+        
         self.batch_size = Js06Settings.get('inference_batch_size')
 
         # Prepare model.
