@@ -278,14 +278,6 @@ class Js06MainCtrl(QObject):
             image = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
         return image
 
-    @pyqtSlot(QVideoFrame)
-    def update_front_video_frame(self, video_frame: QVideoFrame) -> None:
-        self.front_video_frame = video_frame
-
-    @pyqtSlot(QVideoFrame)
-    def update_rear_video_frame(self, video_frame: QVideoFrame) -> None:
-        self.rear_video_frame = video_frame
-
     @pyqtSlot()
     def get_front_camera_uri(self) -> str:
         attr = self._model.read_attr()
@@ -296,13 +288,9 @@ class Js06MainCtrl(QObject):
         attr = self._model.read_attr()
         return attr['rear_camera']['uri']
 
-    def get_front_target(self) -> list:
+    def get_target(self, direction: str) -> list:
         attr = self._model.read_attr()
-        return attr['front_camera']['targets']
-
-    def get_rear_target(self) -> list:
-        attr = self._model.read_attr()
-        return attr['rear_camera']['targets']
+        return attr[f'{direction}_camera']['targets']
 
     def get_camera_table_model(self) -> dict:
         cameras = self.get_cameras()

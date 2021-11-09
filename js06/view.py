@@ -9,6 +9,7 @@
 import collections
 import os
 import sys
+import ast
 
 from PyQt5 import uic
 from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
@@ -227,66 +228,66 @@ class Js06TargetView(QDialog):
         ui_path = os.path.join(directory, 'resources', 'target_view.ui')
         uic.loadUi(ui_path, self)
         self._ctrl = parent._ctrl
-        self._model = self._ctrl.get_front_target()
-        self.cam_name = []
 
         self.target = []
         self.target_x = []
         self.target_y = []
         self.point_x = []
         self.point_y = []
+        self.distance = []
         self.size_x = []
         self.size_y = []
-        self.ordinal = []
-        self.category = []
-        self.distance = []
-        self.oxlist = []
         self.result = []
 
-        self.get_target()
-
-        self.image = self._ctrl.front_video_frame.image().mirrored(False, True)
+        self.image = self._ctrl.grab_image('front')
         self.w = self.image.width()
         self.h = self.image.height()
         self.image_label.setPixmap(QPixmap.fromImage(self.image).scaled(self.w, self.h, Qt.KeepAspectRatio))
         self.image_label.setMaximumSize(self.width(), self.height())
-        # self.image_label.setMaximumHeight(self.height())
-
-        # self.groupBox.setMaximumHeight(self.height() / 2)
 
         self.blank_lbl = QLabel(self)
 
         self.blank_lbl.mousePressEvent = self.blank_mousePressEvent
-        self.buttonBox.accepted.connect(self.save_btn)
+        self.buttonBox.accepted.connect(self.save_target)
         self.buttonBox.rejected.connect(self.rejected_btn)
         self.switch_btn.clicked.connect(self.switch_button)
         self.azimuth_check.stateChanged.connect(self.check)
-
-        # for i in range(len(self._ctrl.get_cameras())):
-        #     self.cam_name.append(self._ctrl.get_cameras()[i]['model'])
-        # self.cameraCombo.addItems(self.cam_name)
-
-        # if self._ctrl.get_camera_models() in self.cam_name:
-        #     self.cameraCombo.setCurrentIndex(self.cam_name.index(self._ctrl.get_camera_models()))
+        self.frame_direction = 0
 
         self.numberCombo.currentIndexChanged.connect(self.combo_changed)
-        self.combo_changed()
         self.blank_lbl.raise_()
+
+        self.get_target("front")
 
     def check(self) -> None:
         self.update()
 
     def switch_button(self):
-        # image = self._ctrl.get_front_image()
-        # image.convertToFormat(QImage.Format_Grayscale8)
+        if self.frame_direction >= 2:
+            self.frame_direction = 0
+
+        if self.frame_direction == 0:
+            self.image = self._ctrl.grab_image('rear')
+            self.get_target("rear")
+        else:
+            self.image = self._ctrl.grab_image('front')
+            self.get_target("front")
+
+        self.w = self.image.width()
+        self.h = self.image.height()
+        self.image_label.setPixmap(QPixmap.fromImage(self.image).scaled(self.w, self.h, Qt.KeepAspectRatio))
+
+        self.frame_direction = self.frame_direction + 1
+
         self.update()
 
     def combo_changed(self) -> None:
         self.blank_lbl.paintEvent = self.blank_paintEvent
 
         for i in range(len(self.target)):
-            if self.numberCombo.currentText() == str(i + 1):
-                self.labelEdit.setText(str(self.target[i]))
+            if self.numberCombo.currentText() == self.target[i]:
+                # self.labelEdit.setText(str(self.target[i]))
+                self.labelEdit.setText(self.numberCombo.currentText())
                 self.distanceEdit.setText(str(self.distance[i]))
                 self.point_x_Edit.setText(str(self.point_x[i]))
                 self.point_y_Edit.setText(str(self.point_y[i]))
@@ -296,29 +297,7 @@ class Js06TargetView(QDialog):
                 self.distanceEdit.setText("")
                 self.point_x_Edit.setText("")
                 self.point_y_Edit.setText("")
-
-    @pyqtSlot()
-    def save_btn(self) -> None:
-        result = []
-        # for i in range(len(self._ctrl.get_cameras())):
-        #     if self.cameraCombo.currentText() == self._ctrl.get_cameras()[i]['model']:
-        #         address = self._ctrl.get_cameras()[i]['uri']
-        # self._ctrl.current_camera_changed.emit(address)
-
-        for i in range(self.numberCombo.count()):
-            self.numberCombo.setCurrentIndex(i)
-            result.append({'label': f'{self.labelEdit.text()}',
-                           'distance': f'{float(self.distanceEdit.text())}',
-                           'roi': {
-                               'point': [int(self.point_x_Edit.text()), int(self.point_y_Edit.text())]
-                           }})
-
-        # TODO(Kyungwon): update camera db only, the current camera selection is
-        # performed at camera view
-        # Save Target through controller
-        self._ctrl.set_attr(result)
-
-        self.close()
+        self.update()
 
     def save_cameras(self) -> None:
         cameras = self._model.get_data()
@@ -340,22 +319,17 @@ class Js06TargetView(QDialog):
                                        self.blank_lbl.width() * (3 / 4), self.blank_lbl.height())
 
         self.painter.setPen(QPen(Qt.red, 2))
-        for name, x, y in zip(self.target, self.point_x, self.point_y):
-            self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), 25 / 2, 25 / 2)
+        for name, x, y, sx, sy in zip(self.target, self.coor_point_x, self.coor_point_y, self.size_x, self.size_y):
+            self.painter.drawRect(int(x - (25 / 4)), int(y - (25 / 4)), int(sx), int(sy))
             self.painter.drawText(x - 4, y - 10, f"{name}")
 
-        print("numberCombo - ", self.numberCombo.currentText())
-        # self.blank_lbl.resize(self.image_label.size())
         self.blank_lbl.setGeometry(self.image_label.geometry())
-        print("Paint")
 
         self.painter.end()
 
     def blank_mousePressEvent(self, event) -> None:
-        self.update()
-
-        x = int(event.pos().x() / self.blank_lbl.width() * self.image.width())
-        y = int(event.pos().y() / self.blank_lbl.height() * self.image.height())
+        x = int(event.pos().x() / self.blank_lbl.width() * self.w)
+        y = int(event.pos().y() / self.blank_lbl.height() * self.h)
 
         for i in range(len(self.target)):
             self.target[i] = i + 1
@@ -368,6 +342,8 @@ class Js06TargetView(QDialog):
 
             self.point_x.append(int(event.pos().x()))
             self.point_y.append(int(event.pos().y()))
+            self.size_x.append(30)
+            self.size_y.append(30)
 
             self.target.append(len(self.point_x))
             self.distance.append(0)
@@ -375,9 +351,9 @@ class Js06TargetView(QDialog):
             self.combo_changed()
             self.coordinator()
 
-            print("mousePressEvent - ", len(self.target))
+            print(f'Mouse press event - Add "{len(self.target)}th" target')
             # self.save_target()
-            # self.get_target()
+            # self.get_target('front')
 
         if event.buttons() == Qt.RightButton:
             deleteIndex = self.numberCombo.currentIndex() + 1
@@ -392,37 +368,77 @@ class Js06TargetView(QDialog):
                 del self.target[deleteIndex - 1]
                 self.combo_changed()
 
+        self.update()
+
     def coordinator(self) -> None:
         self.prime_y = [y / self.h for y in self.target_y]
         self.prime_x = [2 * x / self.w - 1 for x in self.target_x]
 
     def restoration(self) -> None:
-        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime1_x]
+        self.target_x = [int((x + 1) * self.w / 2) for x in self.prime_x]
         self.target_y = [int(y * self.h) for y in self.prime_y]
 
     def save_target(self) -> None:
-        # targets = self._model
+        label = self.labelEdit.text()
+        distance = ast.literal_eval(self.distanceEdit.text())
+        x = int(self.point_x_Edit.text())
+        y = int(self.point_y_Edit.text())
 
-        if self.target:
-            for i in range(len(self.target)):
-                self.result[i]['label'] = self.target
-                self.result[i]['roi']['point'][0] = self.point_x
-                self.result[i]['roi']['point'][1] = self.point_y
-                self.result[i]["distance"] = self.distance
+        self.combo_changed()
 
-    def get_target(self) -> None:
-        targets = self._model
+        _id = self._ctrl.get_attr()
+        if self.frame_direction == 0:
+            _id = _id['front_camera']['camera_id']
+        else:
+            _id = _id['rear_camera']['camera_id']
+
+        info = [{
+            "_id": _id,
+            "targets": [{
+                "label": label,
+                "distance": distance,
+                # "mask": [f"{int(self.labelEdit.text()) + 1}-1.png", f"{int(self.labelEdit.text()) + 1}-2.png"],
+                "roi": {"point": [x, y]}
+            }]
+        }]
+
+        # TODO(Kyungwon): update camera db only, the current camera selection is
+        # performed at camera view
+        # Save Target through controller
+        self._ctrl.update_cameras(info, True)
+        print(info)
+
+        self.close()
+
+    def get_target(self, direction: str) -> None:
+        # Initialize variable
+        # This is because variables overlap
+        self.target = []
+        self.point_x = []
+        self.point_y = []
+        self.distance = []
+        self.size_x = []
+        self.size_y = []
+
+        self.result = self._ctrl.get_target(direction)
 
         self.numberCombo.clear()
-        for i in range(len(targets)):
-            self.numberCombo.addItem(str(i + 1))
-        self.result = targets
-
-        for i in range(len(targets)):
+        for i in range(len(self.result)):
             self.target.append(self.result[i]['label'])
             self.point_x.append(self.result[i]['roi']['point'][0])
             self.point_y.append(self.result[i]['roi']['point'][1])
             self.distance.append(self.result[i]['distance'])
+            self.size_x.append(self.result[i]['roi']['size'][0])
+            self.size_y.append(self.result[i]['roi']['size'][1])
+
+        self.numberCombo.addItems(self.target)
+
+        # 1053 is self.image_label.width
+        # 646 is self.image_label.height
+        self.coor_point_x = [int(x * 1053 / self.w) for x in self.point_x]
+        self.coor_point_y = [int(y * 646 / self.h) for y in self.point_y]
+        self.coor_size_x = [int(x * 1053 / self.w) for x in self.size_x]
+        self.coor_size_y = [int(y * 646 / self.h) for y in self.size_y]
 
 
 class Js06AboutView(QDialog):
@@ -469,7 +485,7 @@ class Js06ConfigView(QDialog):
 
     def ask_image_base_path(self) -> None:
         self.image_base_path = QFileDialog.getExistingDirectory(self, "Select directory",
-                                                directory=Js06Settings.get('image_base_path'))
+                                                                directory=Js06Settings.get('image_base_path'))
 
     def write_values(self) -> None:
         Js06Settings.set('save_vista', self.SaveVista_comboBox.currentText())
@@ -493,25 +509,18 @@ class Js06VideoWidget(QWidget):
 
     def __init__(self, parent: QObject = None) -> None:
         super().__init__(parent)
-        
+
         self.viewer = QVideoWidget()
         self.player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
         self.player.setVideoOutput(self.viewer)
         layout = QVBoxLayout(self)
         layout.addWidget(self.viewer)
-        # self.viewer.setGeometry(0, 0, 300, 300)
-        # self.viewer.setMinimumSize(600, 250)
 
     @pyqtSlot(str)
     def on_camera_change(self, uri: str) -> None:
         self.uri = uri
         self.player.setMedia(QMediaContent(QUrl(uri)))
         self.player.play()
-
-    @pyqtSlot(QVideoFrame)
-    def on_videoFrameProbed(self, frame: QVideoFrame) -> None:
-        self.frame_received = True
-        self.video_frame_prepared.emit(frame)
 
 
 class Js06MainView(QMainWindow):
