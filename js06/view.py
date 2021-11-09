@@ -421,8 +421,6 @@ class Js06TargetView(QDialog):
                 self.result[i]["distance"] = self.distance
 
     def get_target(self, direction: str) -> None:
-        self.update()
-
         # Initialize variable
         # This is because variables overlap
         self.target = []
@@ -432,15 +430,13 @@ class Js06TargetView(QDialog):
         self.size_x = []
         self.size_y = []
 
-        targets = self._ctrl.get_target(direction)
+        self.result = self._ctrl.get_target(direction)
 
         self.numberCombo.clear()
-
-        for i in range(len(targets)):
+        for i in range(len(self.result)):
             self.numberCombo.addItem(str(i + 1))
-        self.result = targets
 
-        for i in range(len(targets)):
+        for i in range(len(self.result)):
             self.target.append(self.result[i]['label'])
             self.point_x.append(self.result[i]['roi']['point'][0])
             self.point_y.append(self.result[i]['roi']['point'][1])
