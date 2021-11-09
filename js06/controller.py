@@ -12,6 +12,8 @@ import sys
 
 import cv2
 import numpy as np
+import tflite_runtime.interpreter as tflite
+
 from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread,
                           QThreadPool, QTime, QTimer, pyqtSignal, pyqtSlot)
 from PyQt5.QtGui import QImage
@@ -146,11 +148,11 @@ class Js06MainCtrl(QObject):
     def start_observation_timer(self) -> None:
         print('DEBUG(start_observation_timer):', QTime.currentTime().toString())
         self.observation_timer.setInterval(1000) # every one second
-        self.observation_timer.timeout.connect(self.start_broker)
+        self.observation_timer.timeout.connect(self.start_worker)
         self.observation_timer.start()
 
     @pyqtSlot()
-    def start_broker(self) -> None:
+    def start_worker(self) -> None:
         # if decomposed targets are not ready, quit.
         if self.front_target_prepared is False or self.rear_target_prepared is False:
             return
@@ -161,7 +163,16 @@ class Js06MainCtrl(QObject):
         else:
             self.broker_running = True
 
-        self.broker = Js06InferenceBroker(self)
+        self.epoch = QDateTime.currentSecsSinceEpoch()
+        front_uri = self.get_front_camera_uri()
+        rear_uri = self.get_rear_camera_uri()
+        self.broker = Js06InferenceWorker(
+            self.epoch,
+            front_uri, 
+            rear_uri, 
+            self.front_decomposed_targets, 
+            self.rear_decomposed_targets
+            )
         self.broker_thread = QThread()
         self.broker.moveToThread(self.broker_thread)
         self.broker_thread.started.connect(self.broker.run)
@@ -179,7 +190,7 @@ class Js06MainCtrl(QObject):
         """
         epoch: seconds since epoch
         """
-        epoch = self.front_decomposed_targets[0].epoch
+        epoch = self.epoch
             
         pos, neg = self.assort_discernment()
         self.target_assorted.emit(pos, neg)
@@ -360,43 +371,144 @@ class Js06MainCtrl(QObject):
         return self._model.read_cameras()
 
 
-class Js06InferenceBroker(QObject):
+class Js06InferenceWorker(QObject):
     finished = pyqtSignal()
     
-    def __init__(self, ctrl: Js06MainCtrl):
+    def __init__(self, epoch: int, front_uri: str, rear_uri: str, front_decomposed_targets: list, rear_decomposed_targets: list) -> None:
         """
         Parameters:
             ctrl:
         """
         super().__init__()
-    
-        self._ctrl = ctrl
-    
-        self.pool = QThreadPool.globalInstance()
-        num_threads = Js06Settings.get('inferece_thread_count')
-        self.pool.setMaxThreadCount(num_threads)
         
+        # TODO(Kyungwon): Put the model file into Qt Resource Collection.
+        if getattr(sys, 'frozen', False):
+            directory = sys._MEIPASS
+        else:
+            directory = os.path.dirname(__file__)
+
+        self.epoch = epoch
+        self.front_uri = front_uri
+        self.rear_uri = rear_uri
+        self.front_targets = front_decomposed_targets
+        self.rear_targets = rear_decomposed_targets
+
+        # num_threads = Js06Settings.get('inferece_thread_count')
+        self.batch_size = Js06Settings.get('inference_batch_size')
+
+        # Prepare model.
+        model_path = os.path.join(directory, 'resources', 'js02.tflite')
+        self.interpreter = tflite.Interpreter(model_path=model_path)
+        self.interpreter.allocate_tensors()
+
+        # Prepare mask array.
+        input_details = self.interpreter.get_input_details()
+        self.input_height = input_details[0]['shape'][1]
+        self.input_width = input_details[0]['shape'][2]
+
+    def grab_image(self, uri: str) -> QImage:
+        """
+        Parameters:
+            uri: URI of a video stream
+        """
+        cap = cv2.VideoCapture(uri)
+        ret, frame = cap.read()
+        image = None
+        if ret:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            image = QImage(frame, frame.shape[1], frame.shape[0], QImage.Format_RGB888)
+        return image
+
+    def save_image(self, dir: str, filename: str, image: QImage) -> None:
+        os.makedirs(dir, exist_ok=True)
+        path = QDir.cleanPath(os.path.join(dir, filename))
+        image.save(path)
+
+    def classify_image(self, data: np.ndarray) -> np.ndarray:
+        input_details = self.interpreter.get_input_details()
+        self.interpreter.set_tensor(input_details[0]['index'], data)
+        self.interpreter.invoke()
+        output_details = self.interpreter.get_output_details()
+
+        output_data = self.interpreter.get_tensor(output_details[0]['index'])
+        top = np.argmax(output_data, axis=1)
+        return np.squeeze(top == 1)
+
     def run(self):
-        epoch = QDateTime.currentSecsSinceEpoch()
-        front_image = self._ctrl.grab_image('front')
-        rear_image = self._ctrl.grab_image('rear')
+        front_image = self.grab_image(self.front_uri)
+        rear_image = self.grab_image(self.rear_uri)
+
+        if front_image is None:
+            print('DEBUG: Failed to capture the front video stream')
+            self.finished.emit()
+            return
+
+        if rear_image is None:
+            print('DEBUG: Failed to capture the rear video stream')
+            self.finished.emit()
+            return
 
         if Js06Settings.get('save_vista'):
             basepath = Js06Settings.get('image_base_path')
-            now = QDateTime.fromSecsSinceEpoch(epoch)
+            now = QDateTime.fromSecsSinceEpoch(self.epoch)
             dir = os.path.join(basepath, 'vista', now.toString("yyyy-MM-dd"))
             filename = f'vista-front-{now.toString("yyyy-MM-dd-hh-mm")}.png'
-            self._ctrl.save_image(dir, filename, front_image)
+            self.save_image(dir, filename, front_image)
             filename = f'vista-rear-{now.toString("yyyy-MM-dd-hh-mm")}.png'
-            self._ctrl.save_image(dir, filename, rear_image)
+            self.save_image(dir, filename, rear_image)
         
-        for target in self._ctrl.front_decomposed_targets:
-            target.clip_roi(epoch, front_image)
-            self.pool.start(target)
+        # padding_size = self.batch_size - (len(self.front_targets) % self.batch_size)
+        # result = np.zeros(len(self.front_targets) + padding_size)
+        # for i, target in enumerate(self.front_targets):
+        #     if i % self.batch_size == 0:
+        #         data = np.zeros(
+        #             (self.batch_size, self.input_height, self.input_width, 3), 
+        #             dtype=np.float32
+        #             )
 
-        for target in self._ctrl.rear_decomposed_targets:
-            target.clip_roi(epoch, rear_image)
-            self.pool.start(target)
+        #     roi_image = target.clip_roi(front_image)
+        #     arr = target.img_to_arr(roi_image, self.input_width, self.input_height)
+        #     masked_arr = arr * target.mask
+        #     data[i % self.batch_size] = masked_arr
 
-        self.pool.waitForDone()
+        #     if i % self.batch_size == self.batch_size - 1:
+        #         result[i: i + self.batch_size] = self.classify_image(data)
+
+        # for i, target in enumerate(self.front_targets):
+        #     target.discernment = result[i] is True
+
+        # padding_size = self.batch_size - (len(self.rear_targets) % self.batch_size)
+        # result = np.zeros(len(self.rear_targets) + padding_size)
+        # for i, target in enumerate(self.rear_targets):
+        #     if i % self.batch_size == 0:
+        #         data = np.zeros(
+        #             (self.batch_size, self.input_height, self.input_width, 3),
+        #             np.float32
+        #             )
+
+        #     roi_image = target.clip_roi(rear_image)
+        #     arr = target.img_to_arr(roi_image, self.input_width, self.input_height)
+        #     masked_arr = arr * target.mask
+        #     data[i % self.batch_size] = masked_arr
+
+        #     if i % self.batch_size == self.batch_size - 1:
+        #         result[i: i + self.batch_size] = self.classify_image(data)
+
+        # for i, target in enumerate(self.rear_targets):
+        #     target.discernment = result[i] is True
+
+        for i, target in enumerate(self.front_targets):
+            roi_image = target.clip_roi(front_image)
+            arr = target.img_to_arr(roi_image, self.input_width, self.input_height)
+            masked_arr = np.expand_dims(arr * target.mask, 0)
+            result = self.classify_image(masked_arr)
+            target.discernment = np.squeeze(result == 1)
+
+        for i, target in enumerate(self.rear_targets):
+            roi_image = target.clip_roi(rear_image)
+            arr = target.img_to_arr(roi_image, self.input_width, self.input_height)
+            masked_arr = np.expand_dims(arr * target.mask, 0)
+            result = self.classify_image(masked_arr)
+            target.discernment = np.squeeze(result == 1)
+
         self.finished.emit()
