@@ -13,13 +13,13 @@ from PyQt5.QtCore import QElapsedTimer
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 
-from . import js06_rc
-from .controller import Js06MainCtrl
-from .model import Js06AttrModel
-from .view import Js06MainView
+from . import js08_rc
+from .controller import Js08MainCtrl
+from .model import Js08AttrModel
+from .view import Js08MainView
 
 
-class Js06Application(QApplication):
+class Js08Application(QApplication):
 
     t = QElapsedTimer()
 
@@ -56,13 +56,13 @@ def main():
         window_size = (int(width), int(height))
 
     # Create an instance of `QApplication`
-    app = Js06Application(unparsed_args)
+    app = Js08Application(unparsed_args)
     # Create instances of the model
-    model = Js06AttrModel()
+    model = Js08AttrModel()
     # Create instances of the controller
-    ctrl = Js06MainCtrl(model)
+    ctrl = Js08MainCtrl(model)
     # Show GUI of JS-06
-    view = Js06MainView(ctrl, size=window_size)
+    view = Js08MainView(ctrl, size=window_size)
     # Set icon of the app
     app_icon = QIcon(':icon/logo.png')
     view.setWindowIcon(app_icon)
