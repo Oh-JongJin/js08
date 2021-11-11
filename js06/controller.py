@@ -126,7 +126,7 @@ class Js06MainCtrl(QObject):
         input_shape = sess.get_inputs()[0].shape
         input_height = input_shape[1]
         input_width = input_shape[2]
-
+        
         for tg in targets:
             wedge = tg['wedge']
             azimuth = tg['azimuth']
