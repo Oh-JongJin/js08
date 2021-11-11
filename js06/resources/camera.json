@@ -23,12 +23,12 @@
                     "1-1.png",
                     "1-2.png"
                 ],
-                "wedge": "E",
-                "azimuth": 288,
+                "wedge": "W",
+                "azimuth": 270,
                 "roi": {
                     "point": [
-                        1180,
-                        845
+                        559,
+                        299
                     ],
                     "size": [
                         30,
@@ -46,12 +46,12 @@
                     "2-1.png",
                     "2-2.png"
                 ],
-                "wedge": "SE",
+                "wedge": "NW",
                 "azimuth": 300,
                 "roi": {
                     "point": [
-                        4006,
-                        926
+                        559,
+                        299
                     ],
                     "size": [
                         30,
@@ -69,12 +69,35 @@
                     "3-1.png",
                     "3-2.png"
                 ],
-                "wedge": "NE",
-                "azimuth": 315,
+                "wedge": "N",
+                "azimuth": 0,
                 "roi": {
                     "point": [
-                        347,
-                        971
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "4",
+                "distance": [
+                    5,
+                    10
+                ],
+                "mask": [
+                    "4-1.png",
+                    "4-2.png"
+                ],
+                "wedge": "NE",
+                "azimuth": 50,
+                "roi": {
+                    "point": [
+                        559,
+                        299
                     ],
                     "size": [
                         30,
@@ -108,12 +131,12 @@
                     "5-1.png",
                     "5-2.png"
                 ],
-                "wedge": "S",
-                "azimuth": 45,
+                "wedge": "E",
+                "azimuth": 90,
                 "roi": {
                     "point": [
-                        120,
-                        756
+                        559,
+                        299
                     ],
                     "size": [
                         30,
@@ -131,12 +154,12 @@
                     "6-1.png",
                     "6-2.png"
                 ],
-                "wedge": "W",
-                "azimuth": 90,
+                "wedge": "SE",
+                "azimuth": 150,
                 "roi": {
                     "point": [
-                        2068,
-                        724
+                        559,
+                        299
                     ],
                     "size": [
                         30,
@@ -154,12 +177,35 @@
                     "7-1.png",
                     "7-2.png"
                 ],
-                "wedge": "SW",
-                "azimuth": 135,
+                "wedge": "S",
+                "azimuth": 180,
                 "roi": {
                     "point": [
-                        4048,
-                        660
+                        559,
+                        299
+                    ],
+                    "size": [
+                        30,
+                        30
+                    ]
+                }
+            },
+            {
+                "label": "8",
+                "distance": [
+                    5,
+                    10
+                ],
+                "mask": [
+                    "8-1.png",
+                    "8-2.png"
+                ],
+                "wedge": "SW",
+                "azimuth": 240,
+                "roi": {
+                    "point": [
+                        559,
+                        299
                     ],
                     "size": [
                         30,

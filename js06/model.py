@@ -9,8 +9,9 @@ import datetime
 import os
 import platform
 
+from typing import List
+
 import numpy as np
-import onnxruntime as ort
 import pymongo
 
 from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, QRect, QRunnable,
@@ -197,6 +198,15 @@ class Js06AttrModel:
                 }
             )
 
+        if 'discernment' not in coll:
+            self.db.create_collection('discernment',
+                timeseries = {
+                  'timeField': 'timestamp',
+                  'metaField': 'attr_id',
+                  'granularity': 'minutes'
+                }
+            )
+
     def insert_camera(self, camera: dict) -> str:
         """Insert a camera.
 
@@ -302,9 +312,23 @@ class Js06AttrModel:
         epoch = wedge_visibility.pop('epoch')
         kst = datetime.timezone(datetime.timedelta(hours=9))
         wedge_visibility['timestamp'] = datetime.datetime.fromtimestamp(epoch, kst)
-        wedge_visibility['timestamp'] = datetime.datetime.fromtimestamp(epoch)
         self.db.visibility.insert_one(wedge_visibility)
 
+    def write_discernment(self, epoch: int, front_targets: List[Js06SimpleTarget], rear_targets: List[Js06SimpleTarget]):
+        attr = self.read_attr()
+        kst = datetime.timezone(datetime.timedelta(hours=9))
+        discernment = {
+            'attr_id': attr['_id'],
+            'timestamp': datetime.datetime.fromtimestamp(epoch, kst)
+        }
+
+        for target in front_targets:
+            discernment[target.label] = target.discernment
+
+        for target in rear_targets:
+            discernment[target.label] = target.discernment
+
+        self.db.discernment.insert_one(discernment)
 
 class Js06Settings:
     settings = QSettings('sijung', 'js06')

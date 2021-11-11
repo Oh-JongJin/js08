@@ -43,8 +43,8 @@ class Js06MainCtrl(QObject):
 
         self.num_working_cam = 0
 
-        self.front_decomposed_targets = []
-        self.rear_decomposed_targets = []
+        self.front_simple_targets = []
+        self.rear_simple_targets = []
 
         self.front_target_prepared = False
         self.rear_target_prepared = False
@@ -55,7 +55,7 @@ class Js06MainCtrl(QObject):
         self.front_camera_changed.connect(self.decompose_front_targets)
         self.rear_camera_changed.connect(self.decompose_rear_targets)
 
-        self.broker_running = False
+        self.worker_running = False
         self.start_observation_timer()
 
     def init_db(self):
@@ -126,7 +126,7 @@ class Js06MainCtrl(QObject):
         input_shape = sess.get_inputs()[0].shape
         input_height = input_shape[1]
         input_width = input_shape[2]
-
+        
         for tg in targets:
             wedge = tg['wedge']
             azimuth = tg['azimuth']
@@ -135,7 +135,7 @@ class Js06MainCtrl(QObject):
             roi = QRect(*point, *size)
 
             for i in range(len(tg['mask'])):
-                label = f"{tg['label']}_{i}"
+                label = f"{tg['label']}-{i}"
                 distance = tg['distance'][i]
                 mask_path = os.path.join(base_path, 'mask', id, tg['mask'][i])
                 mask = self.read_mask(mask_path)
@@ -143,9 +143,9 @@ class Js06MainCtrl(QObject):
                 decomposed_targets.append(st)
 
         if direction == 'front':
-            self.front_decomposed_targets = decomposed_targets
+            self.front_simple_targets = decomposed_targets
         elif direction == 'rear':
-            self.rear_decomposed_targets = decomposed_targets
+            self.rear_simple_targets = decomposed_targets
 
     def read_mask(self, path: str) -> np.ndarray:
         """Read mask image and return 
@@ -172,35 +172,35 @@ class Js06MainCtrl(QObject):
             return
 
         # If broker is already running, quit.
-        if self.broker_running:
+        if self.worker_running:
             return
         else:
-            self.broker_running = True
+            self.worker_running = True
 
         self.epoch = QDateTime.currentSecsSinceEpoch()
         front_uri = self.get_front_camera_uri()
         rear_uri = self.get_rear_camera_uri()
-        self.broker = Js06InferenceWorker(
+        self.worker = Js06InferenceWorker(
             self.epoch,
             front_uri, 
             rear_uri, 
-            self.front_decomposed_targets, 
-            self.rear_decomposed_targets
+            self.front_simple_targets, 
+            self.rear_simple_targets
             )
-        self.broker_thread = QThread()
-        self.broker.moveToThread(self.broker_thread)
-        self.broker_thread.started.connect(self.broker.run)
-        self.broker.finished.connect(self.broker_thread.quit)
-        self.broker.finished.connect(self.postprocessing)
-        self.broker.finished.connect(self.finalize_broker)
-        self.broker_thread.start()
+        self.worker_thread = QThread()
+        self.worker.moveToThread(self.worker_thread)
+        self.worker_thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.worker_thread.quit)
+        self.worker.finished.connect(self.postproduction)
+        self.worker.finished.connect(self.finalize_broker)
+        self.worker_thread.start()
 
     @pyqtSlot()
     def finalize_broker(self):
-        self.broker_running = False
+        self.worker_running = False
 
     @pyqtSlot()
-    def postprocessing(self):
+    def postproduction(self):
         """
         epoch: seconds since epoch
         """
@@ -211,6 +211,7 @@ class Js06MainCtrl(QObject):
         wedge_vis = self.wedge_visibility()
         self.wedge_vis_ready.emit(epoch, wedge_vis)
         self.write_visibilitiy(epoch, wedge_vis)
+        self._model.write_discernment(epoch, self.front_simple_targets, self.rear_simple_targets)
 
     @pyqtSlot()
     def stop_timer(self) -> None:
@@ -221,14 +222,14 @@ class Js06MainCtrl(QObject):
         """
         pos, neg = [], []
 
-        for t in self.front_decomposed_targets:
+        for t in self.front_simple_targets:
             point = (t.azimuth, t.distance)
             if t.discernment:
                 pos.append(point)
             else:
                 neg.append(point)
 
-        for t in self.rear_decomposed_targets:
+        for t in self.rear_simple_targets:
             point = (t.azimuth, t.distance)
             if t.discernment:
                 pos.append(point)
@@ -248,13 +249,13 @@ class Js06MainCtrl(QObject):
 
     def wedge_visibility(self) -> dict:
         wedge_vis = {w: None for w in Js06Wedge}
-        for t in self.front_decomposed_targets:
+        for t in self.front_simple_targets:
             if t.discernment:
                 if wedge_vis[t.wedge] == None:
                     wedge_vis[t.wedge] = t.distance
                 elif wedge_vis[t.wedge] < t.distance:
                     wedge_vis[t.wedge] = t.distance
-        for t in self.rear_decomposed_targets:
+        for t in self.rear_simple_targets:
             if t.discernment:
                 if wedge_vis[t.wedge] == None:
                     wedge_vis[t.wedge] = t.distance
@@ -495,4 +496,4 @@ class Js06InferenceWorker(QObject):
                 result[i - chunk_size + 1:] = self.classify_image(data)
 
         for i, target in enumerate(targets):
-            target.discernment = result[i] == 1
+            target.discernment = bool(result[i] == 1)
