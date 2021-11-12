@@ -23,11 +23,11 @@ from PyQt5.QtMultimediaWidgets import QVideoWidget
 from PyQt5.QtWidgets import (QDialog, QLabel, QMainWindow, QMessageBox,
                              QVBoxLayout, QWidget, QFileDialog)
 
-from .controller import Js06MainCtrl
-from .model import Js06Settings
+from .controller import Js08MainCtrl
+from .model import Js08Settings
 
 
-class Js06DiscernmentView(QChartView):
+class Js08DiscernmentView(QChartView):
     def __init__(self, parent: QWidget, title: str = None):
         super().__init__(parent)
 
@@ -85,7 +85,7 @@ class Js06DiscernmentView(QChartView):
         self.negatives.replace(neg_point)
 
 
-class Js06VisibilityView(QChartView):
+class Js08VisibilityView(QChartView):
     def __init__(self, parent: QWidget, maxlen: int, title: str = None):
         super().__init__(parent)
 
@@ -152,7 +152,7 @@ class Js06VisibilityView(QChartView):
         return prevailing
 
 
-class Js06CameraView(QDialog):
+class Js08CameraView(QDialog):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
         self.setModal(True)
@@ -216,7 +216,7 @@ class Js06CameraView(QDialog):
         self._ctrl.rear_camera_changed.emit(self._ctrl.get_rear_camera_uri())
 
 
-class Js06TargetView(QDialog):
+class Js08TargetView(QDialog):
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
         self.setModal(True)
@@ -441,7 +441,7 @@ class Js06TargetView(QDialog):
         self.coor_size_y = [int(y * 646 / self.h) for y in self.size_y]
 
 
-class Js06AboutView(QDialog):
+class Js08AboutView(QDialog):
     def __init__(self) -> None:
         super().__init__()
 
@@ -453,7 +453,7 @@ class Js06AboutView(QDialog):
         uic.loadUi(ui_path, self)
 
 
-class Js06ConfigView(QDialog):
+class Js08ConfigView(QDialog):
     def __init__(self) -> None:
         super().__init__()
 
@@ -471,38 +471,38 @@ class Js06ConfigView(QDialog):
         self.read_values()
 
     def read_values(self) -> None:
-        self.SaveVista_comboBox.setCurrentText(f"{Js06Settings.get('save_vista')}")
-        self.SaveImagePatch_comboBox.setCurrentText(f"{Js06Settings.get('save_image_patch')}")
+        self.SaveVista_comboBox.setCurrentText(f"{Js08Settings.get('save_vista')}")
+        self.SaveImagePatch_comboBox.setCurrentText(f"{Js08Settings.get('save_image_patch')}")
         self.ImageBasePath_pushButton.clicked.connect(self.ask_image_base_path)
-        self.InferenceBatchSize_spinBox.setValue(Js06Settings.get('inference_batch_size'))
-        self.DatabaseHost_lineEdit.setText(Js06Settings.get('db_host'))
-        self.DatabasePort_lineEdit.setText(f"{Js06Settings.get('db_port')}")
-        self.DatabaseName_lineEdit.setText(Js06Settings.get('db_name'))
-        self.DatabaseAdmin_lineEdit.setText(Js06Settings.get('db_admin'))
-        self.DatabaseAdminPw_lineEdit.setText(Js06Settings.get('db_admin_password'))
-        self.DatabaseUser_lineEdit.setText(Js06Settings.get('db_user'))
-        self.DatabaseUserPw_lineEdit.setText(Js06Settings.get('db_user_password'))
+        self.InferenceBatchSize_spinBox.setValue(Js08Settings.get('inference_batch_size'))
+        self.DatabaseHost_lineEdit.setText(Js08Settings.get('db_host'))
+        self.DatabasePort_lineEdit.setText(f"{Js08Settings.get('db_port')}")
+        self.DatabaseName_lineEdit.setText(Js08Settings.get('db_name'))
+        self.DatabaseAdmin_lineEdit.setText(Js08Settings.get('db_admin'))
+        self.DatabaseAdminPw_lineEdit.setText(Js08Settings.get('db_admin_password'))
+        self.DatabaseUser_lineEdit.setText(Js08Settings.get('db_user'))
+        self.DatabaseUserPw_lineEdit.setText(Js08Settings.get('db_user_password'))
 
     def ask_image_base_path(self) -> None:
         self.image_base_path = QFileDialog.getExistingDirectory(self, "Select directory",
-                                                                directory=Js06Settings.get('image_base_path'))
+                                                                directory=Js08Settings.get('image_base_path'))
 
     def write_values(self) -> None:
-        Js06Settings.set('save_vista', self.SaveVista_comboBox.currentText())
-        Js06Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
+        Js08Settings.set('save_vista', self.SaveVista_comboBox.currentText())
+        Js08Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
         if self.image_base_path is not None:
-            Js06Settings.set('image_base_path', self.image_base_path)
-        Js06Settings.set('inference_batch_size', self.InferenceBatchSize_spinBox.value())
-        Js06Settings.set('db_host', self.DatabaseHost_lineEdit.text())
-        Js06Settings.set('db_port', f"{int(self.DatabasePort_lineEdit.text())}")
-        Js06Settings.set('db_name', self.DatabaseName_lineEdit.text())
-        Js06Settings.set('db_admin', self.DatabaseAdmin_lineEdit.text())
-        Js06Settings.set('db_admin_password', self.DatabaseAdminPw_lineEdit.text())
-        Js06Settings.set('db_user', self.DatabaseUser_lineEdit.text())
-        Js06Settings.set('db_user_password', self.DatabaseUserPw_lineEdit.text())
+            Js08Settings.set('image_base_path', self.image_base_path)
+        Js08Settings.set('inference_batch_size', self.InferenceBatchSize_spinBox.value())
+        Js08Settings.set('db_host', self.DatabaseHost_lineEdit.text())
+        Js08Settings.set('db_port', f"{int(self.DatabasePort_lineEdit.text())}")
+        Js08Settings.set('db_name', self.DatabaseName_lineEdit.text())
+        Js08Settings.set('db_admin', self.DatabaseAdmin_lineEdit.text())
+        Js08Settings.set('db_admin_password', self.DatabaseAdminPw_lineEdit.text())
+        Js08Settings.set('db_user', self.DatabaseUser_lineEdit.text())
+        Js08Settings.set('db_user_password', self.DatabaseUserPw_lineEdit.text())
 
 
-class Js06VideoWidget(QWidget):
+class Js08VideoWidget(QWidget):
     """Video stream player using QVideoWidget
     """
     video_frame_prepared = pyqtSignal(QVideoFrame)
@@ -523,12 +523,12 @@ class Js06VideoWidget(QWidget):
         self.player.play()
 
 
-class Js06MainView(QMainWindow):
+class Js08MainView(QMainWindow):
     restore_defaults_requested = pyqtSignal()
     main_view_closed = pyqtSignal()
     select_camera_requested = pyqtSignal()
 
-    def __init__(self, controller: Js06MainCtrl, size: list = None) -> None:
+    def __init__(self, controller: Js08MainCtrl, size: list = None) -> None:
         super().__init__()
 
         if getattr(sys, 'frozen', False):
@@ -552,54 +552,54 @@ class Js06MainView(QMainWindow):
         self.actionConfiguration.triggered.connect(self.configuration)
         self.actionAbout.triggered.connect(self.about_view)
 
-        # Set size of Js06MainView
+        # Set size of Js08MainView
         if size == None:
-            width, height = Js06Settings.get('window_size')
+            width, height = Js08Settings.get('window_size')
         else:
             width, height = size
         self.resize(width, height)
 
         # Front video
-        self.front_video_widget = Js06VideoWidget(self)
+        self.front_video_widget = Js08VideoWidget(self)
         self.front_vertical.addWidget(self.front_video_widget, 1)
         self._ctrl.front_camera_changed.connect(self.front_video_widget.on_camera_change)
         self._ctrl.front_camera_changed.emit(self._ctrl.get_front_camera_uri())
 
         # Rear video
-        self.rear_video_widget = Js06VideoWidget(self)
+        self.rear_video_widget = Js08VideoWidget(self)
         self.rear_vertical.addWidget(self.rear_video_widget, 1)
         self._ctrl.rear_camera_changed.connect(self.rear_video_widget.on_camera_change)
         self._ctrl.rear_camera_changed.emit(self._ctrl.get_rear_camera_uri())
 
         # Discernment status
-        self.discernment_widget = Js06DiscernmentView(self)
+        self.discernment_widget = Js08DiscernmentView(self)
         self.discernment_vertical.addWidget(self.discernment_widget)
         self._ctrl.target_assorted.connect(self.discernment_widget.refresh_stats)
 
         # Prevailing visibility
-        self.visibility_widget = Js06VisibilityView(self, 1440)
+        self.visibility_widget = Js08VisibilityView(self, 1440)
         self.visibility_vertical.addWidget(self.visibility_widget)
         self._ctrl.wedge_vis_ready.connect(self.visibility_widget.refresh_stats)
 
         self.show()
 
     def edit_target(self) -> None:
-        dlg = Js06TargetView(self)
+        dlg = Js08TargetView(self)
         dlg.resize(self.width(), self.height())
         dlg.exec_()
 
     def configuration(self) -> None:
-        dlg = Js06ConfigView()
+        dlg = Js08ConfigView()
         dlg.exec_()
 
     def about_view(self) -> None:
-        dlg = Js06AboutView()
+        dlg = Js08AboutView()
         dlg.setFixedSize(dlg.size())
         dlg.exec_()
 
     @pyqtSlot()
     def edit_camera(self) -> None:
-        dlg = Js06CameraView(self)
+        dlg = Js08CameraView(self)
         dlg.exec()
 
     def ask_restore_default(self) -> None:
@@ -607,7 +607,7 @@ class Js06MainView(QMainWindow):
         response = QMessageBox.question(
             self,
             'Restore to defaults',
-            'The JS-06 exited abnormally. '
+            'The JS-08 exited abnormally. '
             'Do you want to restore the factory default?',
         )
         if response == QMessageBox.Yes:
@@ -619,7 +619,7 @@ class Js06MainView(QMainWindow):
         window_size = self.size()
         width = window_size.width()
         height = window_size.height()
-        Js06Settings.set('window_size', (width, height))
+        Js08Settings.set('window_size', (width, height))
 
         self._ctrl.set_normal_shutdown()
 
@@ -630,5 +630,5 @@ if __name__ == '__main__':
     from PyQt5.QtWidgets import QApplication
 
     app = QApplication(sys.argv)
-    window = Js06MainView(Js06MainCtrl)
+    window = Js08MainView(Js08MainCtrl)
     sys.exit(app.exec())

@@ -19,11 +19,11 @@ from PyQt5.QtCore import (QAbstractTableModel, QModelIndex, QRect, QRunnable,
 from PyQt5.QtGui import QImage
 
 
-Js06TargetCategory = ['single', 'compound']
-Js06Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+Js08TargetCategory = ['single', 'compound']
+Js08Wedge = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 
 
-class Js06SimpleTarget:
+class Js08SimpleTarget:
     """Simple target"""
 
     def __init__(self, label: str, wedge: str, azimuth: float, distance: float, roi: QRect, mask: QImage, input_width: int, input_height: int):
@@ -69,7 +69,7 @@ class Js06SimpleTarget:
         return arr
 
 
-class Js06CameraTableModel(QAbstractTableModel):
+class Js08CameraTableModel(QAbstractTableModel):
     def __init__(self, data: list):
         super().__init__()
         self._headers = [
@@ -150,7 +150,7 @@ class Js06CameraTableModel(QAbstractTableModel):
         return data_dict
 
 
-class Js06AttrModel:
+class Js08AttrModel:
     def __init__(self):
         super().__init__()
         self.db = None
@@ -160,7 +160,7 @@ class Js06AttrModel:
         self.db = client[db]
 
     def setup_db(self, attr_json: list, camera_json: list) -> None:
-        """Create MongoDB collections for JS-06.
+        """Create MongoDB collections for JS-08.
 
         This method creates the following collections:
         * attr: attributes collection
@@ -314,7 +314,7 @@ class Js06AttrModel:
         wedge_visibility['timestamp'] = datetime.datetime.fromtimestamp(epoch, kst)
         self.db.visibility.insert_one(wedge_visibility)
 
-    def write_discernment(self, epoch: int, front_targets: List[Js06SimpleTarget], rear_targets: List[Js06SimpleTarget]):
+    def write_discernment(self, epoch: int, front_targets: List[Js08SimpleTarget], rear_targets: List[Js08SimpleTarget]):
         attr = self.read_attr()
         kst = datetime.timezone(datetime.timedelta(hours=9))
         discernment = {
@@ -330,25 +330,25 @@ class Js06AttrModel:
 
         self.db.discernment.insert_one(discernment)
 
-class Js06Settings:
-    settings = QSettings('sijung', 'js06')
+class Js08Settings:
+    settings = QSettings('sijung', 'js08')
 
     defaults = {
         'save_vista': True,
         'save_image_patch': True,
         'image_base_path': os.path.join(
             QStandardPaths.writableLocation(QStandardPaths.PicturesLocation),
-            'js06'
+            'js08'
         ),
         'inference_batch_size': 8,
         # Database settings
         'db_host': 'localhost',
         'db_port': 27017,
-        'db_name': 'js06',
+        'db_name': 'js08',
         'db_admin': 'sijung',
         'db_admin_password': 'sijung_pw',
-        'db_user': 'js06',
-        'db_user_password': 'js06_pw',
+        'db_user': 'js08',
+        'db_user_password': 'js08_pw',
         # Hidden settings
         'window_size': (1230, 700),
         'normal_shutdown': False
@@ -372,7 +372,7 @@ class Js06Settings:
             cls.set(key, value)
 
 
-class Js06IoRunner(QRunnable):
+class Js08IoRunner(QRunnable):
     def __init__(self, path: str, image: QImage):
         super().__init__()
         self.setAutoDelete(True)
@@ -392,8 +392,8 @@ if __name__ == '__main__':
 
     fake = faker.Faker()
 
-    js06_model = Js06AttrModel()
-    js06_model.connect_to_db('localhost', 27017, 'js06')
+    js08_model = Js08AttrModel()
+    js08_model.connect_to_db('localhost', 27017, 'js08')
 
     camera = {}
     camera['label'] = 'front'
@@ -405,34 +405,34 @@ if __name__ == '__main__':
     camera['azimuth'] = random.randint(0, 179)
     camera['view_angle'] = random.choice([90, 120, 180, 200])
 
-    response = js06_model.insert_camera(camera)
+    response = js08_model.insert_camera(camera)
     print(response)
 
-    cameras = js06_model.read_cameras()
+    cameras = js08_model.read_cameras()
 
-    js06_attr = {}
-    js06_attr['label'] = 'brave js06'
-    js06_attr['version'] = '0.1'
-    js06_attr['serial_number'] = '0123456789XYZ'
-    js06_attr['location'] = (float(fake.longitude()), float(fake.latitude()))
-    js06_attr['platform'] = platform.platform()
-    js06_attr['camera'] = random.choice(cameras)
+    js08_attr = {}
+    js08_attr['label'] = 'brave js08'
+    js08_attr['version'] = '0.1'
+    js08_attr['serial_number'] = '0123456789XYZ'
+    js08_attr['location'] = (float(fake.longitude()), float(fake.latitude()))
+    js08_attr['platform'] = platform.platform()
+    js08_attr['camera'] = random.choice(cameras)
 
     for i in range(2):
         target = {}
         target['label'] = str(i)
         target['dist'] = random.uniform(0, 20)
-        target['ordinal'] = random.choice(Js06Wedge)
-        target['category'] = random.choice(Js06TargetCategory)
+        target['ordinal'] = random.choice(Js08Wedge)
+        target['category'] = random.choice(Js08TargetCategory)
         target['roi'] = (
             (random.uniform(-1, 0), random.uniform(0, 1)),
             (random.uniform(0, 1), random.uniform(-1, 0))
         )
-        js06_attr['targets'].append(target)
+        js08_attr['targets'].append(target)
 
-    print('Js06Attribute with sample values:')
-    pprint.pprint(js06_attr)
+    print('Js08Attribute with sample values:')
+    pprint.pprint(js08_attr)
 
-    js06_model.insert_attr(js06_attr)
-    js06_attr_2 = js06_model.read_attr()
-    pprint.pprint(js06_attr_2.to_dict())
+    js08_model.insert_attr(js08_attr)
+    js08_attr_2 = js08_model.read_attr()
+    pprint.pprint(js08_attr_2.to_dict())

@@ -20,11 +20,11 @@ from PyQt5.QtCore import (QDateTime, QDir, QObject, QRect, QThread,
 from PyQt5.QtGui import QImage
 from PyQt5.QtMultimedia import QVideoFrame
 
-from .model import (Js06AttrModel, Js06CameraTableModel, Js06IoRunner,
-                    Js06Settings, Js06SimpleTarget, Js06Wedge)
+from .model import (Js08AttrModel, Js08CameraTableModel, Js08IoRunner,
+                    Js08Settings, Js08SimpleTarget, Js08Wedge)
 
 
-class Js06MainCtrl(QObject):
+class Js08MainCtrl(QObject):
     abnormal_shutdown = pyqtSignal()
     front_camera_changed = pyqtSignal(str) # uri
     rear_camera_changed = pyqtSignal(str) # uri
@@ -33,7 +33,7 @@ class Js06MainCtrl(QObject):
     target_assorted = pyqtSignal(list, list) # positives, negatives
     wedge_vis_ready = pyqtSignal(int, dict) # epoch, wedge visibility
 
-    def __init__(self, model: Js06AttrModel):
+    def __init__(self, model: Js08AttrModel):
         super().__init__()
 
         self.writer_pool = QThreadPool.globalInstance()
@@ -59,9 +59,9 @@ class Js06MainCtrl(QObject):
         self.start_observation_timer()
 
     def init_db(self):
-        db_host = Js06Settings.get('db_host')
-        db_port = Js06Settings.get('db_port')
-        db_name = Js06Settings.get('db_name')
+        db_host = Js08Settings.get('db_host')
+        db_port = Js08Settings.get('db_port')
+        db_name = Js08Settings.get('db_name')
         self._model.connect_to_db(db_host, db_port, db_name)
 
         if getattr(sys, 'frozen', False):
@@ -112,7 +112,7 @@ class Js06MainCtrl(QObject):
             targets = attr['rear_camera']['targets']
             id = str(attr['rear_camera']['camera_id'])
         
-        base_path = Js06Settings.get('image_base_path') 
+        base_path = Js08Settings.get('image_base_path') 
         
         # Prepare model.
         # TODO(Kyungwon): Put the model file into Qt Resource Collection.
@@ -139,7 +139,7 @@ class Js06MainCtrl(QObject):
                 distance = tg['distance'][i]
                 mask_path = os.path.join(base_path, 'mask', id, tg['mask'][i])
                 mask = self.read_mask(mask_path)
-                st = Js06SimpleTarget(label, wedge, azimuth, distance, roi, mask, input_width, input_height)
+                st = Js08SimpleTarget(label, wedge, azimuth, distance, roi, mask, input_width, input_height)
                 decomposed_targets.append(st)
 
         if direction == 'front':
@@ -180,7 +180,7 @@ class Js06MainCtrl(QObject):
         self.epoch = QDateTime.currentSecsSinceEpoch()
         front_uri = self.get_front_camera_uri()
         rear_uri = self.get_rear_camera_uri()
-        self.worker = Js06InferenceWorker(
+        self.worker = Js08InferenceWorker(
             self.epoch,
             front_uri, 
             rear_uri, 
@@ -248,7 +248,7 @@ class Js06MainCtrl(QObject):
         self._model.write_visibility(wedge_visibility)
 
     def wedge_visibility(self) -> dict:
-        wedge_vis = {w: None for w in Js06Wedge}
+        wedge_vis = {w: None for w in Js08Wedge}
         for t in self.front_simple_targets:
             if t.discernment:
                 if wedge_vis[t.wedge] == None:
@@ -273,7 +273,7 @@ class Js06MainCtrl(QObject):
     def save_image(self, dir: str, filename: str, image: QImage) -> None:
         os.makedirs(dir, exist_ok=True)
         path = QDir.cleanPath(os.path.join(dir, filename))
-        runner = Js06IoRunner(path, image)
+        runner = Js08IoRunner(path, image)
         self.writer_pool.start(runner)
     
     def grab_image(self, direction: str) -> QImage:
@@ -309,12 +309,12 @@ class Js06MainCtrl(QObject):
 
     def get_camera_table_model(self) -> dict:
         cameras = self.get_cameras()
-        table_model =  Js06CameraTableModel(cameras)
+        table_model =  Js08CameraTableModel(cameras)
         return table_model
 
     def check_exit_status(self) -> bool:
-        normal_exit = Js06Settings.get('normal_shutdown')
-        Js06Settings.set('normal_shutdown', False)
+        normal_exit = Js08Settings.get('normal_shutdown')
+        Js08Settings.set('normal_shutdown', False)
         return normal_exit
 
     def update_cameras(self, cameras: list, update_target: bool = False) -> None:
@@ -350,7 +350,7 @@ class Js06MainCtrl(QObject):
 
     @pyqtSlot()
     def close_process(self) -> None:
-        Js06Settings.set('normal_shutdown', True)
+        Js08Settings.set('normal_shutdown', True)
 
     def get_attr(self) -> dict:
         attr_doc = self._model.read_attr()
@@ -364,17 +364,17 @@ class Js06MainCtrl(QObject):
 
     @pyqtSlot()
     def restore_defaults(self) -> None:
-        Js06Settings.restore_defaults()
+        Js08Settings.restore_defaults()
 
     @pyqtSlot(bool)
     def set_normal_shutdown(self) -> None:
-         Js06Settings.set('normal_shutdown', True)
+         Js08Settings.set('normal_shutdown', True)
 
     def get_cameras(self) -> list:
         return self._model.read_cameras()
 
 
-class Js06InferenceWorker(QObject):
+class Js08InferenceWorker(QObject):
     finished = pyqtSignal()
     
     def __init__(self, epoch: int, front_uri: str, rear_uri: str, front_decomposed_targets: list, rear_decomposed_targets: list) -> None:
@@ -396,7 +396,7 @@ class Js06InferenceWorker(QObject):
         self.front_targets = front_decomposed_targets
         self.rear_targets = rear_decomposed_targets
 
-        self.batch_size = Js06Settings.get('inference_batch_size')
+        self.batch_size = Js08Settings.get('inference_batch_size')
 
         # Prepare model.
         model_path = os.path.join(directory, 'resources', 'js08_1636343249.onnx')
@@ -451,8 +451,8 @@ class Js06InferenceWorker(QObject):
             self.finished.emit()
             return
 
-        if Js06Settings.get('save_vista'):
-            basepath = Js06Settings.get('image_base_path')
+        if Js08Settings.get('save_vista'):
+            basepath = Js08Settings.get('image_base_path')
             now = QDateTime.fromSecsSinceEpoch(self.epoch)
             dir = os.path.join(basepath, 'vista', now.toString("yyyy-MM-dd"))
             filename = f'vista-front-{now.toString("yyyy-MM-dd-hh-mm")}.png'
@@ -468,11 +468,11 @@ class Js06InferenceWorker(QObject):
 
         self.finished.emit()
 
-    def classify_batch(self, targets: List[Js06SimpleTarget], vista: QImage):
+    def classify_batch(self, targets: List[Js08SimpleTarget], vista: QImage):
         """Discriminate image batch
 
         Parameters:
-            targets: List of Js06SimpleTarget
+            targets: List of Js08SimpleTarget
             vista: QImage
         """
         padding_size = -len(targets) % self.batch_size

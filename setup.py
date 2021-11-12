@@ -9,7 +9,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='JS08',
+    name='js08',
     version='0.1',
     author='Sijung Co., Ltd.',
     author_email='steve17@sijung.com',
@@ -19,13 +19,13 @@ setup(
     keywords=['visibility', 'weather station'],
     url='http://sijung.com/ko/bbs/page.php?hid=m02_01',
     project_urls={
-        'Source Code': 'https://github.com/sijung21/js06'
+        'Source Code': 'https://github.com/sijung21/js08'
     },
     packages=find_packages(),
     install_requires=['PyQt5', 'PyQtChart', 'pymongo', 'numpy', 'opencv-python', 'onnxruntime'],
-    package_data={'js06.resources': ['*.ui', '*.json', '*.onnx']},
+    package_data={'js08.resources': ['*.ui', '*.json', '*.onnx']},
     python_requires='>=3.6',
     entry_points={
-        'console_scripts': ['js08 = js06.__main__:main']
+        'console_scripts': ['js08 = js08.__main__:main']
     }
 )
