@@ -61,7 +61,7 @@ def main():
     model = Js08AttrModel()
     # Create instances of the controller
     ctrl = Js08MainCtrl(model)
-    # Show GUI of JS-06
+    # Show GUI of JS-08
     view = Js08MainView(ctrl, size=window_size)
     # Set icon of the app
     app_icon = QIcon(':icon/logo.png')
