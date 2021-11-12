@@ -160,7 +160,7 @@ class Js08AttrModel:
         self.db = client[db]
 
     def setup_db(self, attr_json: list, camera_json: list) -> None:
-        """Create MongoDB collections for JS-06.
+        """Create MongoDB collections for JS-08.
 
         This method creates the following collections:
         * attr: attributes collection
