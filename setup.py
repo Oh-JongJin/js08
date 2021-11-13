@@ -39,5 +39,5 @@ setup(
         ('share/applications/', ['js08.desktop']),
         ('man/man1', ['js08.1'])
         ],
-    python_requres='>=3.6'
+    python_requires='>=3.6'
 )
