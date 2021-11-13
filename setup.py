@@ -18,7 +18,7 @@ setup(
     long_description=open('README.md', 'r').read(),
     long_description_content_type="text/markdown",
     keywords=['visibility-detection', 'weather-station'],
-    url='http://sijung.com/ko/bbs/page.php?hid=m02_01',
+    url='http://sijung.com',
     project_urls={
         'Source Code': 'https://github.com/sijung21/js08'
     },
