@@ -17,7 +17,7 @@ setup(
     license='Copyright (C)',
     long_description=open('README.md', 'r').read(),
     long_description_content_type="text/markdown",
-    keywords=['visibility', 'weather station'],
+    keywords=['visibility-detection', 'weather-station'],
     url='http://sijung.com/ko/bbs/page.php?hid=m02_01',
     project_urls={
         'Source Code': 'https://github.com/sijung21/js08'
@@ -36,7 +36,8 @@ setup(
         'gui_scripts': ['js08=js08.__main__:main']
     },
     data_files=[
-        ('share/applications/', ['js08.desktop'])
+        ('share/applications/', ['js08.desktop']),
+        ('man/man1', ['js08.1'])
         ],
     python_requres='>=3.6'
 )
