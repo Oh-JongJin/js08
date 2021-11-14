@@ -16,7 +16,7 @@ setup(
     description='AI-powered & image-based visibility meter',
     license='Copyright (C)',
     long_description=open('README.md', 'r').read(),
-    long_description_content_type="text/markdown",
+    long_description_content_type='text/markdown',
     keywords=['visibility-detection', 'weather-station'],
     url='http://sijung.com',
     project_urls={
