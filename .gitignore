@@ -38,6 +38,7 @@ target/
 build/
 develop-eggs/
 dist/
+deb_dist/
 downloads/
 eggs/
 .eggs/

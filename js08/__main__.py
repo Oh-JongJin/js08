@@ -17,7 +17,7 @@ from . import js08_rc
 from .controller import Js08MainCtrl
 from .model import Js08AttrModel
 from .view import Js08MainView
-
+from .version import __version__
 
 class Js08Application(QApplication):
 
@@ -38,6 +38,13 @@ class Js08Application(QApplication):
 def process_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '-v',
+        '--version',
+        action='version',
+        version=f'js08 {__version__}'
+    )
+    parser.add_argument(
+        '-w',
         '--window-size', 
         action='store',
         help='--window-size=<width>,<height>'
