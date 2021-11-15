@@ -8,9 +8,10 @@
 
 from setuptools import find_packages, setup
 
+from js08/version import __version__
 setup(
     name='js08',
-    version='0.1',
+    version=__version__,
     author='Sijung Co., Ltd.',
     author_email='steve17@sijung.com',
     description='AI-powered & image-based visibility meter',
