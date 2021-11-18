@@ -475,6 +475,12 @@ class Js08InferenceWorker(QObject):
             targets: List of Js08SimpleTarget
             vista: QImage
         """
+        save_target_clip = Js08Settings.get('save_target_clip')
+        if save_target_clip:
+            basepath = Js08Settings.get('image_base_path')
+            dir = os.path.join(basepath, 'target', str(self.epoch))
+            os.makedirs(dir, exist_ok=True)
+
         padding_size = -len(targets) % self.batch_size
         result = np.zeros(len(targets) + padding_size)
         for i, target in enumerate(targets):
@@ -488,6 +494,11 @@ class Js08InferenceWorker(QObject):
             arr = target.img_to_arr(roi_image, self.input_width, self.input_height)
             masked_arr = arr * target.mask
             data[i % self.batch_size] = masked_arr
+
+            if save_target_clip:
+                filename = f'{target.label}.png'
+                masked_img = target.arr_to_img(masked_arr)
+                self.save_image(dir, filename, masked_img)
 
             if i % self.batch_size == self.batch_size - 1:
                 result[i - self.batch_size + 1: i + 1] = self.classify_image(data)
