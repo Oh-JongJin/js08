@@ -480,6 +480,7 @@ class Js08InferenceWorker(QObject):
             basepath = Js08Settings.get('image_base_path')
             dir = os.path.join(basepath, 'target', str(self.epoch))
             os.makedirs(dir, exist_ok=True)
+            masked_img_list = []
 
         padding_size = -len(targets) % self.batch_size
         result = np.zeros(len(targets) + padding_size)
@@ -496,9 +497,8 @@ class Js08InferenceWorker(QObject):
             data[i % self.batch_size] = masked_arr
 
             if save_target_clip:
-                filename = f'{target.label}.png'
                 masked_img = target.arr_to_img(masked_arr)
-                self.save_image(dir, filename, masked_img)
+                masked_img_list.append(masked_img)
 
             if i % self.batch_size == self.batch_size - 1:
                 result[i - self.batch_size + 1: i + 1] = self.classify_image(data)
@@ -508,3 +508,7 @@ class Js08InferenceWorker(QObject):
 
         for i, target in enumerate(targets):
             target.discernment = bool(result[i] == 1)
+            if save_target_clip:
+                postfix = 'pos' if target.discernment else 'neg'
+                filename = f'{target.label}_{postfix}.png'
+                self.save_image(dir, filename, masked_img_list[i])
