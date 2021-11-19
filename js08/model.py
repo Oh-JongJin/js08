@@ -48,9 +48,9 @@ class Js08SimpleTarget:
     def img_to_arr(self, image: QImage, width: int, height: int) -> np.ndarray:
         """
         Parameters:
-            image: mask image in RGB format
-            width: width of mask array
-            height: height of mask array
+            image: image in RGB format
+            width: width of array
+            height: height of array
         """
         img = image.scaled(
             width, 
@@ -61,12 +61,23 @@ class Js08SimpleTarget:
 
         # The following code is referring to:
         # https://stackoverflow.com/questions/19902183/qimage-to-numpy-array-using-pyside
-        ptr = img.bits()
-        ptr.setsize(int(height * width * 3))
+        img = img.convertToFormat(QImage.Format.Format_RGB888)
+        ptr = img.constBits()
+        ptr.setsize(img.byteCount())
         arr = np.frombuffer(ptr, np.uint8).reshape((height, width, 3))
         arr = arr.astype(np.float32) / 255
 
         return arr
+
+    def arr_to_img(self, arr: np.ndarray) -> QImage:
+        """
+        Parameters:
+            arr: mask array in float32 format
+        """
+        arr = arr * 255
+        arr = arr.astype(np.uint8)
+        img = QImage(arr.data, arr.shape[1], arr.shape[0], arr.strides[0], QImage.Format_RGB888)
+        return img
 
 
 class Js08CameraTableModel(QAbstractTableModel):
@@ -335,7 +346,7 @@ class Js08Settings:
 
     defaults = {
         'save_vista': True,
-        'save_image_patch': True,
+        'save_target_clip': True,
         'image_base_path': os.path.join(
             QStandardPaths.writableLocation(QStandardPaths.PicturesLocation),
             'js08'

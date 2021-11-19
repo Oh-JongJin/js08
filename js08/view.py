@@ -472,7 +472,7 @@ class Js08ConfigView(QDialog):
 
     def read_values(self) -> None:
         self.SaveVista_comboBox.setCurrentText(f"{Js08Settings.get('save_vista')}")
-        self.SaveImagePatch_comboBox.setCurrentText(f"{Js08Settings.get('save_image_patch')}")
+        self.SaveImagePatch_comboBox.setCurrentText(f"{Js08Settings.get('save_target_clip')}")
         self.ImageBasePath_pushButton.clicked.connect(self.ask_image_base_path)
         self.InferenceBatchSize_spinBox.setValue(Js08Settings.get('inference_batch_size'))
         self.DatabaseHost_lineEdit.setText(Js08Settings.get('db_host'))
@@ -489,7 +489,7 @@ class Js08ConfigView(QDialog):
 
     def write_values(self) -> None:
         Js08Settings.set('save_vista', self.SaveVista_comboBox.currentText())
-        Js08Settings.set('save_image_patch', self.SaveImagePatch_comboBox.currentText())
+        Js08Settings.set('save_target_clip', self.SaveImagePatch_comboBox.currentText())
         if self.image_base_path is not None:
             Js08Settings.set('image_base_path', self.image_base_path)
         Js08Settings.set('inference_batch_size', self.InferenceBatchSize_spinBox.value())
