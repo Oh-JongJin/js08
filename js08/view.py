@@ -6,21 +6,20 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
+import ast
 import collections
 import os
 import sys
-import ast
+import vlc
 
 from PyQt5 import uic
 from PyQt5.QtChart import (QChart, QChartView, QDateTimeAxis, QLegend,
                            QLineSeries, QPolarChart, QScatterSeries,
                            QValueAxis)
-from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, QUrl, pyqtSignal,
+from PyQt5.QtCore import (QDateTime, QObject, QPointF, Qt, pyqtSignal,
                           pyqtSlot)
 from PyQt5.QtGui import QCloseEvent, QColor, QPainter, QPen, QPixmap
-from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer, QVideoFrame
-from PyQt5.QtMultimediaWidgets import QVideoWidget
-from PyQt5.QtWidgets import (QDialog, QLabel, QMainWindow, QMessageBox,
+from PyQt5.QtWidgets import (QDialog, QFrame, QLabel, QMainWindow, QMessageBox,
                              QVBoxLayout, QWidget, QFileDialog)
 
 from .controller import Js08MainCtrl
@@ -505,22 +504,30 @@ class Js08ConfigView(QDialog):
 class Js08VideoWidget(QWidget):
     """Video stream player using QVideoWidget
     """
-    video_frame_prepared = pyqtSignal(QVideoFrame)
-
-    def __init__(self, parent: QObject = None) -> None:
+    def __init__(self, parent: QObject = None):
         super().__init__(parent)
 
-        self.viewer = QVideoWidget()
-        self.player = QMediaPlayer(self, QMediaPlayer.VideoSurface)
-        self.player.setVideoOutput(self.viewer)
+        self.instance = vlc.Instance()
+        self.mediaplayer = self.instance.media_player_new()
+    
+        self.videoframe = QFrame()
+        
+        if sys.platform.startswith("linux"):  # for Linux using the X Server
+            self.mediaplayer.set_xwindow(self.videoframe.winId())
+        elif sys.platform == "win32":  # for Windows
+            self.mediaplayer.set_hwnd(self.videoframe.winId())
+        elif sys.platform == "darwin":  # for MacOS
+            self.mediaplayer.set_nsobject(self.videoframe.winId())
+
         layout = QVBoxLayout(self)
-        layout.addWidget(self.viewer)
+        layout.addWidget(self.videoframe)
 
     @pyqtSlot(str)
-    def on_camera_change(self, uri: str) -> None:
+    def on_camera_change(self, uri: str):
         self.uri = uri
-        self.player.setMedia(QMediaContent(QUrl(uri)))
-        self.player.play()
+        media = self.instance.media_new(self.uri)
+        self.mediaplayer.set_media(media)
+        self.mediaplayer.play()
 
 
 class Js08MainView(QMainWindow):
@@ -528,7 +535,7 @@ class Js08MainView(QMainWindow):
     main_view_closed = pyqtSignal()
     select_camera_requested = pyqtSignal()
 
-    def __init__(self, controller: Js08MainCtrl, size: list = None) -> None:
+    def __init__(self, controller: Js08MainCtrl, size: list = None):
         super().__init__()
 
         if getattr(sys, 'frozen', False):

@@ -39,6 +39,7 @@ Required Python packages that can be installed using `pip`:
   - opencv-python >= 4.4.0
   - numpy
   - onnxruntime
+  - python-vlc
 
 #### Ubuntu 18.04
 You can install most of the prerequisites using Ubuntu package manager, apt.

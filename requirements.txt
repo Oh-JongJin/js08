@@ -4,3 +4,4 @@ pymongo
 numpy
 onnxruntime
 opencv-python
+python-vlc
