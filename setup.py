@@ -25,7 +25,7 @@ setup(
         'Source Code': 'https://github.com/sijung21/js08'
     },
     packages=find_packages(),
-    install_requires=['PyQt5', 'PyQtChart', 'pymongo', 'numpy', 'opencv-python', 'onnxruntime'],
+    install_requires=['PyQt5', 'PyQtChart', 'pymongo', 'numpy', 'opencv-python', 'onnxruntime', 'python-vlc'],
     package_data={'js08.resources': ['*.ui', '*.json', '*.onnx']},
     classifiers=[
         'Programming Language :: Python :: 3.6',
