@@ -6,6 +6,6 @@
 #     ruddyscent@gmail.com (Kyungwon Chun)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
-from js08.__main__ import main
+from src.__main__ import main
 
 main()
