@@ -14,6 +14,8 @@ from PySide6.QtCore import Qt, QPointF
 from PySide6.QtCharts import (QChartView, QLegend, QLineSeries,
                               QPolarChart, QValueAxis, QChart,
                               QAreaSeries)
+from model import JS08Settings
+
 
 class DiscernmentView(QChartView):
 
@@ -30,8 +32,6 @@ class DiscernmentView(QChartView):
         self.setChart(chart)
         self.chart().setTheme(QChart.ChartThemeDark)
         self.chart().setBackgroundBrush(QBrush(QColor('#16202a')))
-
-        self.maxfev_time = JS08Settings.get('maxfev_time')
 
         # pen = QPen()
         # pen.setWidth(3)
@@ -176,7 +176,7 @@ class DiscernmentView(QChartView):
 if __name__ == '__main__':
     import sys
     from PySide6.QtWidgets import QApplication, QMainWindow
-    from model import JS08Settings
+    # from model import JS08Settings
 
     visibility = {'visibility_front': '18.829', 'visibility_rear': '0.192',
                   'front_W': 20.000, 'front_NW': 7.208,
@@ -193,6 +193,3 @@ if __name__ == '__main__':
     window.setCentralWidget(discernment_view)
     window.show()
     sys.exit(app.exec())
-
-
-from model import JS08Settings
