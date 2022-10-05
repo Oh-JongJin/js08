@@ -53,7 +53,7 @@ pip3 install onnxruntime
 Before execution of JS-08, you need an woring MongoDB. We recommend installing 
 MongoDB with Docker. Please follow the description on the following link:
 - https://hub.docker.com/_/mongo
-You can create and execute a container with MongoDB:
+  You can create and execute a container with MongoDB:
 ```bash
 docker run --name mongodb -d -p 27017:27017 mongo
 ```
@@ -66,3 +66,11 @@ ImportError: Microsoft Visual C++ Redistributable for Visual Studio 2019 not ins
 ```
 Please, download and install the required packages from:
 https://docs.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170
+
+
+
+## How to Run
+
+[js08.py](src/js08.py)
+
+`python js08.py`
