@@ -8,6 +8,8 @@
 
 import os
 import sys
+
+import pandas
 import vlc
 import time
 
@@ -16,7 +18,7 @@ import pandas as pd
 import multiprocessing as mp
 from multiprocessing import Process, Queue
 
-from PySide6.QtGui import QPixmap, QIcon
+from PySide6.QtGui import QPixmap, QIcon, QPainter, QPen
 from PySide6.QtWidgets import (QMainWindow, QWidget, QFrame, QMessageBox)
 from PySide6.QtCore import (Qt, Slot, QRect,
                             QTimer, QObject, QDateTime)
@@ -46,7 +48,7 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, q, _q):
         super(JS08MainWindow, self).__init__()
 
-        self.mp_flag = False
+        # self.mp_flag = False
 
         # if JS08Settings.get('login_flag'):
         #     login_window = LoginWindow()
@@ -57,8 +59,17 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
 
+        self.get_date = []
+        self.get_epoch = []
         self.q_list = []
         self.q_list_scale = 1440
+        self.result = pd.DataFrame
+
+        current_time = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(QDateTime.currentSecsSinceEpoch()))
+        year = current_time[:4]
+        md = current_time[5:7] + current_time[8:10]
+
+        self.get_date, self.get_epoch, self.q_list = self.get_data(year, md)
 
         self._plot = VisibilityView(self, self.q_list_scale)
         self._polar = DiscernmentView(self)
@@ -70,6 +81,7 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         self.visibility_front = 0
         self.visibility_rear = 0
         self.prevailing_visibility = None
+        self.graph_visibility_value = []
 
         self.year_date = None
         self.data_date = []
@@ -92,6 +104,11 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         self.setting_button.enterEvent = self.btn_on
         self.setting_button.leaveEvent = self.btn_off
 
+        self.front_label.paintEvent = self.front_label_paintEvent
+        self.rear_label.paintEvent = self.rear_label_paintEvent
+
+        self.setWindowIcon(QIcon('logo.ico'))
+        self.logo.setIcon(QIcon('resources/asset/f_logo.png'))
         self.time_button.setIcon(QIcon('resources/asset/clock.png'))
         self.timeseries_button_2.setIcon(QIcon('resources/asset/graph.png'))
         self.timeseries_button.setIcon(QIcon('resources/asset/polar.png'))
@@ -105,7 +122,7 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
             _producer = producer
 
             p = Process(name='clock', target=clockclock, args=(q,), daemon=True)
-            _p = Process(name='producer', target=producer, args=(_q,), daemon=True)
+            _p = Process(name='producer', target=_producer, args=(_q,), daemon=True)
 
             p.start()
             _p.start()
@@ -132,11 +149,19 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         self.label_5hour.mouseDoubleClickEvent = self.thumbnail_click5
         self.label_6hour.mouseDoubleClickEvent = self.thumbnail_click6
 
+        self.real_time_label.mouseDoubleClickEvent = self.get_status
+
         self.setting_button.clicked.connect(self.setting_btn_click)
 
         JS08Settings.restore_value('maxfev_count')
 
         self.show()
+
+    def get_status(self, event):
+        print(f'front video: {self.front_video_widget.media_player.is_playing()}')
+        print(f'rear video: {self.rear_video_widget.media_player.is_playing()}')
+        self.rear_video_widget.media_player.play()
+        print()
 
     def alert_test(self):
         self.alert.setIcon(QIcon('resources/asset/red.png'))
@@ -199,10 +224,10 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         save_path = os.path.join(f'{JS08Settings.get("data_csv_path")}/{JS08Settings.get("front_camera_name")}/{year}')
 
         if os.path.isfile(f'{save_path}/{month_day}.csv'):
-            result = pd.read_csv(f'{save_path}/{month_day}.csv')
-            data_datetime = result['date'].tolist()
-            data_epoch = result['epoch'].tolist()
-            data_visibility = result['visibility'].tolist()
+            self.result = pd.read_csv(f'{save_path}/{month_day}.csv')
+            data_datetime = self.result['date'].tolist()
+            data_epoch = self.result['epoch'].tolist()
+            data_visibility = self.result['visibility'].tolist()
 
             return data_datetime, data_epoch, data_visibility
 
@@ -216,26 +241,38 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         :param visibility: 8-degree Visibility value
         """
+        self.front_video_widget.get_status()
+        self.rear_video_widget.get_status()
 
         self.convert_visibility(visibility)
-        visibility_front = round(float(visibility.get('visibility_front')), 3)
-        visibility_rear = round(float(visibility.get('visibility_rear')), 3)
+        visibility_front = visibility.get('visibility_front')
+        # visibility_rear = visibility.get('visibility_rear')
+
+        # graph_visibility_value
+        self.graph_visibility_value.append(self.prevailing_visibility / 1000)
+        if len(self.graph_visibility_value) >= 10:
+            del self.graph_visibility_value[0]
+        plot_value = round(float(np.mean(self.graph_visibility_value)), 3)
 
         epoch = QDateTime.currentSecsSinceEpoch()
-        current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(epoch))
+        current_time = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(epoch))
         year = current_time[:4]
         md = current_time[5:7] + current_time[8:10]
 
-        get_date, get_epoch, self.q_list = self.get_data(year, md)
+        self.get_date, self.get_epoch, self.q_list = self.get_data(year, md)
 
         if len(self.q_list) == 0 or self.q_list_scale != len(self.q_list):
             self.q_list = []
             for i in range(self.q_list_scale):
-                self.q_list.append(visibility_front)
+                # self.q_list.append(visibility_front)
+                # self.q_list.append(self.prevailing_visibility / 1000)
+                self.q_list.append(plot_value)
             result_vis = np.mean(self.q_list)
         else:
             self.q_list.pop(0)
-            self.q_list.append(visibility_front)
+            # self.q_list.append(visibility_front)
+            # self.q_list.append(self.prevailing_visibility / 1000)
+            self.q_list.append(plot_value)
             result_vis = np.mean(self.q_list)
 
         if len(self.data_date) >= self.q_list_scale or len(self.data_vis) >= self.q_list_scale:
@@ -266,19 +303,25 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         try:
             result_front['date'] = [self.data_date[-1]]
             result_front['epoch'] = [self.data_time[-1]]
-            result_front['visibility'] = visibility_front
-            result_front['NE'] = round(float(visibility.get('NE')), 3)
-            result_front['EN'] = round(float(visibility.get('EN')), 3)
-            result_front['ES'] = round(float(visibility.get('ES')), 3)
-            result_front['SE'] = round(float(visibility.get('SE')), 3)
+            # result_front['visibility'] = visibility_front
+            result_front['visibility'] = plot_value
+            # result_front['NE'] = round(float(visibility.get('NE')), 3)
+            # result_front['EN'] = round(float(visibility.get('EN')), 3)
+            # result_front['ES'] = round(float(visibility.get('ES')), 3)
+            # result_front['SE'] = round(float(visibility.get('SE')), 3)
+            result_front['NE'] = visibility.get('NE')
+            result_front['EN'] = visibility.get('EN')
+            result_front['ES'] = visibility.get('ES')
+            result_front['SE'] = visibility.get('SE')
 
             result_rear['date'] = [self.data_date[-1]]
             result_rear['epoch'] = [self.data_time[-1]]
-            result_rear['visibility'] = visibility_rear
-            result_rear['SW'] = round(float(visibility.get('SW')), 3)
-            result_rear['WS'] = round(float(visibility.get('WS')), 3)
-            result_rear['WN'] = round(float(visibility.get('WN')), 3)
-            result_rear['NW'] = round(float(visibility.get('NW')), 3)
+            # result_rear['visibility'] = visibility_rear
+            result_rear['visibility'] = plot_value
+            result_rear['SW'] = visibility.get('SW')
+            result_rear['WS'] = visibility.get('WS')
+            result_rear['WN'] = visibility.get('WN')
+            result_rear['NW'] = visibility.get('NW')
 
         except TypeError as e:
             print(f'Occurred error ({current_time}) -\n{e}')
@@ -302,18 +345,16 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         try:
             if self.km_mile_convert:
-                # self.c_vis_label.setText(f'{format(round(self.visibility_front / 1.609, 2), ",")} mile')
                 self.c_vis_label.setText(f'{format(round(self.prevailing_visibility / 1609, 2), ",")} mile')
 
             elif self.km_mile_convert is False:
                 if self.visibility is not None:
                     self.c_vis_label.setText(
-                        # f'{format(int(self.visibility.get("visibility_front") * 1000), ",")} m')
                         f'{format(int(self.prevailing_visibility), ",")} m')
         except TypeError:
             pass
 
-        if current_time[-1:] == '0':
+        if current_time[-2:] == '00':
             self.thumbnail_refresh()
 
         if int(self.visibility_front * 1000) <= JS08Settings.get('visibility_alert_limit'):
@@ -328,11 +369,11 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         Notes
         --------
-        - If visibility ranging from 0 m to less than 400 m, mark it in units of 25 m.
+        - If visibility ranging from 0 m to less than 400 m, mark it in units of *25 m*.
         - If visibility ranging from 400 m to less than 800 m, mark it in units of 50 m.
         .. math:: q (10 ^ { size - 1 } ) + re
 
-        - If the visibility is more than 800 m, mark it in units of 25 m.
+        - If the visibility is more than 800 m, mark it in units of 100 m.
         .. math:: q (10 ^{ 2 } ) + re
 
         Examples
@@ -388,33 +429,72 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         self.prevailing_visibility = values[3]
 
     def thumbnail_refresh(self):
+
+        try:
+            data_datetime = self.result['date'].tolist()
+        except TypeError:
+            data_datetime = []
+
         one_hour_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 3600))
+        one_hour_visibility = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(time.time() - 3600))
         two_hour_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 3600 * 2))
+        two_hour_visibility = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(time.time() - 3600 * 2))
         three_hour_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 3600 * 3))
+        three_hour_visibility = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(time.time() - 3600 * 3))
         four_hour_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 3600 * 4))
+        four_hour_visibility = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(time.time() - 3600 * 4))
         five_hour_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 3600 * 5))
+        five_hour_visibility = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(time.time() - 3600 * 5))
         six_hour_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 3600 * 6))
+        six_hour_visibility = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(time.time() - 3600 * 6))
 
-        # one_min_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 60))
-        # two_min_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 60 * 2))
-        # three_min_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 60 * 3))
-        # four_min_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 60 * 4))
-        # five_min_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 60 * 5))
-        # six_min_ago = time.strftime('%Y%m%d%H%M00', time.localtime(time.time() - 60 * 6))
+        if one_hour_visibility in data_datetime:
+            data = self.result.where(self.result['date'] == one_hour_visibility).dropna()
+            vis = int(data['visibility'].tolist()[0] * 1000)
+            self.label_1hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600))}'
+                                          f' - {vis} m')
+        else:
+            self.label_1hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600))}')
 
-        self.label_1hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 3600)))
-        self.label_2hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 3600 * 2)))
-        self.label_3hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 3600 * 3)))
-        self.label_4hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 3600 * 4)))
-        self.label_5hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 3600 * 5)))
-        self.label_6hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 3600 * 6)))
+        if two_hour_visibility in data_datetime:
+            data = self.result.where(self.result['date'] == two_hour_visibility).dropna()
+            vis = int(data['visibility'].tolist()[0] * 1000)
+            self.label_2hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600 * 2))}'
+                                          f' - {vis} m')
+        else:
+            self.label_2hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600 * 2))}')
 
-        # self.label_1hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 60)))
-        # self.label_2hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 60 * 2)))
-        # self.label_3hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 60 * 3)))
-        # self.label_4hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 60 * 4)))
-        # self.label_5hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 60 * 5)))
-        # self.label_6hour_time.setText(time.strftime('%H:%M', time.localtime(time.time() - 60 * 6)))
+        if three_hour_visibility in data_datetime:
+            data = self.result.where(self.result['date'] == three_hour_visibility).dropna()
+            vis = int(data['visibility'].tolist()[0] * 1000)
+            self.label_3hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600 * 3))}'
+                                          f' - {vis} m')
+        else:
+            self.label_3hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600 * 3))}')
+
+        if four_hour_visibility in data_datetime:
+            data = self.result.where(self.result['date'] == four_hour_visibility).dropna()
+            vis = int(data['visibility'].tolist()[0] * 1000)
+            self.label_4hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600 * 4))}'
+                                          f' - {vis} m')
+        else:
+            self.label_4hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600 * 4))}')
+
+        if five_hour_visibility in data_datetime:
+            data = self.result.where(self.result['date'] == five_hour_visibility).dropna()
+            vis = int(data['visibility'].tolist()[0] * 1000)
+            self.label_5hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600 * 5))}'
+                                          f' - {vis} m')
+        else:
+            self.label_5hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600 * 5))}')
+
+        if six_hour_visibility in data_datetime:
+            data = self.result.where(self.result['date'] == six_hour_visibility).dropna()
+            vis = int(data['visibility'].tolist()[0] * 1000)
+            self.label_6hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600 * 6))}'
+                                          f' - {vis} m')
+        else:
+            self.label_6hour_time.setText(f'{time.strftime("%H:%M", time.localtime(time.time() - 3600 * 6))}')
 
         if os.path.isfile(
                 f'{JS08Settings.get("image_save_path")}/thumbnail/'
@@ -467,7 +547,7 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
     # Event
     def thumbnail_click1(self, e):
-        name = self.label_1hour_time.text()[:2] + self.label_1hour_time.text()[3:]
+        name = self.label_1hour_time.text()[:2] + self.label_1hour_time.text()[3:5]
         epoch = time.strftime('%Y%m%d', time.localtime(time.time()))
         self.thumbnail_view(epoch + name + '00')
 
@@ -563,6 +643,46 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
                 self.close()
                 sys.exit()
 
+    def front_label_paintEvent(self, event):
+        painter = QPainter(self.front_label)
+        painter.setPen(QPen(Qt.white, 1, Qt.DotLine))
+
+        painter.drawLine((self.front_label.width() * 0.25), 0,
+                         (self.front_label.width() * 0.25), self.front_label.height())
+        painter.drawLine((self.front_label.width() * 0.5), 0,
+                         (self.front_label.width() * 0.5), self.front_label.height())
+        painter.drawLine((self.front_label.width() * 0.75), 0,
+                         (self.front_label.width() * 0.75), self.front_label.height())
+        painter.drawLine((self.front_label.width() - 1), 0,
+                         (self.front_label.width() - 1), self.front_label.height())
+
+        painter.drawText(self.front_label.width() * 0.125, 14, 'NE')
+        painter.drawText(self.front_label.width() * 0.375, 14, 'EN')
+        painter.drawText(self.front_label.width() * 0.625, 14, 'ES')
+        painter.drawText(self.front_label.width() * 0.875, 14, 'SE')
+
+        painter.end()
+
+    def rear_label_paintEvent(self, event):
+        painter = QPainter(self.rear_label)
+        painter.setPen(QPen(Qt.white, 1, Qt.DotLine))
+
+        painter.drawLine((self.rear_label.width() * 0.25), 0,
+                         (self.rear_label.width() * 0.25), self.rear_label.height())
+        painter.drawLine((self.rear_label.width() * 0.5), 0,
+                         (self.rear_label.width() * 0.5), self.rear_label.height())
+        painter.drawLine((self.rear_label.width() * 0.75), 0,
+                         (self.rear_label.width() * 0.75), self.rear_label.height())
+        painter.drawLine((self.rear_label.width() - 1), 0,
+                         (self.rear_label.width() - 1), self.rear_label.height())
+
+        painter.drawText(self.rear_label.width() * 0.125, 14, 'SW')
+        painter.drawText(self.rear_label.width() * 0.375, 14, 'WS')
+        painter.drawText(self.rear_label.width() * 0.625, 14, 'WN')
+        painter.drawText(self.rear_label.width() * 0.875, 14, 'NW')
+
+        painter.end()
+
     def closeEvent(self, e):
         self.consumer.stop()
         self.video_thread.stop()
@@ -585,8 +705,10 @@ class VideoWidget(QWidget):
         self.instance.log_unset()
 
         self.media_player = self.instance.media_player_new()
+        self.uri = None
+
         # Current camera must be 'PNM-9031RV'
-        self.media_player.video_set_aspect_ratio('20:9')
+        self.media_player.video_set_aspect_ratio('21:9')
 
         self.video_frame = QFrame()
 
@@ -595,10 +717,18 @@ class VideoWidget(QWidget):
 
     def on_camera_change(self, uri: str):
         if uri[:4] == 'rtsp':
+            self.uri = uri
             self.media_player.set_media(self.instance.media_new(uri))
             self.media_player.play()
         else:
             pass
+
+    def get_status(self):
+        if self.media_player.is_playing() == 0:
+            print(f'Player is not playing! in '
+                  f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(QDateTime.currentSecsSinceEpoch()))}')
+            self.media_player.set_media(self.instance.media_new(self.uri))
+            self.media_player.play()
 
 
 if __name__ == '__main__':
@@ -606,7 +736,7 @@ if __name__ == '__main__':
     from PySide6.QtGui import QGuiApplication
     from model import JS08Settings
 
-    JS08Settings.set('first_step', True)
+    # JS08Settings.set('first_step', True)
 
     print(f'Start time: {time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}')
 
@@ -630,7 +760,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     screen_size = QGuiApplication.screens()[0].geometry()
     width, height = screen_size.width(), screen_size.height()
-    if width > 1920 or height > 1080:
+    if width != 1920 or height != 1080:
         QMessageBox.warning(None, 'Warning', 'JS08 is based on FHD screen.')
     window = JS08MainWindow(q, _q)
     sys.exit(app.exec())

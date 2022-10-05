@@ -23,16 +23,16 @@ class JS08Settings:
         'rear_main': 'rtsp://admin:sijung5520@192.168.100.132/profile5/media.smp',
 
         # 'front_camera_name': 'PNM_9030V_front',
-        # 'front_camera_rtsp': 'rtsp://admin:sijung5520@211.185.197.211/profile2/media.smp',
-        # 'front_main': 'rtsp://admin:sijung5520@211.185.197.211/profile4/media.smp',
+        # 'front_camera_rtsp': 'rtsp://admin:sijung5520@192.168.100.102/profile2/media.smp',
+        # 'front_main': 'rtsp://admin:sijung5520@192.168.100.102/profile4/media.smp',
         # 'rear_camera_name': 'PNM_9030V_rear',
-        # 'rear_camera_rtsp': 'rtsp://admin:sijung5520@211.185.197.211/profile2/media.smp',
-        # 'rear_main': 'rtsp://admin:sijung5520@211.185.197.211/profile4/media.smp',
+        # 'rear_camera_rtsp': 'rtsp://admin:sijung5520@192.168.100.103/profile2/media.smp',
+        # 'rear_main': 'rtsp://admin:sijung5520@192.168.100.103/profile4/media.smp',
 
-        'data_csv_path': os.path.join('D:\\JS08', 'data'),
-        'target_csv_path': os.path.join('D:\\JS08', 'target'),
-        'rgb_csv_path': os.path.join('D:\\JS08', 'rgb'),
-        'image_save_path': os.path.join('D:\\JS08', 'image'),
+        'data_csv_path': os.path.join('F:\\JS08', 'data'),
+        'target_csv_path': os.path.join('F:\\JS08', 'target'),
+        'rgb_csv_path': os.path.join('F:\\JS08', 'rgb'),
+        'image_save_path': os.path.join('F:\\JS08', 'image'),
         'image_size': 0,
         'visibility_alert_limit': 1000,
         'login_id': 'admin',
@@ -40,8 +40,7 @@ class JS08Settings:
         'login_flag': True,
         'first_step': True,
         'maxfev_flag': False,
-        'maxfev_count': 0,
-        'maxfev_time': []
+        'maxfev_count': 0
     }
 
     @classmethod
@@ -73,10 +72,8 @@ class JS08Settings:
 
 
 if __name__ == '__main__':
-    # JS08Settings.set('login_pw', 4803)
-    # print(JS08Settings.get('login_pw'))
-    # JS08Settings.restore_value('login_pw')
-    # print(JS08Settings.get('login_pw'))
-    # JS08Settings.restore_value('maxfev_time')
-    JS08Settings.set('maxfev_time', 2)
-    print(JS08Settings.get('maxfev_time'))
+
+    JS08Settings.restore_defaults()
+    print(JS08Settings.get('front_camera_rtsp'))
+    print(JS08Settings.get('rear_camera_rtsp'))
+    print(JS08Settings.get('data_csv_path'))

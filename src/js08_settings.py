@@ -139,7 +139,7 @@ class JS08SettingWidget(QDialog, Ui_Dialog):
             self.b_list.append(copy_image[result[1], result[0], 2])
 
         for i in range(0, row_count):
-            item2 = QTableWidgetItem(f'target {i + 1}')
+            item2 = QTableWidgetItem(f'{i + 1}')
             item2.setTextAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
             item2.setForeground(QBrush(QColor(255, 255, 255)))
             self.tableWidget.setItem(i, 0, item2)
@@ -397,13 +397,22 @@ class JS08SettingWidget(QDialog, Ui_Dialog):
 
         if os.path.isfile(f'{save_path}/{camera}.csv') is False:
             os.makedirs(f'{save_path}', exist_ok=True)
-            result = pd.DataFrame(columns=['target_name', 'left_range', 'right_range', 'distance', 'azimuth'])
-            result['target_name'] = ['target_1', 'target_2', 'target_3', 'target_4']
-            result['left_range'] = [(95, 711), (367, 716), (293, 1749), (250, 124)]
-            result['right_range'] = [(31, 831), (279, 836), (236, 1841), (148, 211)]
-            result['distance'] = [0.1, 1.0, 2.0, 3.0]
-            result['azimuth'] = ['NE', 'NE', 'NE', 'NE']
-            result.to_csv(file, mode='w', index=False)
+            if self.cam_flag is False:
+                result = pd.DataFrame(columns=['target_name', 'left_range', 'right_range', 'distance', 'azimuth'])
+                result['target_name'] = [1, 2, 3, 4]
+                result['left_range'] = [(95, 711), (367, 716), (293, 1749), (250, 124)]
+                result['right_range'] = [(31, 831), (279, 836), (236, 1841), (148, 211)]
+                result['distance'] = [0.1, 1.0, 2.0, 3.0]
+                result['azimuth'] = ['NE', 'NE', 'NE', 'NE']
+                result.to_csv(file, mode='w', index=False)
+            elif self.cam_flag:
+                result = pd.DataFrame(columns=['target_name', 'left_range', 'right_range', 'distance', 'azimuth'])
+                result['target_name'] = ['target_1', 'target_2', 'target_3', 'target_4']
+                result['left_range'] = [(95, 711), (367, 716), (293, 1749), (250, 124)]
+                result['right_range'] = [(31, 831), (279, 836), (236, 1841), (148, 211)]
+                result['distance'] = [0.1, 1.0, 2.0, 3.0]
+                result['azimuth'] = ['SW', 'SW', 'SW', 'SW']
+                result.to_csv(file, mode='w', index=False)
 
         target_df = pd.read_csv(f'{save_path}/{camera}.csv')
         self.target_name = target_df['target_name'].tolist()
@@ -472,15 +481,15 @@ class JS08SettingWidget(QDialog, Ui_Dialog):
             painter.drawText(self.image_label.width() * 0.875, 20, 'SE')
             painter.setPen(QPen(Qt.white, 1, Qt.DotLine))
 
-        if self.select_target is not None:
-            self.select_name = self.target_name[self.select_target]
-            self.select_corner1 = self.left_range[self.select_target]
-            self.select_corner2 = self.right_range[self.select_target]
+        # if self.select_target is not None:
+        #     self.select_name = self.target_name[self.select_target]
+        #     self.select_corner1 = self.left_range[self.select_target]
+        #     self.select_corner2 = self.right_range[self.select_target]
 
         if self.left_range and self.right_range:
-            for name, corner1, corner2, in zip(self.target_name, self.left_range, self.right_range):
-                if self.select_name == name:
-                    print(self.select_name)
+            for name, corner1, corner2 in zip(self.target_name, self.left_range, self.right_range):
+                # if self.select_name == name:
+                #     print(self.select_name)
                 br = QBrush(QColor(100, 10, 10, 40))
                 painter.setBrush(br)
                 painter.setPen(QPen(Qt.red, 2, Qt.SolidLine))
@@ -489,18 +498,18 @@ class JS08SettingWidget(QDialog, Ui_Dialog):
                 corner2_1 = int((corner2[0] - corner1[0]) / self.video_width * self.image_label.width())
                 corner2_2 = int((corner2[1] - corner1[1]) / self.video_height * self.image_label.height())
                 painter.drawRect(QRect(corner1_1, corner1_2, corner2_1, corner2_2))
-                painter.drawText(corner1_1 + corner2_1, corner1_2 - 5, f'{name[7:]}')
+                painter.drawText(corner1_1 + corner2_1, corner1_2 - 5, f'{name}')
 
-            # br = QBrush(QColor(255, 255, 255, 40))
-            # painter.setBrush(br)
-            # painter.setPen(QPen(Qt.black, 3, Qt.SolidLine))
-            # select_corner1_1 = int(self.select_corner1[0] / self.video_width * self.image_label.width())
-            # select_corner1_2 = int(self.select_corner1[0] / self.video_height * self.image_label.height())
-            # select_corner2_1 = int((self.select_corner2[0] - self.select_corner1[0]) /
-            #                        self.video_width * self.image_label.width())
-            # select_corner2_2 = int((self.select_corner2[1] - self.select_corner1[1]) /
-            #                        self.video_height * self.image_label.height())
-            # painter.drawRect(QRect(select_corner1_1, select_corner1_2, select_corner2_1, select_corner2_2))
+            #             # br = QBrush(QColor(255, 255, 255, 40))
+            #             # painter.setBrush(br)
+            #             # painter.setPen(QPen(Qt.black, 3, Qt.SolidLine))
+            #             # select_corner1_1 = int(self.select_corner1[0] / self.video_width * self.image_label.width())
+            #             # select_corner1_2 = int(self.select_corner1[0] / self.video_height * self.image_label.height())
+            #             # select_corner2_1 = int((self.select_corner2[0] - self.select_corner1[0]) /
+            #             #                        self.video_width * self.image_label.width())
+            #             # select_corner2_2 = int((self.select_corner2[1] - self.select_corner1[1]) /
+            #             #                        self.video_height * self.image_label.height())
+            #             # painter.drawRect(QRect(select_corner1_1, select_corner1_2, select_corner2_1, select_corner2_2))
             # painter.drawText(select_corner1_1 + select_corner2_1, select_corner1_2 - 5, f'{self.select_name}')
 
         if self.isDrawing:
@@ -523,7 +532,7 @@ class JS08SettingWidget(QDialog, Ui_Dialog):
     def lbl_mousePressEvent(self, event):
         """마우스 클릭시 발생하는 이벤트, QLabel method overriding"""
         # self.update()
-        self.repaint()
+        # self.repaint()
 
         # 좌 클릭시 실행
         if event.buttons() == Qt.LeftButton:
@@ -532,16 +541,15 @@ class JS08SettingWidget(QDialog, Ui_Dialog):
             self.end = event.pos()
             self.upper_left = (int((self.begin.x() / self.image_label.width()) * self.video_width),
                                int((self.begin.y() / self.image_label.height()) * self.video_height))
-            self.image_label.update()
+            # self.image_label.update()
 
             self.draw_flag = True
 
         # 우 클릭시 실행
         elif event.buttons() == Qt.RightButton:
-            self.isDrawing = False
+            # self.isDrawing = False
 
-            text, ok = QInputDialog.getText(self, 'Delete target',
-                                            'Input target number to delete')
+            text, ok = QInputDialog.getText(self, 'Delete target', 'Input target number to delete')
             if ok:
                 if text == '':
                     del self.target_name[-1]
@@ -551,7 +559,7 @@ class JS08SettingWidget(QDialog, Ui_Dialog):
                     del self.azimuth[-1]
 
                 else:
-                    if len(self.left_range) > 0:
+                    if len(self.target_name) > 0:
                         text = int(text)
                         del self.target_name[text - 1]
                         del self.left_range[text - 1]
@@ -559,17 +567,12 @@ class JS08SettingWidget(QDialog, Ui_Dialog):
                         del self.distance[text - 1]
                         del self.azimuth[text - 1]
 
-                    # 삭제한 타겟보다 큰 타겟 넘버의 숫자를 모두 -1 씩 해야한다.
                     for i in range(len(self.target_name)):
-                        if text < i:
-                            a = f'target_{i - 1}'
-                            # print(a)
-                            # self.target_name[]
-                        else:
-                            pass
+                        self.target_name[i] = i + 1
 
-            self.update()
-            self.image_label.update()
+            # self.update()
+            # self.image_label.update()
+            self.show_target_table()
             self.draw_flag = False
 
     def lbl_mouseMoveEvent(self, event):
@@ -577,7 +580,7 @@ class JS08SettingWidget(QDialog, Ui_Dialog):
         if event.buttons() == Qt.LeftButton:
             self.end = event.pos()
             self.image_label.update()
-            self.isDrawing = True
+            # self.isDrawing = True
 
     def lbl_mouseReleaseEvent(self, event):
         """마우스 클릭이 떼질 때 발생하는 이벤트, QLabel method overriding"""
@@ -613,21 +616,15 @@ class JS08SettingWidget(QDialog, Ui_Dialog):
                 self.left_range.append(self.upper_left)
                 self.right_range.append(self.lower_right)
                 self.distance.append(text)
-                self.target_name.append('target_' + str(len(self.left_range)))
+                self.target_name.append(len(self.left_range))
 
-                # self.save_target(self.current_camera)
                 self.isDrawing = False
                 self.end_drawing = True
             else:
                 self.isDrawing = False
                 del self.azimuth[-1]
 
-            self.image_label.update()
-            # from PIL import ImageQt
-            # image = ImageQt.fromqpixmap(self.image_label.pixmap())
-            # image.save('text.png')
             self.show_target_table()
-
 
 
 if __name__ == '__main__':

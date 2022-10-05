@@ -70,11 +70,8 @@ class Coef:
             JS08Settings.set('maxfev_flag', False)
 
         except RuntimeError:
-            # print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())} - {traceback.format_exc()}')
-            maxfev_time = JS08Settings.get('maxfev_time')
             JS08Settings.set('maxfev_flag', True)
             JS08Settings.set('maxfev_count', JS08Settings.get('maxfev_count') + 1)
-            # JS08Settings.set('maxfev_time', maxfev_time.append(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
             return
 
         list1 = []

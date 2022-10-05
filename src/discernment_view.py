@@ -7,25 +7,29 @@
 #     5jx2oh@gmail.com (Jongjin Oh)
 
 import time
+import numpy as np
+import random
 
-from PySide6.QtGui import QPainter, QColor, QBrush, QPen
+from PySide6.QtGui import QPainter, QColor, QBrush, QPen, QFont
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import Qt, QPointF
 from PySide6.QtCharts import (QChartView, QLegend, QLineSeries,
                               QPolarChart, QValueAxis, QChart,
-                              QAreaSeries)
+                              QAreaSeries, QCategoryAxis)
 from model import JS08Settings
 
 
 class DiscernmentView(QChartView):
 
     def __init__(self, parent: QWidget):
+
         super().__init__(parent)
         self.setRenderHint(QPainter.Antialiasing)
         self.setMinimumSize(200, 200)
         self.setMaximumSize(600, 400)
 
-        chart = QPolarChart(title='Discernment Visibility')
+        # chart = QPolarChart(title='Discernment Visibility')
+        chart = QPolarChart()
         # chart.legend().setAlignment(Qt.AlignRight)
         chart.legend().setVisible(False)
         # chart.legend().setMarkerShape(QLegend.MarkerShapeCircle)
@@ -33,23 +37,26 @@ class DiscernmentView(QChartView):
         self.chart().setTheme(QChart.ChartThemeDark)
         self.chart().setBackgroundBrush(QBrush(QColor('#16202a')))
 
-        # pen = QPen()
-        # pen.setWidth(3)
-        # pen.setColor('green')
-        # self.series = QLineSeries()
-        # self.series.setName('Visibility')
-        # self.series.setColor(QColor('green'))
-        # self.series.setPen(pen)
-        # chart.addSeries(self.series)
+        self.past_dataDist = None
 
         self.axis_x = QValueAxis()
         self.axis_x.setTickCount(9)
         self.axis_x.setRange(0, 360)
-        # self.axis_x.setLabelFormat('%d \xc2\xb0')
-        self.axis_x.setLabelFormat('%d')
-        # axis_x.setTitleText('Azimuth (deg)')
-        # axis_x.setTitleVisible(False)
-        # chart.setAxisX(self.axis_x, self.series)
+        self.axis_x.setLabelFormat('%d \xc2\xb0')
+
+        self.axis_distance = QCategoryAxis()
+        self.axis_distance.setLabelsPosition(QCategoryAxis.AxisLabelsPositionOnValue)
+        self.axis_distance.setRange(0, 360)
+        self.axis_distance.setLabelsFont(QFont('Noto Sans', 15))
+
+        data = np.arange(22.5, 360, 45)
+        self.dataName = ['NE', 'EN', 'ES', 'SE', 'SW', 'WS', 'WN', 'NW']
+        self.dataDist = [0, 0, 0, 0, 0, 0, 0, 0]
+
+        for name, dist, dt in zip(self.dataName, self.dataDist, data):
+            self.axis_distance.append(f'{name} ({dist})', dt)
+        self.axis_distance.setGridLineVisible(False)
+        self.axis_distance.setLineVisible(False)
 
         self.axis_y = QValueAxis()
         self.axis_y.setRange(0, 20)
@@ -87,49 +94,19 @@ class DiscernmentView(QChartView):
         self.area.setOpacity(0.7)
 
         chart.addSeries(self.area)
-        chart.addAxis(self.axis_x, QPolarChart.PolarOrientationAngular)
-        chart.addAxis(self.axis_y, QPolarChart.PolarOrientationRadial)
+        # chart.addAxis(self.axis_x, QPolarChart.PolarOrientationAngular)
+        chart.addAxis(self.axis_distance, QPolarChart.PolarOrientationAngular)
+        # chart.addAxis(self.axis_y, QPolarChart.PolarOrientationRadial)
         chart.setAxisX(self.axis_x, self.area)
         chart.setAxisY(self.axis_y, self.area)
 
     def refresh_stats(self, data: dict):
-        # self.series.clear()
-        #
-        # for i in range(0, 361):
-        #     if i <= 45:
-        #         self.series.append([
-        #             QPointF(i, float(data.get('front_N')))
-        #         ])
-        #     elif 45 < i <= 90:
-        #         self.series.append([
-        #             QPointF(i, float(data.get('front_NE')))
-        #         ])
-        #     elif 90 < i <= 135:
-        #         self.series.append([
-        #             QPointF(i, float(data.get('front_E')))
-        #         ])
-        #     elif 135 < i <= 180:
-        #         self.series.append([
-        #             QPointF(i, float(data.get('rear_SE')))
-        #         ])
-        #     elif 180 < i <= 225:
-        #         self.series.append([
-        #             QPointF(i, float(data.get('rear_S')))
-        #         ])
-        #     elif 225 < i <= 270:
-        #         self.series.append([
-        #             QPointF(i, float(data.get('rear_SW')))
-        #         ])
-        #     elif 270 < i <= 315:
-        #         self.series.append([
-        #             QPointF(i, float(data.get('rear_W')))
-        #         ])
-        #     elif 315 < i <= 360:
-        #         self.series.append([
-        #             QPointF(i, float(data.get('front_NW')))
-        #         ])
 
         self.upperLine.clear()
+        del data['visibility_front']
+        del data['visibility_rear']
+
+        dataDist = list(data.values())
 
         for i in range(0, 46):
             self.upperLine.append(i, data.get('NE'))
@@ -148,19 +125,18 @@ class DiscernmentView(QChartView):
         for i in range(315, 361):
             self.upperLine.append(i, data.get('NW'))
 
-        # self.series.append([
-        #     QPointF(360, float(data.get('front_N')))
-        # ])
-        #
-        # self.series.replace([
-        #     QPointF(0, float(data.get('front_N'))), QPointF(45, float(data.get('front_NE'))),
-        #     QPointF(90, float(data.get('front_E'))), QPointF(135, float(data.get('rear_SE'))),
-        #     QPointF(180, float(data.get('rear_S'))), QPointF(225, float(data.get('rear_SW'))),
-        #     QPointF(270, float(data.get('rear_W'))), QPointF(315, float(data.get('front_NW'))),
-        #     QPointF(360, float(data.get('front_N')))
-        # ])
+        if self.past_dataDist is None:
+            for name, dist, dt in zip(self.dataName, dataDist, data):
+                self.axis_distance.replaceLabel(f'{name} ({self.dataDist[self.dataName.index(name)]})',
+                                                f'{name} ({dist})')
+        else:
+            for name, dist, dt in zip(self.dataName, dataDist, data):
+                self.axis_distance.replaceLabel(f'{name} ({self.past_dataDist[self.dataName.index(name)]})',
+                                                f'{name} ({dist})')
+        self.past_dataDist = dataDist
 
     def mousePressEvent(self, event):
+
         # JS08Settings.set('maxfev_count', JS08Settings.get('maxfev_count') + 1)
         # self.maxfev_time.append(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         # JS08Settings.set('maxfev_time', self.maxfev_time)
@@ -171,25 +147,29 @@ class DiscernmentView(QChartView):
         # print()
         # print(f'time: {JS08Settings.get("maxfev_time")}')
 
+        # data = {'NE': round(random.uniform(10, 20), 3), 'EN': round(random.uniform(10, 20), 3),
+        #           'ES': round(random.uniform(10, 20), 3), 'SE': round(random.uniform(10, 20), 3),
+        #           'SW': round(random.uniform(10, 20), 3), 'WS': round(random.uniform(10, 20), 3),
+        #           'WN': round(random.uniform(10, 20), 3), 'NW': round(random.uniform(10, 20), 3)}
+        # self.refresh_stats(data)
 
 
 if __name__ == '__main__':
+
     import sys
     from PySide6.QtWidgets import QApplication, QMainWindow
-    # from model import JS08Settings
 
-    visibility = {'visibility_front': '18.829', 'visibility_rear': '0.192',
-                  'front_W': 20.000, 'front_NW': 7.208,
-                  'front_N': '20.000', 'front_NE': '1.015',
-                  'front_E': '2.613', 'rear_E': '20.000',
-                  'rear_SE': '20.000', 'rear_S': '20.000',
-                  'rear_SW': '0.155', 'rear_W': '20.000'}
+    visibility = {'visibility_front': 18.829, 'visibility_rear': 5.192,
+                  'NE': 20.000, 'EN': 7.208,
+                  'ES': 20.000, 'SE': 5.015,
+                  'SW': 2.613, 'WS': 20.000,
+                  'WN': 20.000, 'NW': 20.000}
 
     app = QApplication(sys.argv)
     window = QMainWindow()
     window.resize(600, 400)
     discernment_view = DiscernmentView(window)
-    # discernment_view.refresh_stats(visibility)
+    discernment_view.refresh_stats(visibility)
     window.setCentralWidget(discernment_view)
     window.show()
     sys.exit(app.exec())

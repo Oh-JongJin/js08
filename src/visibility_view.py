@@ -80,8 +80,6 @@ class VisibilityView(QChartView):
             path = os.path.join(f'{JS08Settings.get("data_csv_path")}/{JS08Settings.get("front_camera_name")}/{year}')
             mtime = lambda f: os.stat(os.path.join(path, f)).st_mtime
             res = list(sorted(os.listdir(path), key=mtime))
-            print(res)
-            print(JS08Settings.get('first_step'))
 
             if len(res) >= 2:
                 JS08Settings.set('first_step', False)
@@ -103,9 +101,6 @@ class VisibilityView(QChartView):
 
                 epoch_yesterday = result_yesterday['epoch'].tolist()
                 vis_list_yesterday = result_yesterday['visibility'].tolist()
-
-                # hour = QDateTime.fromMSecsSinceEpoch(epoch_yesterday[0]).time().hour()
-                # minute = QDateTime.fromMSecsSinceEpoch(epoch_yesterday[0]).time().minute()
 
                 for i in range(len(epoch_yesterday)):
                     data.append((epoch_yesterday[i], vis_list_yesterday[i]))
@@ -153,6 +148,8 @@ class VisibilityView(QChartView):
 
         return prevailing
 
+    def wheelEvent(self, event):
+        print('wheel')
 
 
 if __name__ == '__main__':

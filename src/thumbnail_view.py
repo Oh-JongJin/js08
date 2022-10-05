@@ -27,6 +27,9 @@ class ThumbnailView(QMainWindow, Ui_MainWindow):
         rear_image = f'{JS08Settings.get("image_save_path")}/vista/{JS08Settings.get("rear_camera_name")}/' \
                      f'{date}/{image_file_name}.png'
 
+        print(front_image)
+        print(rear_image)
+
         if os.path.isfile(front_image) and os.path.isfile(rear_image):
             self.front_image.setPixmap(
                 QPixmap(front_image).scaled(self.width(), self.height(), Qt.KeepAspectRatio))
