@@ -1,9 +1,0 @@
-[Desktop Entry]
-Version=0.1
-Type=Application
-Name=js08
-Comment=AI-powered & image-based visibility meter
-Exec=js08
-Terminal=false
-StartupNotify=true
-StartupWMClass=js08

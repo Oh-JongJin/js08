@@ -23,6 +23,9 @@ target/
 # Ignore data files
 *.csv
 
+*.exe
+*.spec
+
 # Ignore model files
 *.pb
 *.h5
