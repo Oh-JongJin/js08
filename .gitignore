@@ -20,6 +20,11 @@ __pycache__/
 # Ignore image data files
 target/
 
+# Ignore JS02 MODEL
+js02_model/
+predict/
+
+
 # Ignore data files
 *.csv
 
@@ -156,3 +161,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# pip mdule
+*.whl

@@ -1,7 +1,0 @@
-PyQt5 >= 5.13
-PyQtChart
-pymongo
-numpy
-onnxruntime
-opencv-python
-python-vlc
