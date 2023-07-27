@@ -77,6 +77,7 @@ class VisibilityView(QChartView):
             print('NOT FOUND data csv file')
             zeros = [(t * 1000.0, -1) for t in range(now - maxlen * 60, now, 60)]
             self.data = collections.deque(zeros, maxlen=maxlen)
+            self.data_2 = collections.deque(zeros, maxlen=maxlen)
 
             left = QDateTime.fromMSecsSinceEpoch(int(self.data[0][0]))
             right = QDateTime.fromMSecsSinceEpoch(int(self.data[-1][0]))
@@ -95,26 +96,61 @@ class VisibilityView(QChartView):
 
             epoch_today = result_today['epoch'].tolist()
             vis_list_today = result_today['prev'].tolist()
-
+            
+            #seongmin 추가
+            predict_folder_path = f"predict/{year}{md}"
+            predict_file_path = f"{predict_folder_path}/{year}{md}.csv"
+            predict_result_today = pd.read_csv(predict_file_path)
+            
+            predict_epoch_today = predict_result_today['epoch'].tolist()
+            predict_vis_list_today = predict_result_today['predict_value'].tolist()
+            
             data = []
-
+            data_2 = []
             if JS08Settings.get('first_step') is False and len(res) > 1:
                 if md == '0101':
                     save_path = os.path.join(f'{JS08Settings.get("data_csv_path")}/'
                                              f'Prevailing_Visibility/{int(year) - 1}')
+                    year = str(int(year)-1)
                 yesterday_file = f'{save_path}/{res[-2]}'
                 result_yesterday = pd.read_csv(yesterday_file)
 
                 epoch_yesterday = result_yesterday['epoch'].tolist()
                 vis_list_yesterday = result_yesterday['prev'].tolist()
+                
+                #seongmin 추가
+                predict_yesterday_folder_path = f"predict/{year}{res[-2][:-4]}"
+                predict_yesterday_file_path = f"{predict_yesterday_folder_path}/{year}{res[-2]}"
+                predict_result_yesterday = pd.read_csv(predict_yesterday_file_path)
+                
+                predict_epoch_yesterday = predict_result_yesterday['epoch'].tolist()
+                predict_vis_list_yesterday = predict_result_yesterday['predict_value'].tolist()
 
+                # 전날꺼 저장_yesterday
                 for i in range(len(epoch_yesterday)):
                     data.append((epoch_yesterday[i], vis_list_yesterday[i]))
-
+                    
+                    # seongmin 추가
+                    if epoch_yesterday[i] in predict_epoch_yesterday:
+                        idx = predict_epoch_yesterday.index(epoch_yesterday[i])
+                        data_2.append((epoch_yesterday[i], predict_vis_list_yesterday[idx]))
+                    else:
+                        pass
+                    
+            # 당일꺼 저장_today
             for i in range(len(epoch_today)):
                 data.append((epoch_today[i], vis_list_today[i]))
+                
+                # seongmin 추가
+                if epoch_today[i] in predict_epoch_today:
+                    idx = predict_epoch_today.index(epoch_today[i])
+                    data_2.append((epoch_today[i], predict_vis_list_today[idx]))
+                else:
+                    pass
 
             self.data = collections.deque(data, maxlen=1440)
+            self.data_2 = collections.deque(data_2, maxlen=1440)
+            
 
             left = QDateTime.fromMSecsSinceEpoch(int(self.data[0][0]))
             right = QDateTime.fromMSecsSinceEpoch(int(self.data[-1][0]))
@@ -133,7 +169,8 @@ class VisibilityView(QChartView):
         self.series.append(data_point)
         
         # seongmin 추가
-        data_point_2 = [QPointF(t, v-1) for t, v in self.data if v-5> 0]
+        # data_point_2 = [QPointF(t, v-1) for t, v in self.data if v-5> 0]
+        data_point_2 =  [QPointF(t, v) for t, v in self.data_2]
         self.series_2.append(data_point_2)
         pen = QPen(QColor(250,180,0))
         pen.setWidth(1)

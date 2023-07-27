@@ -493,7 +493,7 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         day = 24*60*60
         now = pd.Timestamp.now()
         current_time = now.timestamp()
-        print("self.prevailing_visibility : ", pv)
+        print("current_time : ", current_time)
         
         # if self.lstm_df.shape[0] == 0 or now.minute % 10 == 0:
         #     pass
@@ -562,22 +562,22 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
             print("predict_visibility : ", round(self.predict_vis_meter/1609, 2))
             
             
-        current_time = time.strftime('%Y%m%d%H%M00', time.localtime(time.time()))
-        predict_path = f"predict/{current_time[:8]}"
-        predict_vis_file = current_time[:8] + ".csv"
+        current_time_str = now.strftime('%Y%m%d%H%M00')
+        predict_path = f"predict/{current_time_str[:8]}"
+        predict_vis_file = current_time_str[:8] + ".csv"
         predict_file_path =  os.path.join(predict_path, predict_vis_file)
         print("predict__file__name : ", predict_vis_file)
         
         if os.path.isdir(f'{predict_path}') is False:
             os.makedirs(predict_path, exist_ok=True)
-            df_predict = pd.DataFrame(columns=['date', 'predict_value'])
+            df_predict = pd.DataFrame(columns=['date', 'epoch', 'predict_epoch', 'predict_value'])
             df_predict.to_csv(predict_file_path, mode='w', index=False)
             print("create predict path")
             
         else:
             df_predict = pd.read_csv(predict_file_path)
         
-        df_predict = pd.concat([df_predict, pd.DataFrame([[current_time, str(int(self.predict_vis_meter))]],columns=['date', 'predict_value'])], join='outer')
+        df_predict = pd.concat([df_predict, pd.DataFrame([[now.strftime('%Y-%m-%d %H:%M:00'), (current_time*1000.0), str(int(self.predict_vis_meter))]],columns=['date', 'epoch','predict_epoch', 'predict_value'])], join='outer')
         print(df_predict.tail())
         df_predict.to_csv(predict_file_path, mode='w', index=False)
         print("create predict file")
