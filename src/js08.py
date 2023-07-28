@@ -11,7 +11,7 @@ import sys
 import vlc
 import time
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 import numpy as np
 import pandas as pd
 import multiprocessing as mp
@@ -292,9 +292,9 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
             del self.graph_visibility_value[0]
         plot_value = round(float(np.mean(self.graph_visibility_value)), 3)
 
-        epoch = QDateTime.currentSecsSinceEpoch()
-        print("epoch!!!!!", epoch)
-        current_time = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(epoch))
+        l_epoch = QDateTime.currentSecsSinceEpoch()
+        current_time = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(l_epoch))
+        epoch =  datetime.strptime(current_time, "%Y-%m-%d %H:%M:%S").timestamp()
         _time = time.strftime('%Y%m%d%H%M%S', time.localtime(epoch))
         year = current_time[:4]
         md = current_time[5:7] + current_time[8:10]
@@ -491,15 +491,23 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         print("distance_list : ", distance_list)
         result = max(ft + rt)
         day = 24*60*60
-        now = pd.Timestamp.now()
-        current_time = now.timestamp()
+        # 현재 시간 저장
+        # now = pd.Timestamp.now()
+        now_str = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(time.time()))
+        now = datetime.strptime(now_str, "%Y-%m-%d %H:%M:%S")
+        current_time =  now.timestamp()
         print("current_time : ", current_time)
         
         # if self.lstm_df.shape[0] == 0 or now.minute % 10 == 0:
         #     pass
         # else:
         #     return
-
+        
+        ten_m_later = now + timedelta(minutes=10)
+        predict_epoch_10m = ten_m_later.timestamp()
+        
+        ten_h_later = now + timedelta(hours=1)
+        predict_epoch_1h = ten_h_later.timestamp()
 
         if self.lstm_df.shape[0] < 18:
             
@@ -533,16 +541,24 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         if self.lstm_df.shape[0] > 1:
             prediction_cvt = self.lstm_model.predict_visibility(current_time, self.lstm_df)
+            # 1시간 뒤 예측 값
+            predict_vis_1h = prediction_cvt[0][5][0]
+            print("predict_vis_1hour", predict_vis_1h)
+            predict_vis_1h = self.lstm_model.find_closest_value(predict_vis_1h, distance_list)
             
-            predict_vis = prediction_cvt[0][-1][0]
-            print("predict_vis", predict_vis)
-            predict_vis = self.lstm_model.find_closest_value(predict_vis, distance_list)
-            self.predict_vis_meter = predict_vis * 1000
+            self.predict_vis_meter = predict_vis_1h * 1000
             print("self.predict_vis_meter", self.predict_vis_meter)
             self._predic_plot.appendData(pv, prediction_cvt)
-
+            
+            # 10분 뒤 예측값
+            predict_vis_10m = prediction_cvt[0][1][0]
+            print("predict_vis_10minute", predict_vis_10m)
+            predict_vis_10m = self.lstm_model.find_closest_value(predict_vis_10m, distance_list)
+            
+            self.predict_vis_meter_10m = predict_vis_10m * 1000
         else:
             self.predict_vis_meter = 0
+            self.predict_vis_meter_10m = 0
             
 
 
@@ -570,15 +586,15 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         
         if os.path.isdir(f'{predict_path}') is False:
             os.makedirs(predict_path, exist_ok=True)
-            df_predict = pd.DataFrame(columns=['date', 'epoch', 'predict_epoch', 'predict_value'])
+            df_predict = pd.DataFrame(columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])
             df_predict.to_csv(predict_file_path, mode='w', index=False)
             print("create predict path")
             
         else:
             df_predict = pd.read_csv(predict_file_path)
         
-        df_predict = pd.concat([df_predict, pd.DataFrame([[now.strftime('%Y-%m-%d %H:%M:00'), (current_time*1000.0), str(int(self.predict_vis_meter))]],columns=['date', 'epoch','predict_epoch', 'predict_value'])], join='outer')
-        print(df_predict.tail())
+        df_predict = pd.concat([df_predict, pd.DataFrame([[now.strftime('%Y-%m-%d %H:%M:00'), (current_time*1000.0), (predict_epoch_1h*1000.0), str(int(self.predict_vis_meter)), (predict_epoch_10m*1000.0), str(int(self.predict_vis_meter_10m))]],
+                                                         columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])], join='outer')
         df_predict.to_csv(predict_file_path, mode='w', index=False)
         print("create predict file")
 

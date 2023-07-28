@@ -6,6 +6,7 @@
 #     cotjdals5450@gmail.com (Seong Min Chae)
 #     5jx2oh@gmail.com (Jongjin Oh)
 
+from datetime import datetime, timedelta
 import os
 import sys
 import time
@@ -98,15 +99,26 @@ class VisibilityView(QChartView):
             vis_list_today = result_today['prev'].tolist()
             
             #seongmin 추가
+            predict_epoch_today = []
+            predict_vis_list_today = []
+            
             predict_folder_path = f"predict/{year}{md}"
             predict_file_path = f"{predict_folder_path}/{year}{md}.csv"
-            predict_result_today = pd.read_csv(predict_file_path)
+            if os.path.exists(predict_file_path) and os.path.isdir(predict_folder_path):
+                predict_result_today = pd.read_csv(predict_file_path)
             
-            predict_epoch_today = predict_result_today['epoch'].tolist()
-            predict_vis_list_today = predict_result_today['predict_value'].tolist()
+                if 'predict_epoch_10m' not in predict_result_today.columns:
+                    # 'predict_epoch' 컬럼에 새로운 값 추가
+
+                    predict_result_today['predict_epoch_10m'] = predict_result_today['epoch'].apply(add_10_minutes)
+                
+                predict_epoch_today = predict_result_today['predict_epoch_10m'].tolist()
+                predict_vis_list_today = predict_result_today['predict_value_10m'].tolist()
             
             data = []
             data_2 = []
+            predict_epoch_yesterday = []
+            predict_vis_list_yesterday = []
             if JS08Settings.get('first_step') is False and len(res) > 1:
                 if md == '0101':
                     save_path = os.path.join(f'{JS08Settings.get("data_csv_path")}/'
@@ -121,10 +133,15 @@ class VisibilityView(QChartView):
                 #seongmin 추가
                 predict_yesterday_folder_path = f"predict/{year}{res[-2][:-4]}"
                 predict_yesterday_file_path = f"{predict_yesterday_folder_path}/{year}{res[-2]}"
-                predict_result_yesterday = pd.read_csv(predict_yesterday_file_path)
                 
-                predict_epoch_yesterday = predict_result_yesterday['epoch'].tolist()
-                predict_vis_list_yesterday = predict_result_yesterday['predict_value'].tolist()
+                if os.path.exists(predict_yesterday_file_path) and os.path.isdir(predict_yesterday_folder_path):
+                    predict_result_yesterday = pd.read_csv(predict_yesterday_file_path)
+                    if 'predict_epoch_10m' not in predict_result_yesterday.columns:
+                    # 'predict_epoch' 컬럼에 새로운 값 추가
+                        predict_result_yesterday['predict_epoch_10m'] = predict_result_yesterday['epoch'].apply(add_10_minutes)
+                        
+                    predict_epoch_yesterday = predict_result_yesterday['predict_epoch_10m'].tolist()
+                    predict_vis_list_yesterday = predict_result_yesterday['predict_value_10m'].tolist()
 
                 # 전날꺼 저장_yesterday
                 for i in range(len(epoch_yesterday)):
@@ -206,6 +223,14 @@ class VisibilityView(QChartView):
         prevailing = sorted_vis[(len(sorted_vis) - 1) // 2]
 
         return prevailing
+    
+# epoch 값을 datetime 객체로 변환하고 10분을 더해주는 함수
+def add_10_minutes(epoch_value):
+    timestamp_datetime = datetime.fromtimestamp(epoch_value / 1000.0)
+    new_datetime = timestamp_datetime + timedelta(minutes=10)
+    return float(new_datetime.timestamp() * 1000.0)
+
+
 
 
 if __name__ == '__main__':

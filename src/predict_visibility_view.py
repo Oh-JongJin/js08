@@ -70,8 +70,6 @@ class Vis_Chart(QWidget):
         self.vis_scatter_2.setBrush(QColor(225,225,225))
         
         epoch = QDateTime.currentSecsSinceEpoch()
-        print("epoch!!!!!", epoch)
-        print(epoch * 1000.0)
         
         # 현재 시간 저장
         self.now = QDateTime.currentDateTime()
@@ -83,10 +81,7 @@ class Vis_Chart(QWidget):
         for i in range(0, self.viewLimit, self.timetick):
             # cur = 20 * random.random()
             # time = self.now.addSecs(i).toMSecsSinceEpoch()  #Processing to append to QLineSeries
-            print("addsec:", i)
             re_time = self.now.addSecs(i).toSecsSinceEpoch() 
-            print(re_time)
-            print(re_time * 1000.0)
             self.vis_series.append(QPointF(re_time * 1000.0 , 0))
             self.vis_scatter.append(QPointF(re_time* 1000.0, 0))
             self.vis_scatter_2.append(QPointF(re_time* 1000.0, 0))
@@ -162,7 +157,7 @@ class Vis_Chart(QWidget):
         cur_axis_y.setLinePenColor(self.vis_scatter_2.pen().color())  #Make the axis and chart colors the same
         cur_axis_y.setTitleBrush(axisBrush)
         cur_axis_y.setLabelsBrush(axisBrush)
-        cur_axis_y.setRange(0, 10)
+        cur_axis_y.setRange(0, 25)
         cur_axis_y.setTickCount(6)
         self.chart.addAxis(cur_axis_y, Qt.AlignLeft)
         self.vis_series.attachAxis(cur_axis_y)
@@ -175,6 +170,8 @@ class Vis_Chart(QWidget):
         # self.pw.dataSent.connect(self.appendData)
         # QThread 시작
         # self.pw.start()
+             
+        
         self.__updateAxis()
         
     
@@ -202,17 +199,17 @@ class Vis_Chart(QWidget):
         for i in range(5, value.shape[1]+1, 6):
             time_tick = 600 * i
             fu_time = dt.addSecs(600 + time_tick).toSecsSinceEpoch()  #Processing to append to QLineSeries
-            print("QDate time",fu_time)
             real_value = value[0][i][0]
-            self.vis_series.append(QPointF(fu_time* 1000.0, real_value))
-            self.vis_scatter.append(QPointF(fu_time* 1000.0, real_value))
-            self.vis_scatter_2.append(QPointF(fu_time* 1000.0, real_value))
+            cvt_real_value = self.find_closest_value(real_value)
+            self.vis_series.append(QPointF(fu_time* 1000.0, cvt_real_value))
+            self.vis_scatter.append(QPointF(fu_time* 1000.0, cvt_real_value))
+            self.vis_scatter_2.append(QPointF(fu_time* 1000.0, cvt_real_value))
             self.__updateAxis()
         
         # 마지막 예측 시정에 따라 그래프 색 변경
-        if real_value < 4 and real_value > 2:
+        if cvt_real_value < 6 and cvt_real_value > 3:
             prediction_color = QColor(250,180,0)
-        elif real_value <= 2:
+        elif cvt_real_value <= 3:
             prediction_color = QColor(250,0,0)
         else:
             prediction_color = QColor(32,159,223)
@@ -232,18 +229,37 @@ class Vis_Chart(QWidget):
         
         
         pvs = self.vis_series.pointsVector()
-        print("pvs : ", pvs)
-        print("pvs 0", int(pvs[0].x()))
         dtStart = QDateTime.fromMSecsSinceEpoch(int(pvs[0].x()))
-        print("dtStart : ", dtStart)
         # if len(self.vis_series) == self.viewLimit:
         #     dtLast = QDateTime.fromMSecsSinceEpoch(int(pvs[-1].x()))
         # else:
         dtLast = dtStart.addSecs(self.viewLimit)
-        print("qchart recent time : ", dtLast)
         ax = self.chart.axisX()
         ax.setRange(dtStart, dtLast)
         # return chart_view
+    
+    def find_closest_value(self, number):
+        front_target_name, rear_target_name = JS08Settings.get('front_camera_name'), JS08Settings.get('rear_camera_name')
+        front_target_path = os.path.join(f'{JS08Settings.get("target_csv_path")}/{front_target_name}/{front_target_name}.csv')
+        rear_target_path = os.path.join(f'{JS08Settings.get("target_csv_path")}/{rear_target_name}/{rear_target_name}.csv')
+        ft, rt = pd.read_csv(front_target_path)['distance'].tolist(), pd.read_csv(rear_target_path)['distance'].tolist()
+        distance_list = list(set(ft + rt))
+        distance_list = sorted(distance_list)
+        
+        closest_value = None
+        min_diff = float('inf')
+
+        for value in distance_list:
+            diff = abs(number - value)
+            if diff < min_diff:
+                min_diff = diff
+                closest_value = value
+
+        return closest_value
+ 
+    
+
+
         
 class Predict_VisibilityView(QChartView):
 

@@ -42,7 +42,7 @@ class DiscernmentView(QChartView):
 
         self.axis_y = QValueAxis()
         self.axis_y.setRange(0, 6)
-        self.axis_y.setMax(6)
+        self.axis_y.setMax(20)
         self.axis_y.setLabelFormat('%d km')
 
         self.axis_distance = QCategoryAxis()
