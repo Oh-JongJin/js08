@@ -151,23 +151,28 @@ class VisibilityView(QChartView):
                     if epoch_yesterday[i] in predict_epoch_yesterday:
                         idx = predict_epoch_yesterday.index(epoch_yesterday[i])
                         data_2.append((epoch_yesterday[i], predict_vis_list_yesterday[idx]))
+                        print("data_2_prediction_yesterday")
                     else:
                         pass
                     
             # 당일꺼 저장_today
             for i in range(len(epoch_today)):
                 data.append((epoch_today[i], vis_list_today[i]))
-                
+                print("data : ", epoch_today[i])
                 # seongmin 추가
                 if epoch_today[i] in predict_epoch_today:
                     idx = predict_epoch_today.index(epoch_today[i])
                     data_2.append((epoch_today[i], predict_vis_list_today[idx]))
+                    print("data_2_prediction_today")
                 else:
                     pass
 
             self.data = collections.deque(data, maxlen=1440)
             self.data_2 = collections.deque(data_2, maxlen=1440)
+            print("data1", data[-1])
             
+            if len(data_2) > 0:
+                print("data2", data_2[-1])
 
             left = QDateTime.fromMSecsSinceEpoch(int(self.data[0][0]))
             right = QDateTime.fromMSecsSinceEpoch(int(self.data[-1][0]))
@@ -189,6 +194,8 @@ class VisibilityView(QChartView):
         # data_point_2 = [QPointF(t, v-1) for t, v in self.data if v-5> 0]
         data_point_2 =  [QPointF(t, v) for t, v in self.data_2]
         self.series_2.append(data_point_2)
+        
+        
         pen = QPen(QColor(250,180,0))
         pen.setWidth(1)
         self.series_2.setPen(pen)
@@ -196,24 +203,33 @@ class VisibilityView(QChartView):
         
         # print("TEST : ", data_point_2[0])
 
-    @Slot(float, list)
-    def refresh_stats(self, epoch: float, vis_list: list):
+    @Slot(float, list, float)
+    def refresh_stats(self, epoch: float, vis_list: list, predict_vis: float):
         if len(vis_list) == 0:
             vis_list = [0]
         prev_vis = self.prevailing_visibility(vis_list)
         self.data.append((epoch, prev_vis))
+        
 
         left = QDateTime.fromMSecsSinceEpoch(int(self.data[0][0]))
         right = QDateTime.fromMSecsSinceEpoch(int(self.data[-1][0]))
 
         self.chart().axisX().setRange(left, right)
-
+        
         data_point = [QPointF(t, v) for t, v in self.data]
         self.series.replace(data_point)
+        print("data_point", data_point[-1])
         
         # seongmin 추가
-        data_point_2 = [QPointF(t, v-1) for t, v in self.data if v-1 > 0]
+        predict_vis_km = int(predict_vis/1000)
+        
+        # 시간 10분 뒤
+        epoch_10 = add_10_minutes(epoch)
+        self.data_2.append((epoch_10, predict_vis_km))
+        data_point_2 = [QPointF(t, v) for t, v in self.data_2]
         self.series_2.replace(data_point_2)
+        if len(self.data_2) > 0:
+            print("data_point_2", data_point_2[-1])
 
     def prevailing_visibility(self, vis: list) -> float:
         if None in vis:

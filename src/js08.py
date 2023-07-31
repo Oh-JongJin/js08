@@ -374,7 +374,7 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         # self.visibility_front = round(float(result_vis), 3)
 
-        self._plot.refresh_stats(self.data_time[-1], self.q_list)
+        self._plot.refresh_stats(self.data_time[-1], self.q_list, self.predict_vis_meter_10m)
         self._polar.refresh_stats(visibility)
 
         self.maxfev_alert.setVisible(JS08Settings.get('maxfev_flag'))
@@ -543,16 +543,13 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
             prediction_cvt = self.lstm_model.predict_visibility(current_time, self.lstm_df)
             # 1시간 뒤 예측 값
             predict_vis_1h = prediction_cvt[0][5][0]
-            print("predict_vis_1hour", predict_vis_1h)
             predict_vis_1h = self.lstm_model.find_closest_value(predict_vis_1h, distance_list)
             
             self.predict_vis_meter = predict_vis_1h * 1000
-            print("self.predict_vis_meter", self.predict_vis_meter)
             self._predic_plot.appendData(pv, prediction_cvt)
             
             # 10분 뒤 예측값
             predict_vis_10m = prediction_cvt[0][1][0]
-            print("predict_vis_10minute", predict_vis_10m)
             predict_vis_10m = self.lstm_model.find_closest_value(predict_vis_10m, distance_list)
             
             self.predict_vis_meter_10m = predict_vis_10m * 1000
@@ -593,7 +590,7 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         else:
             df_predict = pd.read_csv(predict_file_path)
         
-        df_predict = pd.concat([df_predict, pd.DataFrame([[now.strftime('%Y-%m-%d %H:%M:00'), (current_time*1000.0), (predict_epoch_1h*1000.0), str(int(self.predict_vis_meter)), (predict_epoch_10m*1000.0), str(int(self.predict_vis_meter_10m))]],
+        df_predict = pd.concat([df_predict, pd.DataFrame([[now.strftime('%Y-%m-%d %H:%M:00'), (current_time*1000.0), (predict_epoch_1h*1000.0), str(int(predict_vis_1h)), (predict_epoch_10m*1000.0), str(int(predict_vis_10m))]],
                                                          columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])], join='outer')
         df_predict.to_csv(predict_file_path, mode='w', index=False)
         print("create predict file")
