@@ -8,10 +8,10 @@
 
 import os
 import sys
-
 import vlc
 import time
 
+from datetime import timedelta, datetime
 import numpy as np
 import pandas as pd
 import multiprocessing as mp
@@ -19,23 +19,35 @@ from multiprocessing import Process, Queue
 
 from PySide6.QtGui import QPixmap, QIcon, QPainter, QPen
 from PySide6.QtWidgets import (QMainWindow, QWidget, QFrame, QMessageBox)
-from PySide6.QtCore import (Qt, Slot, QRect, QTimer, QObject, QDateTime)
+from PySide6.QtCore import (Qt, Slot, QRect,
+                            QTimer, QObject, QDateTime)
 
 from login_view import LoginWindow
 from video_thread_mp import producer
+from log_view import LogView
 from js08_settings_admin import JS08AdminSettingWidget
 from js08_settings_user import JS08UserSettingWidget
+from model import JS08Settings
 from curve_thread import CurveThread
 from clock import clock_clock
 from consumer import Consumer
 from thumbnail_view import ThumbnailView
-from auto_file_delete import FileAutoDelete
+from save_log import log
 
 from visibility_view import VisibilityView
 from discernment_view import DiscernmentView
 
 # UI
-from resources.main_window import Ui_MainWindow
+from resources.main_window2 import Ui_MainWindow
+
+# Warning Message ignore
+import warnings
+warnings.filterwarnings('ignore')
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+
+# seongmin
+from lstm_model_print import LSTM_model
+from predict_visibility_view import Predict_VisibilityView, Vis_Chart
 
 
 class JS08MainWindow(QMainWindow, Ui_MainWindow):
@@ -43,73 +55,47 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, q, _q):
         super(JS08MainWindow, self).__init__()
 
-        _producer = producer
-
         login_window = LoginWindow()
+        login_window.sijunglogo.setIcon(QIcon('resources/asset/f_logo.png'))
         login_window.exec()
-        self.mp_flag = True
+
+        _p.start()
 
         self.setupUi(self)
-
-        p = Process(name='clock', target=clock_clock, args=(q,), daemon=True)
-        p.start()
-
-        self.consumer = Consumer(q)
-        self.consumer.poped.connect(self.clock)
-        self.consumer.start()
-
-        _p = Process(name='producer', target=_producer, args=(_q,), daemon=True)
-        self.video_thread = CurveThread(_q)
-        self.video_thread.poped.connect(self.print_data)
-
-        if JS08Settings.get('first_step') is False:
-        #     _producer = producer
-        #
-        #     p = Process(name='clock', target=clock_clock, args=(q,), daemon=True)
-        #     _p = Process(name='producer', target=_producer, args=(_q,), daemon=True)
-        #
-        #     p.start()
-        #     _p.start()
-        #
-        #     self.consumer = Consumer(q)
-        #     self.consumer.poped.connect(self.clock)
-        #     p.start()
-        #     self.consumer.start()
-        #
-        #     self.video_thread = CurveThread(_q)
-        #     self.video_thread.poped.connect(self.print_data)
-            _p.start()
-            self.video_thread.start()
+        # self.showFullScreen()
+        print(f'Start time: {time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}')
 
         self.get_date = []
         self.get_epoch = []
         self.q_list = []
-        self.q_list_scale = 1440    # 60 * 24 = 1 day graph
+        self.q_list_scale = 1440
+        # seongmin
+        self.p_list = []
+        self.p_list_scale = 10
         self.result = pd.DataFrame
 
         current_time = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(QDateTime.currentSecsSinceEpoch()))
         year = current_time[:4]
         md = current_time[5:7] + current_time[8:10]
 
-        # self.get_date, self.get_epoch, self.q_list = self.get_data(year, md)
-        # self.q_list = self.get_data(year, md)
-        self.q_list = None
+        self.q_list = self.get_data(year, md)
 
         self._plot = VisibilityView(self, self.q_list_scale)
         self._polar = DiscernmentView(self)
-
+        # self._predic_plot = Predict_VisibilityView(self, self.p_list_scale)
+        self._predic_plot = Vis_Chart(self)
         self.view = None
-        self.km_mile_convert = False
+        self.km_mile_convert = True
 
         self.visibility = None
-        self.visibility_front = 0
-        self.visibility_rear = 0
         self.prevailing_visibility = None
+        self.predict_vis_meter = None
         self.graph_visibility_value = []
 
         self.year_date = None
         self.data_date = []
         self.data_time = []
+        self.data_vis = []
 
         self.front_video_widget = VideoWidget(self)
         self.front_video_widget.on_camera_change(JS08Settings.get('front_main'))
@@ -122,12 +108,19 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         self.graph_horizontalLayout.addWidget(self._plot)
         self.polar_horizontalLayout.addWidget(self._polar)
+        # seongmin
+        self.horizontalLayout_6.addWidget(self._predic_plot.chart_view)
+        
+
+        if JS08Settings.get('right') == 'administrator':
+            self.log_view.setIcon(QIcon('resources/asset/log.png'))
+        else:
+            self.log_view.setEnabled(False)
 
         self.setting_button.setIcon(QIcon('resources/asset/settings.png'))
         self.setting_button.enterEvent = self.btn_on
         self.setting_button.leaveEvent = self.btn_off
 
-        # Azimuth paint event
         self.front_label.paintEvent = self.front_label_paintEvent
         self.rear_label.paintEvent = self.rear_label_paintEvent
 
@@ -139,12 +132,21 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         self.prevailing_vis_button.setIcon(QIcon('resources/asset/vis.png'))
         self.button.setIcon(QIcon('resources/asset/pre_vis_1.png'))
         self.maxfev_alert.setIcon(QIcon('resources/asset/alert.png'))
-        self.maxfev_alert.setToolTip('Optimal parameters not found: Number of calls to function has reached max fev = 5000.')
+        self.maxfev_alert.setToolTip('Optimal parameters not found: Number of calls to function has reached max fev = '
+                                     '5000.')
         self.maxfev_alert.setVisible(JS08Settings.get('maxfev_flag'))
+
+        self.consumer = Consumer(q)
+        self.consumer.poped.connect(self.clock)
+        self.consumer.start()
+
+        self.video_thread = CurveThread(_q)
+        self.video_thread.poped.connect(self.print_data)
+        self.video_thread.start()
 
         self.click_style = 'border: 1px solid red;'
 
-        self.alert.clicked.connect(self.alert_test)
+        # self.alert.clicked.connect(self.alert_test)
 
         self.c_vis_label.mousePressEvent = self.unit_convert
         self.p_vis_label.mousePressEvent = self.unit_convert
@@ -156,7 +158,14 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         self.label_5hour.mouseDoubleClickEvent = self.thumbnail_click5
         self.label_6hour.mouseDoubleClickEvent = self.thumbnail_click6
 
+        self.log_view.clicked.connect(self.logview_btn_click)
         self.setting_button.clicked.connect(self.setting_btn_click)
+
+        JS08Settings.restore_value('maxfev_count')
+        # seongmin
+        self.lstm_model = LSTM_model()
+        self.coulmns = ["prev", "Day sin", "Day cos"]
+        self.lstm_df = pd.DataFrame(columns = self.coulmns)
 
         self.show()
 
@@ -195,13 +204,33 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         self.view.raise_()
 
     def thumbnail_show(self):
-        self.monitoring_label.setStyleSheet('color: #1c88e3; background-color: #1b3146')
-        self.monitoring_label.setText('   Monitoring')
+        self.thumbnail_info_label.setStyleSheet('color: #1c88e3; background-color: #1b3146')
+        self.thumbnail_info_label.setText('')
         self.reset_StyleSheet()
         self.view.close()
 
+    def logview_btn_click(self):
+        dlg = LogView()
+        dlg.show()
+        dlg.setWindowModality(Qt.ApplicationModal)
+        dlg.exec()
+
     @Slot()
     def setting_btn_click(self):
+        # self.front_video_widget.media_player.stop()
+        # self.rear_video_widget.media_player.stop()
+        # self.consumer.pause()
+
+        # dlg = JS08SettingWidget()
+        # dlg.show()
+        # dlg.setWindowModality(Qt.ApplicationModal)
+        # dlg.exec()
+
+        # self.front_video_widget.media_player.play()
+        # self.rear_video_widget.media_player.play()
+        # self.consumer.resume()
+        # self.consumer.start()
+
         if JS08Settings.get('right') == 'administrator':
             self.front_video_widget.media_player.stop()
             self.rear_video_widget.media_player.stop()
@@ -232,23 +261,6 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
             self.consumer.resume()
             self.consumer.start()
 
-    # def get_data(self, year, month_day):
-    #
-    #     save_path = os.path.join(f'{JS08Settings.get("data_csv_path")}/{JS08Settings.get("front_camera_name")}/{year}')
-    #
-    #     if os.path.isfile(f'{save_path}/{month_day}.csv'):
-    #         self.result = pd.read_csv(f'{save_path}/{month_day}.csv')
-    #         # data_datetime = self.result['date'].tolist()
-    #         # data_epoch = self.result['epoch'].tolist()
-    #         data_visibility = self.result['visibility'].tolist()
-    #
-    #         # return data_datetime, data_epoch, data_visibility
-    #         return data_visibility
-    #
-    #     else:
-    #         # return [], [], []
-    #         return []
-
     def get_data(self, year, month_day):
 
         save_path = os.path.join(f'{JS08Settings.get("data_csv_path")}/Prevailing_Visibility/{year}')
@@ -269,41 +281,37 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         :param visibility: 8-degree Visibility value
         """
-        FileAutoDelete()
 
         self.convert_visibility(visibility)
-        visibility_front = visibility.get('visibility_front')
-        visibility_rear = visibility.get('visibility_rear')
+        # visibility_front = visibility.get('visibility_front')
+        # visibility_rear = visibility.get('visibility_rear')
 
-        # Graph Visibility value
+        # graph visibility value
         self.graph_visibility_value.append(self.prevailing_visibility / 1000)
         if len(self.graph_visibility_value) >= 10:
             del self.graph_visibility_value[0]
         plot_value = round(float(np.mean(self.graph_visibility_value)), 3)
 
-        epoch = QDateTime.currentSecsSinceEpoch()
-        current_time = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(epoch))
+        l_epoch = QDateTime.currentSecsSinceEpoch()
+        current_time = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(l_epoch))
+        epoch =  datetime.strptime(current_time, "%Y-%m-%d %H:%M:%S").timestamp()
         _time = time.strftime('%Y%m%d%H%M%S', time.localtime(epoch))
         year = current_time[:4]
         md = current_time[5:7] + current_time[8:10]
 
-        # if _time[-4:] == '0000':
-        # self.front_video_widget.get_status()
-        # self.rear_video_widget.get_status()
+        if _time[-4:] == '0000':
+            self.front_video_widget.get_status()
+            self.rear_video_widget.get_status()
 
         self.q_list = self.get_data(year, md)
 
         if len(self.q_list) == 0 or self.q_list_scale != len(self.q_list):
             self.q_list = []
             for i in range(self.q_list_scale):
-                # self.q_list.append(visibility_front)
-                # self.q_list.append(self.prevailing_visibility / 1000)
                 self.q_list.append(plot_value)
             result_vis = np.mean(self.q_list)
         else:
             self.q_list.pop(0)
-            # self.q_list.append(visibility_front)
-            # self.q_list.append(self.prevailing_visibility / 1000)
             self.q_list.append(plot_value)
             result_vis = np.mean(self.q_list)
 
@@ -319,13 +327,12 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         save_path_rear = os.path.join(
             f'{JS08Settings.get("data_csv_path")}/{JS08Settings.get("rear_camera_name")}/{year}')
         save_path_prevailing = os.path.join(f'{JS08Settings.get("data_csv_path")}/Prevailing_Visibility/{year}')
-
         file_front = f'{save_path_front}/{md}.csv'
         file_rear = f'{save_path_rear}/{md}.csv'
         file_prevailing = f'{save_path_prevailing}/{md}.csv'
 
-        result_front = pd.DataFrame(columns=['date', 'epoch', 'visibility', 'SW', 'WS', 'WN', 'NW'])
-        result_rear = pd.DataFrame(columns=['date', 'epoch', 'visibility', 'NE', 'EN', 'ES', 'SE'])
+        result_front = pd.DataFrame(columns=['date', 'epoch', 'visibility', 'NE', 'EN', 'ES', 'SE'])
+        result_rear = pd.DataFrame(columns=['date', 'epoch', 'visibility', 'SW', 'WS', 'WN', 'NW'])
         result_prevailing = pd.DataFrame(columns=['date', 'epoch', 'prev'])
 
         if os.path.isfile(f'{file_front}') is False or os.path.isfile(f'{file_rear}') is False \
@@ -340,8 +347,7 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         try:
             result_front['date'] = [self.data_date[-1]]
             result_front['epoch'] = [self.data_time[-1]]
-            result_front['visibility'] = visibility_front
-            # result_front['visibility'] = plot_value
+            # result_front['visibility'] = visibility_front
             result_front['NE'] = visibility.get('NE')
             result_front['EN'] = visibility.get('EN')
             result_front['ES'] = visibility.get('ES')
@@ -349,8 +355,7 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
             result_rear['date'] = [self.data_date[-1]]
             result_rear['epoch'] = [self.data_time[-1]]
-            result_rear['visibility'] = visibility_rear
-            # result_rear['visibility'] = plot_value
+            # result_rear['visibility'] = visibility_rear
             result_rear['SW'] = visibility.get('SW')
             result_rear['WS'] = visibility.get('WS')
             result_rear['WN'] = visibility.get('WN')
@@ -367,9 +372,9 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         result_front.to_csv(f'{file_front}', mode='a', index=False, header=False)
         result_prevailing.to_csv(f'{file_prevailing}', mode='a', index=False, header=False)
 
-        self.visibility_front = round(float(result_vis), 3)
+        # self.visibility_front = round(float(result_vis), 3)
 
-        self._plot.refresh_stats(self.data_time[-1], self.q_list)
+        self._plot.refresh_stats(self.data_time[-1], self.q_list, self.predict_vis_meter)
         self._polar.refresh_stats(visibility)
 
         self.maxfev_alert.setVisible(JS08Settings.get('maxfev_flag'))
@@ -384,21 +389,23 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         try:
             if self.km_mile_convert:
                 self.c_vis_label.setText(f'{format(round(self.prevailing_visibility / 1609, 2), ",")} mile')
-
+                self.p_vis_label.setText(f'{format(round(self.predict_vis_meter/1609, 2), ",")} mile')
             elif self.km_mile_convert is False:
                 if self.visibility is not None:
                     self.c_vis_label.setText(
                         f'{format(int(self.prevailing_visibility), ",")} m')
+                    if self.predict_vis_meter is not None:
+                        self.p_vis_label.setText(f'{format(int(self.predict_vis_meter), ",")} m')
         except TypeError:
             pass
 
         if current_time[-2:] == '00':
             self.thumbnail_refresh()
 
-        if int(self.visibility_front * 1000) <= JS08Settings.get('visibility_alert_limit'):
-            self.alert.setIcon(QIcon('resources/asset/red.png'))
-        else:
-            self.alert.setIcon(QIcon('resources/asset/green.png'))
+            # if int(self.prevailing_visibility) <= JS08Settings.get('visibility_alert_limit'):
+            #     self.alert.setIcon(QIcon('resources/asset/red.png'))
+            # else:
+            #     self.alert.setIcon(QIcon('resources/asset/green.png'))
 
     def convert_visibility(self, data: dict):
         """
@@ -407,11 +414,11 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         Notes
         --------
-        - If visibility ranging from 0 m to less than 400 m, mark it in units of *25 m*.
+        - If visibility ranging from 0 m to less than 400 m, mark it in units of 25 m.
         - If visibility ranging from 400 m to less than 800 m, mark it in units of 50 m.
         .. math:: q (10 ^ { size - 1 } ) + re
 
-        - If the visibility is more than 800 m, mark it in units of 100 m.
+        - If the visibility is more than 800 m, mark it in units of 25 m.
         .. math:: q (10 ^{ 2 } ) + re
 
         Examples
@@ -458,13 +465,162 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         self.visibility = data
         disposable = self.visibility.copy()
-        del disposable['visibility_front']
-        del disposable['visibility_rear']
+        # del disposable['visibility_front']
+        # del disposable['visibility_rear']
         for i in disposable.keys():
             values.append(int(disposable.get(i) * 1000))
 
         values.sort(reverse=True)
         self.prevailing_visibility = values[3]
+
+        if int(self.prevailing_visibility) <= JS08Settings.get('visibility_alert_limit'):
+                self.alert.setIcon(QIcon('resources/asset/red.png'))
+        else:
+            self.alert.setIcon(QIcon('resources/asset/green.png'))
+        
+        # seongmin
+
+        pv = self.prevailing_visibility /1000    
+
+        front_target_name, rear_target_name = JS08Settings.get('front_camera_name'), JS08Settings.get('rear_camera_name')
+        front_target_path = os.path.join(f'{JS08Settings.get("target_csv_path")}/{front_target_name}/{front_target_name}.csv')
+        rear_target_path = os.path.join(f'{JS08Settings.get("target_csv_path")}/{rear_target_name}/{rear_target_name}.csv')
+        ft, rt = pd.read_csv(front_target_path)['distance'].tolist(), pd.read_csv(rear_target_path)['distance'].tolist()
+        distance_list = list(set(ft + rt))
+        distance_list = sorted(distance_list)
+        print("distance_list : ", distance_list)
+        result = max(ft + rt)
+        day = 24*60*60
+        # 현재 시간 저장
+        # now = pd.Timestamp.now()
+        now_str = time.strftime('%Y-%m-%d %H:%M:00', time.localtime(time.time()))
+        now = datetime.strptime(now_str, "%Y-%m-%d %H:%M:%S")
+        current_time =  now.timestamp()
+        print("current_time : ", current_time)
+        
+        # if self.lstm_df.shape[0] == 0 or now.minute % 10 == 0:
+        #     pass
+        # else:
+        #     return
+        
+        ten_m_later = now + timedelta(minutes=10)
+        predict_epoch_10m = ten_m_later.timestamp()
+        
+        ten_h_later = now + timedelta(hours=1)
+        predict_epoch_1h = ten_h_later.timestamp()
+
+        if self.lstm_df.shape[0] < 18:
+            
+            if self.lstm_df.shape[0] == 0:
+                for i in range(18, 0, -1):
+                    before_time = now - timedelta(minutes=10 * i)
+                    # print("now : ", before_time)
+                    new_serires = {'prev':  pv, "Day sin" : np.sin(before_time.timestamp() * (2 * np.pi / day)), "Day cos" : np.cos(before_time.timestamp() * (2 * np.pi / day))}
+                    self.lstm_df = self.lstm_df.append(new_serires, ignore_index = True)                
+                
+            # if self.lstm_df.shape[0] == 0:
+            #     before_time = now - timedelta(minutes=15)
+            #     new_serires = {'prev':  pv, "Day sin" : np.sin(before_time.timestamp() * (2 * np.pi / day)), "Day cos" : np.cos(before_time.timestamp() * (2 * np.pi / day))}
+            #     self.lstm_df = self.lstm_df.append(new_serires, ignore_index = True)
+
+            new_serires = {'prev':  pv, "Day sin" : np.sin(current_time * (2 * np.pi / day)), "Day cos" : np.cos(current_time * (2 * np.pi / day))}
+            self.lstm_df = self.lstm_df.append(new_serires, ignore_index = True)
+
+            print("self.lstm_df", self.lstm_df.shape)
+            # data_df = (self.lstm_df - df_mean) / df_std
+            # print(data_df.head())
+            
+            prediction_cvt = self.lstm_model.predict_visibility(current_time, self.lstm_df)
+            # 1시간 뒤 예측 값
+            predict_vis_1h = prediction_cvt[0][5][0]
+            predict_vis_1h = self.lstm_model.find_closest_value(predict_vis_1h, distance_list)
+            
+            self.predict_vis_meter = predict_vis_1h * 1000
+            self._predic_plot.appendData(pv, prediction_cvt)
+            
+            # 10분 뒤 예측값
+            predict_vis_10m = prediction_cvt[0][1][0]
+            predict_vis_10m = self.lstm_model.find_closest_value(predict_vis_10m, distance_list)
+            
+            self.predict_vis_meter_10m = predict_vis_10m * 1000
+            
+            current_time_str = now.strftime('%Y%m%d%H%M00')
+            predict_path = f"predict/{current_time_str[:8]}"
+            predict_vis_file = current_time_str[:8] + ".csv"
+            predict_file_path =  os.path.join(predict_path, predict_vis_file)
+            print("predict__file__name : ", predict_vis_file)
+            
+            if os.path.isdir(f'{predict_path}') is False:
+                os.makedirs(predict_path, exist_ok=True)
+                df_predict = pd.DataFrame(columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])
+                df_predict.to_csv(predict_file_path, mode='w', index=False)
+                print("create predict path")
+                
+            else:
+                df_predict = pd.read_csv(predict_file_path)
+            
+            df_predict = pd.concat([df_predict, pd.DataFrame([[now.strftime('%Y-%m-%d %H:%M:00'), (current_time*1000.0), (predict_epoch_1h*1000.0), str(int(predict_vis_1h)), (predict_epoch_10m*1000.0), str(int(predict_vis_10m))]],
+                                                            columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])], join='outer')
+            df_predict.to_csv(predict_file_path, mode='w', index=False)
+            print("create predict file")
+             
+        elif now.minute % 10 == 0:
+            
+            self.lstm_df.drop([0], axis=0, inplace=True)
+            new_serires = {'prev':  pv, "Day sin" : np.sin(current_time * (2 * np.pi / day)), "Day cos" : np.cos(current_time * (2 * np.pi / day))}
+            self.lstm_df = self.lstm_df.append(new_serires, ignore_index = True)
+            # data_df = (self.lstm_df - df_mean) / df_std
+            self.lstm_df = self.lstm_df.reset_index(drop=True)
+            # print(data_df.head())
+
+
+            prediction_cvt = self.lstm_model.predict_visibility(current_time, self.lstm_df)
+            # 1시간 뒤 예측 값
+            predict_vis_1h = prediction_cvt[0][5][0]
+            predict_vis_1h = self.lstm_model.find_closest_value(predict_vis_1h, distance_list)
+            
+            self.predict_vis_meter = predict_vis_1h * 1000
+            self._predic_plot.appendData(pv, prediction_cvt)
+            
+            # 10분 뒤 예측값
+            predict_vis_10m = prediction_cvt[0][1][0]
+            predict_vis_10m = self.lstm_model.find_closest_value(predict_vis_10m, distance_list)
+            
+            self.predict_vis_meter_10m = predict_vis_10m * 1000
+            # self.predict_vis_meter = 0
+            # self.predict_vis_meter_10m = 0
+                
+
+
+
+            # if self.predict_vis_meter > result * 1000:
+            #     self.predict_vis_meter = result * 1000
+            # else:
+            #     pass
+                
+                
+            current_time_str = now.strftime('%Y%m%d%H%M00')
+            predict_path = f"predict/{current_time_str[:8]}"
+            predict_vis_file = current_time_str[:8] + ".csv"
+            predict_file_path =  os.path.join(predict_path, predict_vis_file)
+            print("predict__file__name : ", predict_vis_file)
+            
+            if os.path.isdir(f'{predict_path}') is False:
+                os.makedirs(predict_path, exist_ok=True)
+                df_predict = pd.DataFrame(columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])
+                df_predict.to_csv(predict_file_path, mode='w', index=False)
+                print("create predict path")
+                
+            else:
+                df_predict = pd.read_csv(predict_file_path)
+            
+            df_predict = pd.concat([df_predict, pd.DataFrame([[now.strftime('%Y-%m-%d %H:%M:00'), (current_time*1000.0), (predict_epoch_1h*1000.0), str(int(predict_vis_1h)), (predict_epoch_10m*1000.0), str(int(predict_vis_10m))]],
+                                                            columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])], join='outer')
+            df_predict.to_csv(predict_file_path, mode='w', index=False)
+            print("create predict file")
+
+
+
 
     def thumbnail_refresh(self):
 
@@ -587,74 +743,74 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
     def thumbnail_click1(self, e):
         name = self.label_1hour_time.text()[:2] + self.label_1hour_time.text()[3:5]
         epoch = time.strftime('%Y%m%d', time.localtime(time.time()))
-        self.thumbnail_view(epoch + name + '00')
+        self.thumbnail_view(f'{epoch}{name}00')
 
         self.reset_StyleSheet()
         self.label_1hour.setStyleSheet(self.click_style)
-        self.monitoring_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
-        self.monitoring_label.setText(f' {self.label_1hour_time.text()} image')
+        self.thumbnail_info_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
+        self.thumbnail_info_label.setText(f' {self.label_1hour_time.text()} image')
 
-        QTimer.singleShot(2000, self.thumbnail_show)
+        QTimer.singleShot(5000, self.thumbnail_show)
 
     def thumbnail_click2(self, e):
-        name = self.label_2hour_time.text()[:2] + self.label_2hour_time.text()[3:]
+        name = self.label_2hour_time.text()[:2] + self.label_2hour_time.text()[3:5]
         epoch = time.strftime('%Y%m%d', time.localtime(time.time()))
-        self.thumbnail_view(epoch + name + '00')
+        self.thumbnail_view(f'{epoch}{name}00')
 
         self.reset_StyleSheet()
         self.label_2hour.setStyleSheet(self.click_style)
-        self.monitoring_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
-        self.monitoring_label.setText(f' {self.label_2hour_time.text()} image')
+        self.thumbnail_info_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
+        self.thumbnail_info_label.setText(f' {self.label_2hour_time.text()} image')
 
-        QTimer.singleShot(2000, self.thumbnail_show)
+        QTimer.singleShot(5000, self.thumbnail_show)
 
     def thumbnail_click3(self, e):
-        name = self.label_3hour_time.text()[:2] + self.label_3hour_time.text()[3:]
+        name = self.label_3hour_time.text()[:2] + self.label_3hour_time.text()[3:5]
         epoch = time.strftime('%Y%m%d', time.localtime(time.time()))
-        self.thumbnail_view(epoch + name + '00')
+        self.thumbnail_view(f'{epoch}{name}00')
 
         self.reset_StyleSheet()
         self.label_3hour.setStyleSheet(self.click_style)
-        self.monitoring_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
-        self.monitoring_label.setText(f' {self.label_3hour_time.text()} image')
+        self.thumbnail_info_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
+        self.thumbnail_info_label.setText(f' {self.label_3hour_time.text()} image')
 
-        QTimer.singleShot(2000, self.thumbnail_show)
+        QTimer.singleShot(5000, self.thumbnail_show)
 
     def thumbnail_click4(self, e):
-        name = self.label_4hour_time.text()[:2] + self.label_4hour_time.text()[3:]
+        name = self.label_4hour_time.text()[:2] + self.label_4hour_time.text()[3:5]
         epoch = time.strftime('%Y%m%d', time.localtime(time.time()))
-        self.thumbnail_view(epoch + name + '00')
+        self.thumbnail_view(f'{epoch}{name}00')
 
         self.reset_StyleSheet()
         self.label_4hour.setStyleSheet(self.click_style)
-        self.monitoring_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
-        self.monitoring_label.setText(f' {self.label_4hour_time.text()} image')
+        self.thumbnail_info_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
+        self.thumbnail_info_label.setText(f' {self.label_4hour_time.text()} image')
 
-        QTimer.singleShot(2000, self.thumbnail_show)
+        QTimer.singleShot(5000, self.thumbnail_show)
 
     def thumbnail_click5(self, e):
-        name = self.label_5hour_time.text()[:2] + self.label_5hour_time.text()[3:]
+        name = self.label_5hour_time.text()[:2] + self.label_5hour_time.text()[3:5]
         epoch = time.strftime('%Y%m%d', time.localtime(time.time()))
-        self.thumbnail_view(epoch + name + '00')
+        self.thumbnail_view(f'{epoch}{name}00')
 
         self.reset_StyleSheet()
         self.label_5hour.setStyleSheet(self.click_style)
-        self.monitoring_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
-        self.monitoring_label.setText(f' {self.label_5hour_time.text()} image')
+        self.thumbnail_info_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
+        self.thumbnail_info_label.setText(f' {self.label_5hour_time.text()} image')
 
-        QTimer.singleShot(2000, self.thumbnail_show)
+        QTimer.singleShot(5000, self.thumbnail_show)
 
     def thumbnail_click6(self, e):
-        name = self.label_6hour_time.text()[:2] + self.label_6hour_time.text()[3:]
+        name = self.label_6hour_time.text()[:2] + self.label_6hour_time.text()[3:5]
         epoch = time.strftime('%Y%m%d', time.localtime(time.time()))
-        self.thumbnail_view(epoch + name + '00')
+        self.thumbnail_view(f'{epoch}{name}00')
 
         self.reset_StyleSheet()
         self.label_6hour.setStyleSheet(self.click_style)
-        self.monitoring_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
-        self.monitoring_label.setText(f' {self.label_6hour_time.text()} image')
+        self.thumbnail_info_label.setStyleSheet('color: #ffffff; background-color: #1b3146')
+        self.thumbnail_info_label.setText(f' {self.label_6hour_time.text()} image')
 
-        QTimer.singleShot(2000, self.thumbnail_show)
+        QTimer.singleShot(5000, self.thumbnail_show)
 
     def btn_on(self, event):
         self.setting_button.setIcon(QIcon('resources/asset/settings_on.png'))
@@ -694,10 +850,10 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         painter.drawLine((self.front_label.width() - 1), 0,
                          (self.front_label.width() - 1), self.front_label.height())
 
-        painter.drawText(self.front_label.width() * 0.125, 14, 'SW')
-        painter.drawText(self.front_label.width() * 0.375, 14, 'WS')
-        painter.drawText(self.front_label.width() * 0.625, 14, 'WN')
-        painter.drawText(self.front_label.width() * 0.875, 14, 'NW')
+        painter.drawText(self.front_label.width() * 0.125, 14, 'NE')
+        painter.drawText(self.front_label.width() * 0.375, 14, 'EN')
+        painter.drawText(self.front_label.width() * 0.625, 14, 'ES')
+        painter.drawText(self.front_label.width() * 0.875, 14, 'SE')
 
         painter.end()
 
@@ -714,19 +870,18 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
         painter.drawLine((self.rear_label.width() - 1), 0,
                          (self.rear_label.width() - 1), self.rear_label.height())
 
-        painter.drawText(self.rear_label.width() * 0.125, 14, 'NE')
-        painter.drawText(self.rear_label.width() * 0.375, 14, 'EN')
-        painter.drawText(self.rear_label.width() * 0.625, 14, 'ES')
-        painter.drawText(self.rear_label.width() * 0.875, 14, 'SE')
+        painter.drawText(self.rear_label.width() * 0.125, 14, 'SW')
+        painter.drawText(self.rear_label.width() * 0.375, 14, 'WS')
+        painter.drawText(self.rear_label.width() * 0.625, 14, 'WN')
+        painter.drawText(self.rear_label.width() * 0.875, 14, 'NW')
 
         painter.end()
 
     def closeEvent(self, e):
-        if self.consumer.isRunning():
-            self.consumer.stop()
-        if self.video_thread.isRunning():
-            self.video_thread.stop()
+        self.consumer.stop()
+        self.video_thread.stop()
         print(f'Close time: {time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}')
+        log(JS08Settings.get('current_id'), 'Logout, Program exit')
 
 
 class VideoWidget(QWidget):
@@ -748,7 +903,7 @@ class VideoWidget(QWidget):
         self.uri = None
 
         # Current camera must be 'PNM-9031RV'
-        self.media_player.video_set_aspect_ratio('21:9')
+        self.media_player.video_set_aspect_ratio('2:1')
 
         self.video_frame = QFrame()
 
@@ -758,39 +913,37 @@ class VideoWidget(QWidget):
     def on_camera_change(self, uri: str):
         if uri[:4] == 'rtsp':
             self.uri = uri
-            self.media_player.set_media(self.instance.media_new(uri))
-            self.instance.vlm_set_loop(uri, True)
+            self.media_player.set_media(self.instance.media_new(self.uri))
             self.media_player.play()
         else:
             pass
 
     def get_status(self):
-        # print(f'Video is playing?: {self.media_player.is_playing()}')
         # if self.media_player.is_playing() == 0:
-        #     print(f'Player is not playing!!!!!!!!!!! in '
+        #     print(f'Player is not playing! in'
         #           f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(QDateTime.currentSecsSinceEpoch()))}')
-        # print('replayed')
-        # self.media_player.set_media(self.instance.media_new(self.uri))
-        # self.media_player.play()
-
-        # print(f'is_seekable: {self.media_player.is_seekable()}')    # return 0
-        # print(f'is_playing: {self.media_player.is_playing()}')      # return 1
-
+        #     self.media_player.set_media(self.instance.media_new(self.uri))
+        #     self.media_player.play()
         self.media_player.set_pause(1)
         self.media_player.play()
 
 
 if __name__ == '__main__':
-    mp.freeze_support()
-
     from PySide6.QtWidgets import QApplication
     from PySide6.QtGui import QGuiApplication
     from model import JS08Settings
 
-    print(f'Start time: {time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}')
-
+    mp.freeze_support()
     q = Queue()
     _q = Queue()
+
+    _producer = producer
+
+    p = Process(name='clock', target=clock_clock, args=(q,), daemon=True)
+    _p = Process(name='producer', target=_producer, args=(_q,), daemon=True)
+
+    p.start()
+    # _p.start()
 
     os.makedirs(f'{JS08Settings.get("data_csv_path")}', exist_ok=True)
     os.makedirs(f'{JS08Settings.get("target_csv_path")}', exist_ok=True)
@@ -798,10 +951,9 @@ if __name__ == '__main__':
     os.makedirs(f'{JS08Settings.get("image_save_path")}', exist_ok=True)
 
     app = QApplication(sys.argv)
-    # app.setStyle(QStyleFactory().create('Noto Sans'))
     screen_size = QGuiApplication.screens()[0].geometry()
     width, height = screen_size.width(), screen_size.height()
-    if width != 1920 or height != 1080:
+    if width > 1920 or height > 1080:
         QMessageBox.warning(None, 'Warning', 'JS08 is based on FHD screen.')
     window = JS08MainWindow(q, _q)
     sys.exit(app.exec())

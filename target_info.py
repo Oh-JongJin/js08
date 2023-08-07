@@ -9,7 +9,6 @@
 import os
 import pandas as pd
 import numpy as np
-import cv2
 
 from cal_ext_coef import Coef
 from model import JS08Settings
@@ -26,14 +25,16 @@ class TargetInfo:
         """A function that outputs pixels for calculating the dissipation coefficient in the specified areas"""
 
         cp_image = cv_img.copy()
-        # cv2.imwrite(f'test/{epoch}.png', cp_image)
+        result = ()
         min_x = []
         min_y = []
+        count = 1
 
         for upper_left, lower_right in zip(left_range, right_range):
             result = self.minrgb(upper_left, lower_right, cp_image)
             min_x.append(result[0])
             min_y.append(result[1])
+            count += 1
 
         visibility = self.get_rgb(epoch, min_x, min_y, cp_image, distance, camera)
 
@@ -65,7 +66,7 @@ class TargetInfo:
         show_min_y = t_idx[0][0] + up_y
         show_min_x = t_idx[1][0] + left_x
 
-        return show_min_x, show_min_y
+        return (show_min_x, show_min_y)
 
     def get_rgb(self, epoch: str, min_x, min_y, cp_image, distance, camera):
         """Gets the RGB values of the coordinates."""
@@ -80,13 +81,11 @@ class TargetInfo:
             b_list.append(cp_image[y, x, 2])
 
         visibility = self.save_rgb(r_list, g_list, b_list, epoch, distance, camera)
-
         return visibility
 
     def save_rgb(self, r_list, g_list, b_list, epoch, distance, camera):
         """Save the rgb information for each target."""
 
-        # save_path = os.path.join(f'rgb/{camera}/{epoch[:4]}/{epoch[4:8]}')
         save_path = os.path.join(f'{JS08Settings.get("rgb_csv_path")}/{camera}/{epoch[:4]}/{epoch[4:8]}')
         os.makedirs(save_path, exist_ok=True)
 
@@ -113,7 +112,7 @@ class TargetInfo:
 
             return visibility
 
-    def extinc_print(self, alp_list: list, select_color: str = ''):
+    def extinc_print(self, alp_list: list, select_color: str):
         """Select an appropriate value among visibility by wavelength."""
         visibility = 0
 

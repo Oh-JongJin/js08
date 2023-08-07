@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'admin_menu.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.3.0
+## Created by: Qt User Interface Compiler version 6.3.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -19,8 +19,7 @@ from PySide6.QtWidgets import (QAbstractButton, QApplication, QCheckBox, QComboB
     QDialog, QDialogButtonBox, QGridLayout, QHBoxLayout,
     QHeaderView, QLabel, QLayout, QLineEdit,
     QPushButton, QSizePolicy, QSpinBox, QTableWidget,
-    QTableWidgetItem, QTextBrowser, QTextEdit, QVBoxLayout,
-    QWidget)
+    QTableWidgetItem, QTextBrowser, QVBoxLayout, QWidget)
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
@@ -418,15 +417,13 @@ class Ui_Dialog(object):
 
         self.id_horizontalLayout.addWidget(self.id_label)
 
-        self.id_textBrowser = QTextBrowser(self.gridWidget)
-        self.id_textBrowser.setObjectName(u"id_textBrowser")
-        sizePolicy3.setHeightForWidth(self.id_textBrowser.sizePolicy().hasHeightForWidth())
-        self.id_textBrowser.setSizePolicy(sizePolicy3)
-        self.id_textBrowser.setMaximumSize(QSize(195, 39))
-        self.id_textBrowser.setStyleSheet(u"background-color: rgb(255, 255, 255);")
-        self.id_textBrowser.setLineWrapMode(QTextEdit.NoWrap)
+        self.current_id = QLineEdit(self.gridWidget)
+        self.current_id.setObjectName(u"current_id")
+        sizePolicy3.setHeightForWidth(self.current_id.sizePolicy().hasHeightForWidth())
+        self.current_id.setSizePolicy(sizePolicy3)
+        self.current_id.setStyleSheet(u"background-color: rgb(255, 255, 255);")
 
-        self.id_horizontalLayout.addWidget(self.id_textBrowser)
+        self.id_horizontalLayout.addWidget(self.current_id)
 
 
         self.etc_verticalLayout.addLayout(self.id_horizontalLayout)
@@ -486,7 +483,10 @@ class Ui_Dialog(object):
         self.pw_label_4.setObjectName(u"pw_label_4")
         sizePolicy3.setHeightForWidth(self.pw_label_4.sizePolicy().hasHeightForWidth())
         self.pw_label_4.setSizePolicy(sizePolicy3)
-        self.pw_label_4.setFont(font3)
+        font5 = QFont()
+        font5.setFamilies([u"Noto Sans"])
+        font5.setPointSize(10)
+        self.pw_label_4.setFont(font5)
         self.pw_label_4.setStyleSheet(u"background-color:rgb(27,49,70);\n"
 "color: #ffffff;")
 
@@ -520,9 +520,9 @@ class Ui_Dialog(object):
         self.user_list_button.setObjectName(u"user_list_button")
         sizePolicy3.setHeightForWidth(self.user_list_button.sizePolicy().hasHeightForWidth())
         self.user_list_button.setSizePolicy(sizePolicy3)
-        font5 = QFont()
-        font5.setFamilies([u"Noto Sans KR Medium"])
-        self.user_list_button.setFont(font5)
+        font6 = QFont()
+        font6.setFamilies([u"Noto Sans KR Medium"])
+        self.user_list_button.setFont(font6)
         self.user_list_button.setStyleSheet(u"background-color:rgb(255, 255, 255);")
 
         self.afd_horizontalLayout.addWidget(self.user_list_button)
@@ -534,10 +534,10 @@ class Ui_Dialog(object):
         self.buttonBox.setObjectName(u"buttonBox")
         sizePolicy4.setHeightForWidth(self.buttonBox.sizePolicy().hasHeightForWidth())
         self.buttonBox.setSizePolicy(sizePolicy4)
-        font6 = QFont()
-        font6.setFamilies([u"Noto Sans"])
-        font6.setPointSize(9)
-        self.buttonBox.setFont(font6)
+        font7 = QFont()
+        font7.setFamilies([u"Noto Sans KR Medium"])
+        font7.setPointSize(9)
+        self.buttonBox.setFont(font7)
         self.buttonBox.setStyleSheet(u"background-color:rgb(27,49,70);\n"
 "color: #ffffff;")
         self.buttonBox.setOrientation(Qt.Horizontal)
@@ -589,13 +589,13 @@ class Ui_Dialog(object):
         self.image_save_path_button.setText(QCoreApplication.translate("Dialog", u"\u21a9", None))
         self.vis_limit_label_2.setText(QCoreApplication.translate("Dialog", u"\uc774\ubbf8\uc9c0 \ud06c\uae30 \uc9c0\uc815", None))
         self.image_size_comboBox.setItemText(0, QCoreApplication.translate("Dialog", u"Original (PNG)", None))
-        self.image_size_comboBox.setItemText(1, QCoreApplication.translate("Dialog", u"Reduce (JPG)", None))
-        self.image_size_comboBox.setItemText(2, QCoreApplication.translate("Dialog", u"Resize to FHD (PNG)", None))
+        self.image_size_comboBox.setItemText(1, QCoreApplication.translate("Dialog", u"Resize to FHD (PNG)", None))
+        self.image_size_comboBox.setItemText(2, QCoreApplication.translate("Dialog", u"Reduce (JPG)", None))
 
         self.vis_limit_label.setText(QCoreApplication.translate("Dialog", u"\ucd5c\uc800 \uc2dc\uc815 \uc54c\ub9bc \uae30\uc900", None))
         self.vis_limit_spinBox.setSuffix(QCoreApplication.translate("Dialog", u" m", None))
         self.vis_limit_spinBox.setPrefix("")
-        self.id_label.setText(QCoreApplication.translate("Dialog", u" ID: ", None))
+        self.id_label.setText(QCoreApplication.translate("Dialog", u"\ud604\uc7ac ID: ", None))
         self.pw_label.setText(QCoreApplication.translate("Dialog", u"\ud604\uc7ac \ube44\ubc00\ubc88\ud638", None))
         self.pw_label_3.setText(QCoreApplication.translate("Dialog", u"\uc0c8 \ube44\ubc00\ubc88\ud638", None))
         self.pw_label_4.setText(QCoreApplication.translate("Dialog", u"\uc0c8 \ube44\ubc00\ubc88\ud638 \ud655\uc778", None))
