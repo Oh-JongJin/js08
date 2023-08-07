@@ -28,49 +28,73 @@ def byte_transform(bytes, to, bsize=1024):
     return int(r)
 
 
-def delete_select_date(path: str, folder: list):
-    """
-    Delete the list containing the folder name
+class FileAutoDelete(QDialog, Ui_Form):
 
-    :param path: Path to proceed with a auto-delete
-    :param folder: Data older than the date selected as the calendarWidget
-    """
+    def __init__(self):
+        super().__init__()
 
-    # for i in range(len(folder)):
-    #     a = os.path.join(path, str(folder[i]))
-    #     shutil.rmtree(a)
-    #     print(f'{a} delete complete.')
-    a = os.path.join(path, str(folder[0]))
-    print(f'{a} delete complete.')
+        # ui_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+        #                        "resources/auto_file_delete.ui")
+        # uic.loadUi(ui_path, self)
+        self.setupUi(self)
 
+        # self.setFixedSize(self.width(), self.height())
 
-def check_file_date(path: str):
-    is_old = []
+        drive = []
+        # Save all of the user's drives in drive variable.
+        for i in range(len(psutil.disk_partitions())):
+            drive.append(str(psutil.disk_partitions()[i])[18:19])
 
-    for f in os.listdir(path):
-        is_old.append(int(f))
-    delete_select_date(path, is_old)
+        self.calendarWidget.activated.connect(self.showDate)
 
+        self.path = None
+        self.date = None
+        self.date_convert = None
 
-def FileAutoDelete():
-    save_disk = JS08Settings.get('image_save_path')[:2]
+        self.exit_pushButton.clicked.connect(self.exit_click)
 
-    total, used, free = shutil.disk_usage(save_disk)
-    if JS08Settings.get('afd'):
-        if byte_transform(free, 'GB') <= 20:
-            check_disk()
+    def exit_click(self):
+        self.close()
 
+    def showDate(self, date):
+        self.date = date.toString('yyMMdd')
+        self.date_convert = date.toString('yyyy/MM/dd')
+        self.check_file_date(os.path.join(JS06Settings.get('image_save_path'),
+                                          'vista'))
 
-def check_disk():
-    check_file_date(os.path.join(JS08Settings.get('image_save_path'), 'vista',
-                                 JS08Settings.get('front_camera_name')))
-    print('-' * 10)
-    check_file_date(os.path.join(JS08Settings.get('image_save_path'), 'vista',
-                                 JS08Settings.get('rear_camera_name')))
+    def check_file_date(self, path: str):
+        is_old = []
+
+        for f in os.listdir(path):
+            if int(f) <= int(self.date):
+                is_old.append(int(f))
+
+        if is_old:
+            dlg = QMessageBox.question(self, 'Warning', f'Delete folder before {self.date_convert} ?',
+                                       QMessageBox.Yes | QMessageBox.No)
+            if dlg == QMessageBox.Yes:
+                self.delete_select_date(path, is_old)
+        else:
+            QMessageBox.information(self, 'Information', 'There is no data before the selected date.')
+
+    def delete_select_date(self, path: str, folder: list):
+        """
+        Delete the list containing the folder name
+
+        :param path: Path to proceed with a auto-delete
+        :param folder: Data older than the date selected as the calendarWidget
+        """
+
+        for i in range(len(folder)):
+            a = os.path.join(path, str(folder[i]))
+            shutil.rmtree(a)
+            print(f'{a} delete complete.')
 
 
 if __name__ == "__main__":
     import sys
 
-    FileAutoDelete()
-    # sys.exit(app.exec())
+    app = QApplication(sys.argv)
+    window = FileAutoDelete()
+    window.show()
+    sys.exit(app.exec_())

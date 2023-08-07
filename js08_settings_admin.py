@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 #
-# Copyright 2021-2022 Sijung Co., Ltd.
+# Copyright 2021-2023 Sijung Co., Ltd.
 #
 # Authors:
 #     cotjdals5450@gmail.com (Seong Min Chae)
 #     5jx2oh@gmail.com (Jongjin Oh)
+
 
 import os
 import cv2
@@ -25,6 +26,7 @@ from target_info import TargetInfo
 from model import JS08Settings
 from user_edit import UserEdit
 from resources.admin_menu import Ui_Dialog
+from save_log import log
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -50,6 +52,7 @@ class JS08AdminSettingWidget(QDialog, Ui_Dialog):
         self.right_range = []
         self.distance = []
         self.azimuth = []
+        self.current_azi = ''
 
         self.isDrawing = False
 
@@ -101,7 +104,7 @@ class JS08AdminSettingWidget(QDialog, Ui_Dialog):
         self.image_save_path_textBrowser.setPlainText(JS08Settings.get('image_save_path'))
 
         self.vis_limit_spinBox.setValue(JS08Settings.get('visibility_alert_limit'))
-        self.id_textBrowser.setText(JS08Settings.get('admin_id'))
+        self.current_id.setText(JS08Settings.get('admin_id'))
         self.current_pw.setEchoMode(QLineEdit.Password)
         self.new_pw.setEchoMode(QLineEdit.Password)
         self.new_pw_check.setEchoMode(QLineEdit.Password)
@@ -155,6 +158,7 @@ class JS08AdminSettingWidget(QDialog, Ui_Dialog):
             item4.setTextAlignment(Qt.AlignVCenter | Qt.AlignHCenter)
             item4.setForeground(QBrush(QColor(255, 255, 255)))
             self.tableWidget.setItem(i, 2, item4)
+            # print(i + 1, item2, item3, item4)
 
     def func(self, x, c1, c2, a):
         return c2 + (c1 - c2) * np.exp(-a * x)
@@ -270,10 +274,12 @@ class JS08AdminSettingWidget(QDialog, Ui_Dialog):
 
         except TypeError as e:
             QMessageBox.about(self, 'Error', f'{e}')
+            log(JS08Settings.get('current_id'), str(e))
             pass
 
         except IndexError as e:
             QMessageBox.about(self, 'Error', f'{e}')
+            log(JS08Settings.get('current_id'), str(e))
             pass
 
     def camera_flip(self):
@@ -307,6 +313,7 @@ class JS08AdminSettingWidget(QDialog, Ui_Dialog):
 
         except Exception as e:
             QMessageBox.about(self, 'Error', f'{e}')
+            log(JS08Settings.get('current_id'), str(e))
 
         self.image_label.setPixmap(self.convert_cv_qt(cp_image))
         self.show_target_table()
@@ -433,25 +440,30 @@ class JS08AdminSettingWidget(QDialog, Ui_Dialog):
         self.azimuth = target_df['azimuth'].tolist()
 
     def accept_click(self):
+        input_current_id = self.current_id.text()
         input_current_pw = self.current_pw.text()
         input_new_pw = self.new_pw.text()
         input_new_pw_check = self.new_pw_check.text()
 
         if input_current_pw == JS08Settings.get('admin_pw') and \
                 input_new_pw == input_new_pw_check:
+            if input_current_pw != input_new_pw:
+                log(f'{JS08Settings.get("admin_id")}', f'Change ID ({JS08Settings.get("admin_id")}) -> ({input_current_id})), '
+                    f'Change Password ({input_current_pw}) -> ({input_new_pw_check})')
 
             JS08Settings.set('data_csv_path', self.data_csv_path_textBrowser.toPlainText())
             JS08Settings.set('target_csv_path', self.target_csv_path_textBrowser.toPlainText())
             JS08Settings.set('image_save_path', self.image_save_path_textBrowser.toPlainText())
             JS08Settings.set('image_size', self.image_size_comboBox.currentIndex())
             JS08Settings.set('visibility_alert_limit', self.vis_limit_spinBox.value())
+            JS08Settings.set('admin_id', input_current_id)
             JS08Settings.set('admin_pw', input_new_pw)
-            # JS08Settings.set('afd', self.afd_checkBox.isChecked())
 
         self.save_target(self.current_camera)
 
         if JS08Settings.get('first_step'):
-            QMessageBox.about(None, 'Restart JS-08', 'When JS-08 program is restarted, Target Detection Algorithm is started')
+            QMessageBox.about(None, 'Restart JS-08',
+                              'When JS-08 program is restarted, Target Detection is started')
             JS08Settings.set('first_step', False)
         self.close()
 
@@ -460,7 +472,8 @@ class JS08AdminSettingWidget(QDialog, Ui_Dialog):
 
     # Event
     def tableWidget_doubleClicked(self, event):
-        self.select_target = self.tableWidget.currentIndex().row()
+        # self.select_target = self.tableWidget.
+        # print(self.tableWidget.item(self.tableWidget.currentRow(), self.tableWidget.currentColumn()), self.tableWidget.selectedItems)
         self.update()
 
     def btn_on(self, event):
@@ -476,6 +489,8 @@ class JS08AdminSettingWidget(QDialog, Ui_Dialog):
         bk_image = QPixmap.fromImage(back_ground_image)
         painter.drawPixmap(QRect(0, 0, self.image_label.width(),
                                  self.image_label.height()), bk_image)
+
+        # print(self.image_label.width(), self.image_label.height())
 
         painter.setPen(QPen(Qt.white, 1, Qt.DotLine))
 
@@ -569,7 +584,6 @@ class JS08AdminSettingWidget(QDialog, Ui_Dialog):
 
     def lbl_mouseMoveEvent(self, event):
         """마우스가 움직일 때 발생하는 이벤트, QLabel method overriding"""
-        print(self.image_label.size())
         if event.buttons() == Qt.LeftButton:
             self.end = event.pos()
             self.image_label.update()
@@ -580,42 +594,69 @@ class JS08AdminSettingWidget(QDialog, Ui_Dialog):
             if self.cam_flag:
                 if 0 < self.upper_left[0] <= self.video_width * 0.25:
                     self.azimuth.append('SW')
+                    self.current_azi = 'SW'
                 elif self.video_width * 0.25 < self.upper_left[0] <= self.video_width * 0.5:
                     self.azimuth.append('WS')
+                    self.current_azi = 'WS'
                 elif self.video_width * 0.5 < self.upper_left[0] <= self.video_width * 0.75:
                     self.azimuth.append('WN')
+                    self.current_azi = 'WN'
                 elif self.video_width * 0.75 < self.upper_left[0] <= self.video_width:
                     self.azimuth.append('NW')
+                    self.current_azi = 'NW'
 
             elif self.cam_flag is False:
                 if 0 < self.upper_left[0] <= self.video_width * 0.25:
                     self.azimuth.append('NE')
+                    self.current_azi = 'NE'
                 elif self.video_width * 0.25 < self.upper_left[0] <= self.video_width * 0.5:
                     self.azimuth.append('EN')
+                    self.current_azi = 'EN'
                 elif self.video_width * 0.5 < self.upper_left[0] <= self.video_width * 0.75:
                     self.azimuth.append('ES')
+                    self.current_azi = 'ES'
                 elif self.video_width * 0.75 < self.upper_left[0] <= self.video_width:
                     self.azimuth.append('SE')
+                    self.current_azi = 'SE'
 
             self.end = event.pos()
             self.image_label.update()
             self.lower_right = (int((self.end.x() / self.image_label.width()) * self.video_width),
                                 int((self.end.y() / self.image_label.height()) * self.video_height))
 
-            text, ok = QInputDialog.getText(self, '거리 입력', '거리(km)')
+            # text, ok = QInputDialog.getText(self, '거리 입력', '거리(km)')
 
-            if ok:
+            from input_target import InputTarget
+            getText = InputTarget(self.current_azi)
+            if getText.exec():
+                dist, azi = getText.getInputs()
+
                 self.left_range.append(self.upper_left)
                 self.right_range.append(self.lower_right)
-                self.distance.append(text)
+                self.distance.append(dist)
+                self.azimuth[-1] = azi
                 self.target_name.append(len(self.left_range))
 
                 self.end_drawing = True
+                log(JS08Settings.get('current_id'), 'Save Target ')
             else:
                 del self.azimuth[-1]
 
+            # if state:
+            #     self.left_range.append(self.upper_left)
+            #     self.right_range.append(self.lower_right)
+            #     self.distance.append(dist)
+            #     self.target_name.append(len(self.left_range))
+            #
+            #     self.end_drawing = True
+            #
+            # else:
+            #     del self.azimuth[-1]
+
             self.isDrawing = False
             self.show_target_table()
+
+            # print(self.azimuth)
 
 
 if __name__ == '__main__':
