@@ -107,13 +107,13 @@ class VisibilityView(QChartView):
             if os.path.exists(predict_file_path) and os.path.isdir(predict_folder_path):
                 predict_result_today = pd.read_csv(predict_file_path)
             
-                if 'predict_epoch_10m' not in predict_result_today.columns:
+                if 'predict_epoch_1h' not in predict_result_today.columns:
                     # 'predict_epoch' 컬럼에 새로운 값 추가
 
-                    predict_result_today['predict_epoch_10m'] = predict_result_today['epoch'].apply(add_10_minutes)
+                    predict_result_today['predict_epoch_1h'] = predict_result_today['epoch'].apply(add_10_minutes)
                 
-                predict_epoch_today = predict_result_today['predict_epoch_10m'].tolist()
-                predict_vis_list_today = predict_result_today['predict_value_10m'].tolist()
+                predict_epoch_today = predict_result_today['predict_epoch_1h'].tolist()
+                predict_vis_list_today = predict_result_today['predict_value_1h'].tolist()
             
             data = []
             data_2 = []
@@ -136,12 +136,12 @@ class VisibilityView(QChartView):
                 
                 if os.path.exists(predict_yesterday_file_path) and os.path.isdir(predict_yesterday_folder_path):
                     predict_result_yesterday = pd.read_csv(predict_yesterday_file_path)
-                    if 'predict_epoch_10m' not in predict_result_yesterday.columns:
+                    if 'predict_epoch_1h' not in predict_result_yesterday.columns:
                     # 'predict_epoch' 컬럼에 새로운 값 추가
-                        predict_result_yesterday['predict_epoch_10m'] = predict_result_yesterday['epoch'].apply(add_10_minutes)
+                        predict_result_yesterday['predict_epoch_1h'] = predict_result_yesterday['epoch'].apply(add_1_hour)
                         
-                    predict_epoch_yesterday = predict_result_yesterday['predict_epoch_10m'].tolist()
-                    predict_vis_list_yesterday = predict_result_yesterday['predict_value_10m'].tolist()
+                    predict_epoch_yesterday = predict_result_yesterday['predict_epoch_1h'].tolist()
+                    predict_vis_list_yesterday = predict_result_yesterday['predict_value_1h'].tolist()
 
                 # 전날꺼 저장_yesterday
                 for i in range(len(epoch_yesterday)):
@@ -223,8 +223,8 @@ class VisibilityView(QChartView):
         # seongmin 추가
         predict_vis_km = int(predict_vis/1000)
         
-        # 시간 10분 뒤
-        epoch_10 = add_10_minutes(epoch)
+        # 시간 60분 뒤
+        epoch_10 = add_1_hour(epoch)
         self.data_2.append((epoch_10, predict_vis_km))
         data_point_2 = [QPointF(t, v) for t, v in self.data_2]
         self.series_2.replace(data_point_2)
@@ -246,6 +246,11 @@ def add_10_minutes(epoch_value):
     new_datetime = timestamp_datetime + timedelta(minutes=10)
     return float(new_datetime.timestamp() * 1000.0)
 
+# epoch 값을 datetime 객체로 변환하고 10분을 더해주는 함수
+def add_1_hour(epoch_value):
+    timestamp_datetime = datetime.fromtimestamp(epoch_value / 1000.0)
+    new_datetime = timestamp_datetime + timedelta(hours=1)
+    return float(new_datetime.timestamp() * 1000.0)
 
 
 

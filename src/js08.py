@@ -374,7 +374,7 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
 
         # self.visibility_front = round(float(result_vis), 3)
 
-        self._plot.refresh_stats(self.data_time[-1], self.q_list, self.predict_vis_meter_10m)
+        self._plot.refresh_stats(self.data_time[-1], self.q_list, self.predict_vis_meter)
         self._polar.refresh_stats(visibility)
 
         self.maxfev_alert.setVisible(JS08Settings.get('maxfev_flag'))
@@ -530,16 +530,6 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
             # data_df = (self.lstm_df - df_mean) / df_std
             # print(data_df.head())
             
-        else:
-            self.lstm_df.drop([0], axis=0, inplace=True)
-            new_serires = {'prev':  pv, "Day sin" : np.sin(current_time * (2 * np.pi / day)), "Day cos" : np.cos(current_time * (2 * np.pi / day))}
-            self.lstm_df = self.lstm_df.append(new_serires, ignore_index = True)
-            # data_df = (self.lstm_df - df_mean) / df_std
-            self.lstm_df = self.lstm_df.reset_index(drop=True)
-            # print(data_df.head())
-
-
-        if self.lstm_df.shape[0] > 1:
             prediction_cvt = self.lstm_model.predict_visibility(current_time, self.lstm_df)
             # 1시간 뒤 예측 값
             predict_vis_1h = prediction_cvt[0][5][0]
@@ -553,47 +543,81 @@ class JS08MainWindow(QMainWindow, Ui_MainWindow):
             predict_vis_10m = self.lstm_model.find_closest_value(predict_vis_10m, distance_list)
             
             self.predict_vis_meter_10m = predict_vis_10m * 1000
-        else:
-            self.predict_vis_meter = 0
-            self.predict_vis_meter_10m = 0
             
-
-
-
-        # if self.predict_vis_meter > result * 1000:
-        #     self.predict_vis_meter = result * 1000
-        # else:
-        #     pass
-
-        if self.km_mile_convert:
-            unit = "m"
-            # self.p_vis_label.setText(f'{format(int(self.predict_vis_meter), ",")} {unit}')
-            print("predict_visibility : ", int(self.predict_vis_meter))
-        else:
-            unit = "mile"
-            # self.p_vis_label.setText(f'{format(round(self.predict_vis_meter/1609, 2), ",")} {unit}')
-            print("predict_visibility : ", round(self.predict_vis_meter/1609, 2))
+            current_time_str = now.strftime('%Y%m%d%H%M00')
+            predict_path = f"predict/{current_time_str[:8]}"
+            predict_vis_file = current_time_str[:8] + ".csv"
+            predict_file_path =  os.path.join(predict_path, predict_vis_file)
+            print("predict__file__name : ", predict_vis_file)
             
+            if os.path.isdir(f'{predict_path}') is False:
+                os.makedirs(predict_path, exist_ok=True)
+                df_predict = pd.DataFrame(columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])
+                df_predict.to_csv(predict_file_path, mode='w', index=False)
+                print("create predict path")
+                
+            else:
+                df_predict = pd.read_csv(predict_file_path)
             
-        current_time_str = now.strftime('%Y%m%d%H%M00')
-        predict_path = f"predict/{current_time_str[:8]}"
-        predict_vis_file = current_time_str[:8] + ".csv"
-        predict_file_path =  os.path.join(predict_path, predict_vis_file)
-        print("predict__file__name : ", predict_vis_file)
-        
-        if os.path.isdir(f'{predict_path}') is False:
-            os.makedirs(predict_path, exist_ok=True)
-            df_predict = pd.DataFrame(columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])
+            df_predict = pd.concat([df_predict, pd.DataFrame([[now.strftime('%Y-%m-%d %H:%M:00'), (current_time*1000.0), (predict_epoch_1h*1000.0), str(int(predict_vis_1h)), (predict_epoch_10m*1000.0), str(int(predict_vis_10m))]],
+                                                            columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])], join='outer')
             df_predict.to_csv(predict_file_path, mode='w', index=False)
-            print("create predict path")
+            print("create predict file")
+             
+        elif now.minute % 10 == 0:
             
-        else:
-            df_predict = pd.read_csv(predict_file_path)
-        
-        df_predict = pd.concat([df_predict, pd.DataFrame([[now.strftime('%Y-%m-%d %H:%M:00'), (current_time*1000.0), (predict_epoch_1h*1000.0), str(int(predict_vis_1h)), (predict_epoch_10m*1000.0), str(int(predict_vis_10m))]],
-                                                         columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])], join='outer')
-        df_predict.to_csv(predict_file_path, mode='w', index=False)
-        print("create predict file")
+            self.lstm_df.drop([0], axis=0, inplace=True)
+            new_serires = {'prev':  pv, "Day sin" : np.sin(current_time * (2 * np.pi / day)), "Day cos" : np.cos(current_time * (2 * np.pi / day))}
+            self.lstm_df = self.lstm_df.append(new_serires, ignore_index = True)
+            # data_df = (self.lstm_df - df_mean) / df_std
+            self.lstm_df = self.lstm_df.reset_index(drop=True)
+            # print(data_df.head())
+
+
+            prediction_cvt = self.lstm_model.predict_visibility(current_time, self.lstm_df)
+            # 1시간 뒤 예측 값
+            predict_vis_1h = prediction_cvt[0][5][0]
+            predict_vis_1h = self.lstm_model.find_closest_value(predict_vis_1h, distance_list)
+            
+            self.predict_vis_meter = predict_vis_1h * 1000
+            self._predic_plot.appendData(pv, prediction_cvt)
+            
+            # 10분 뒤 예측값
+            predict_vis_10m = prediction_cvt[0][1][0]
+            predict_vis_10m = self.lstm_model.find_closest_value(predict_vis_10m, distance_list)
+            
+            self.predict_vis_meter_10m = predict_vis_10m * 1000
+            # self.predict_vis_meter = 0
+            # self.predict_vis_meter_10m = 0
+                
+
+
+
+            # if self.predict_vis_meter > result * 1000:
+            #     self.predict_vis_meter = result * 1000
+            # else:
+            #     pass
+                
+                
+            current_time_str = now.strftime('%Y%m%d%H%M00')
+            predict_path = f"predict/{current_time_str[:8]}"
+            predict_vis_file = current_time_str[:8] + ".csv"
+            predict_file_path =  os.path.join(predict_path, predict_vis_file)
+            print("predict__file__name : ", predict_vis_file)
+            
+            if os.path.isdir(f'{predict_path}') is False:
+                os.makedirs(predict_path, exist_ok=True)
+                df_predict = pd.DataFrame(columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])
+                df_predict.to_csv(predict_file_path, mode='w', index=False)
+                print("create predict path")
+                
+            else:
+                df_predict = pd.read_csv(predict_file_path)
+            
+            df_predict = pd.concat([df_predict, pd.DataFrame([[now.strftime('%Y-%m-%d %H:%M:00'), (current_time*1000.0), (predict_epoch_1h*1000.0), str(int(predict_vis_1h)), (predict_epoch_10m*1000.0), str(int(predict_vis_10m))]],
+                                                            columns=['date', 'epoch', 'predict_epoch_1h', 'predict_value_1h','predict_epoch_10m', 'predict_value_10m'])], join='outer')
+            df_predict.to_csv(predict_file_path, mode='w', index=False)
+            print("create predict file")
 
 
 
@@ -879,7 +903,7 @@ class VideoWidget(QWidget):
         self.uri = None
 
         # Current camera must be 'PNM-9031RV'
-        self.media_player.video_set_aspect_ratio('21:9')
+        self.media_player.video_set_aspect_ratio('2:1')
 
         self.video_frame = QFrame()
 
